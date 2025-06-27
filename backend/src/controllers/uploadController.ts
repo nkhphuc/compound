@@ -1,100 +1,69 @@
+// S3/MinIO Upload Controller (AWS SDK v3)
+// Required env vars:
+// S3_ENDPOINT=http://localhost:9000
+// S3_ACCESS_KEY=minioadmin
+// S3_SECRET_KEY=minioadmin
+// S3_BUCKET=compound-uploads
+
 import { Request, Response } from 'express';
+import { S3Client, HeadBucketCommand, CreateBucketCommand, PutObjectCommand } from '@aws-sdk/client-s3';
 import { v4 as uuidv4 } from 'uuid';
 import path from 'path';
-import fs from 'fs';
 
-// For now, we'll implement a simple local file storage
-// In production, you'd want to use cloud storage like AWS S3, Google Cloud Storage, etc.
-const UPLOAD_DIR = path.join(__dirname, '../../uploads');
+const S3_ENDPOINT = process.env.S3_ENDPOINT || 'http://localhost:9000';
+const S3_ACCESS_KEY = process.env.S3_ACCESS_KEY || 'minioadmin';
+const S3_SECRET_KEY = process.env.S3_SECRET_KEY || 'minioadmin';
+const S3_BUCKET = process.env.S3_BUCKET || 'compound-uploads';
 
-// Ensure upload directory exists
-if (!fs.existsSync(UPLOAD_DIR)) {
-  fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+const s3 = new S3Client({
+  endpoint: S3_ENDPOINT,
+  region: 'us-east-1', // MinIO ignores region but AWS SDK v3 requires it
+  credentials: {
+    accessKeyId: S3_ACCESS_KEY,
+    secretAccessKey: S3_SECRET_KEY,
+  },
+  forcePathStyle: true, // needed for MinIO
+});
+
+// Ensure bucket exists (create if not)
+async function ensureBucketExists() {
+  try {
+    await s3.send(new HeadBucketCommand({ Bucket: S3_BUCKET }));
+  } catch (err: any) {
+    if (err.$metadata && err.$metadata.httpStatusCode === 404) {
+      await s3.send(new CreateBucketCommand({ Bucket: S3_BUCKET }));
+    } else if (err.name === 'NotFound') {
+      await s3.send(new CreateBucketCommand({ Bucket: S3_BUCKET }));
+    } else {
+      throw err;
+    }
+  }
 }
-
-// --- S3 Upload Snippet (for future use) ---
-//
-// import AWS from 'aws-sdk';
-//
-// const s3 = new AWS.S3({
-//   accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-//   secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-//   region: process.env.AWS_REGION
-// });
-// const S3_BUCKET = process.env.AWS_S3_BUCKET_NAME;
-//
-// export const uploadFile = async (req: Request, res: Response): Promise<void> => {
-//   try {
-//     if (!req.files || Object.keys(req.files).length === 0) {
-//       res.status(400).json({ success: false, error: 'No file uploaded' });
-//       return;
-//     }
-//     const uploadedFile = req.files.file as any;
-//     if (Array.isArray(uploadedFile)) {
-//       res.status(400).json({ success: false, error: 'Only single file uploads are supported' });
-//       return;
-//     }
-//     const fileExtension = path.extname(uploadedFile.name);
-//     const fileName = `${uuidv4()}${fileExtension}`;
-//     const params = {
-//       Bucket: S3_BUCKET,
-//       Key: fileName,
-//       Body: uploadedFile.data,
-//       ContentType: uploadedFile.mimetype,
-//       ACL: 'public-read'
-//     };
-//     const s3Result = await s3.upload(params).promise();
-//     res.json({
-//       success: true,
-//       data: {
-//         url: s3Result.Location,
-//         filename: fileName,
-//         originalName: uploadedFile.name,
-//         size: uploadedFile.size,
-//         mimetype: uploadedFile.mimetype
-//       }
-//     });
-//   } catch (error) {
-//     console.error('Error uploading file to S3:', error);
-//     res.status(500).json({ success: false, error: 'Failed to upload file' });
-//   }
-// };
-
-// --- End S3 Upload Snippet ---
 
 export const uploadFile = async (req: Request, res: Response): Promise<void> => {
   try {
-    // Check if file was uploaded
     if (!req.files || Object.keys(req.files).length === 0) {
-      res.status(400).json({
-        success: false,
-        error: 'No file uploaded'
-      });
+      res.status(400).json({ success: false, error: 'No file uploaded' });
       return;
     }
-
     const uploadedFile = req.files.file as any;
-
     if (Array.isArray(uploadedFile)) {
-      res.status(400).json({
-        success: false,
-        error: 'Only single file uploads are supported'
-      });
+      res.status(400).json({ success: false, error: 'Only single file uploads are supported' });
       return;
     }
-
-    // Generate unique filename
+    await ensureBucketExists();
     const fileExtension = path.extname(uploadedFile.name);
     const fileName = `${uuidv4()}${fileExtension}`;
-    const filePath = path.join(UPLOAD_DIR, fileName);
-
-    // Move file to upload directory
-    await uploadedFile.mv(filePath);
-
-    // In production, you would upload to cloud storage and return the cloud URL
-    // For now, we'll return a local URL that the frontend can use
-    const fileUrl = `/uploads/${fileName}`;
-
+    const putParams = {
+      Bucket: S3_BUCKET,
+      Key: fileName,
+      Body: uploadedFile.data,
+      ContentType: uploadedFile.mimetype,
+      ACL: 'public-read' as const,
+    };
+    await s3.send(new PutObjectCommand(putParams));
+    // Public URL for MinIO (adjust if using a reverse proxy or custom domain)
+    const fileUrl = `${S3_ENDPOINT.replace(/\/$/, '')}/${S3_BUCKET}/${fileName}`;
     res.json({
       success: true,
       data: {
@@ -102,14 +71,11 @@ export const uploadFile = async (req: Request, res: Response): Promise<void> => 
         filename: fileName,
         originalName: uploadedFile.name,
         size: uploadedFile.size,
-        mimetype: uploadedFile.mimetype
-      }
+        mimetype: uploadedFile.mimetype,
+      },
     });
   } catch (error) {
-    console.error('Error uploading file:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to upload file'
-    });
+    console.error('Error uploading file to S3/MinIO:', error);
+    res.status(500).json({ success: false, error: 'Failed to upload file' });
   }
 };
