@@ -4,11 +4,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const dbConfig: PoolConfig = {
-  host: process.env.DB_HOST || 'localhost',
-  port: parseInt(process.env.DB_PORT || '5432'),
-  database: process.env.DB_NAME || 'compound_chemistry',
-  user: process.env.DB_USER || 'postgres',
-  password: process.env.DB_PASSWORD || 'your_password',
+  connectionString: process.env.DATABASE_URL || 'postgresql://postgres:your_password@localhost:5432/compound_chemistry',
   max: 20, // Maximum number of clients in the pool
   idleTimeoutMillis: 30000, // Close idle clients after 30 seconds
   connectionTimeoutMillis: 2000, // Return an error after 2 seconds if connection could not be established
