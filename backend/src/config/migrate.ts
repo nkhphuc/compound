@@ -78,6 +78,7 @@ const createTables = async () => {
       CREATE INDEX IF NOT EXISTS idx_compounds_stt_hc ON compounds(stt_hc);
       CREATE INDEX IF NOT EXISTS idx_compounds_ten_hc ON compounds(ten_hc);
       CREATE INDEX IF NOT EXISTS idx_compounds_loai_hc ON compounds(loai_hc);
+      CREATE INDEX IF NOT EXISTS idx_compounds_created_at ON compounds(created_at DESC);
       CREATE INDEX IF NOT EXISTS idx_nmr_data_blocks_compound_id ON nmr_data_blocks(compound_id);
       CREATE INDEX IF NOT EXISTS idx_nmr_signals_nmr_data_block_id ON nmr_signals(nmr_data_block_id);
     `);

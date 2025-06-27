@@ -28,7 +28,7 @@ export class CompoundService {
       queryParams.push(`%${searchTerm}%`);
     }
 
-    query += ` ORDER BY c.stt_hc ASC LIMIT $${queryParams.length + 1} OFFSET $${queryParams.length + 2}`;
+    query += ` ORDER BY c.created_at DESC LIMIT $${queryParams.length + 1} OFFSET $${queryParams.length + 2}`;
     queryParams.push(limit, offset);
 
     const result = await pool.query(query, queryParams);
