@@ -1081,8 +1081,8 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
 
       <div className="flex justify-end space-x-4 pt-8 border-t border-gray-300">
         <Button type="button" variant="secondary" onClick={handleCancel} disabled={isSaving}>{t('buttons.cancel')}</Button>
-        <Button type="submit" variant="primary" disabled={isSaving}>
-          {isSaving ? t('buttons.saving') : (initialData ? t('buttons.update') : t('buttons.save'))}
+        <Button type="submit" variant="primary" disabled={isSaving} loading={isSaving}>
+          {initialData ? t('buttons.update') : t('buttons.save')}
         </Button>
       </div>
     </form>

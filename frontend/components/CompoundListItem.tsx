@@ -23,12 +23,13 @@ export const CompoundListItem: React.FC<CompoundListItemProps> = ({ compound, on
         {compound.tenLatin && <p className="text-xs text-gray-500">{t('compoundListItem.latinPrefix')}{compound.tenLatin}</p>}
       </div>
       <div className="mt-3 sm:mt-0 flex space-x-2">
-        <Link to={`/edit/${compound.id}`}>
-            <Button variant="secondary" size="sm">{t('buttons.edit')}</Button>
+        <Link to={`/edit/${compound.id}`} className="h-8">
+            <Button variant="secondary" size="sm" className="h-8">{t('buttons.edit')}</Button>
         </Link>
         <Button
             variant="danger"
             size="sm"
+            className="h-8"
             onClick={(e) => { e.stopPropagation(); onDelete(compound.id); }}
             leftIcon={<TrashIcon className="w-4 h-4"/>}
         >
