@@ -14,6 +14,9 @@ WORKDIR /app
 
 RUN npm install -g pnpm@10.12.1
 
+# Install netcat for database connection check
+RUN apk add --no-cache netcat-openbsd
+
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/package.json ./package.json

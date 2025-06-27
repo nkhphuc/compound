@@ -286,9 +286,54 @@ pnpm build
 pnpm --filter backend start
 ```
 
-### Docker (Future)
+### Docker Deployment
 
-Docker configuration can be added for containerized deployment.
+The application includes Docker Compose configuration for easy deployment:
+
+```bash
+# Build and start all services
+docker-compose up -d
+
+# View logs
+docker-compose logs -f
+
+# Stop all services
+docker-compose down
+
+# Rebuild and restart
+docker-compose up -d --build
+```
+
+**Services included:**
+- **PostgreSQL**: Database server
+- **MinIO**: Object storage for file uploads
+- **Backend**: Express.js API server
+- **Frontend**: React application served via Nginx
+
+**Database Migration:**
+The backend container automatically runs database migrations on startup using the compiled JavaScript files. The migration script creates all necessary tables and indexes.
+
+**Environment Variables:**
+Docker Compose uses the following default environment variables:
+- `DATABASE_URL=postgresql://postgres:your_password@postgres:5432/compound_chemistry`
+- `S3_ENDPOINT=http://minio:9000`
+- `S3_ACCESS_KEY=minioadmin`
+- `S3_SECRET_KEY=minioadmin`
+
+You can override these by creating a `.env` file or modifying `docker-compose.yml`.
+
+### Manual Docker Build
+
+```bash
+# Build backend only
+docker-compose build backend
+
+# Build frontend only
+docker-compose build frontend
+
+# Build all services
+docker-compose build
+```
 
 ## 🤝 Contributing
 

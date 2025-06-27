@@ -20,9 +20,6 @@ importers:
       '@aws-sdk/client-s3':
         specifier: ^3.837.0
         version: 3.837.0
-      '@compound/shared':
-        specifier: workspace:*
-        version: link:../shared
       aws-sdk:
         specifier: ^2.1692.0
         version: 2.1692.0
@@ -142,12 +139,6 @@ importers:
       vite:
         specifier: ^6.2.0
         version: 6.3.5(@types/node@22.15.33)(tsx@4.20.3)
-
-  shared:
-    devDependencies:
-      typescript:
-        specifier: ~5.7.2
-        version: 5.7.3
 
 packages:
 
