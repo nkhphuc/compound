@@ -1,4 +1,3 @@
-
 import React from 'react';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -9,8 +8,8 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 export const Button: React.FC<ButtonProps> = ({ children, variant = 'primary', size = 'md', className, leftIcon, rightIcon, ...props }) => {
-  const baseStyles = "inline-flex items-center justify-center border border-transparent rounded-md shadow-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2";
-  
+  const baseStyles = "inline-flex items-center gap-2 justify-center border border-transparent rounded-md shadow-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2";
+
   let variantStyles = "";
   switch (variant) {
     case 'primary':
@@ -46,9 +45,9 @@ export const Button: React.FC<ButtonProps> = ({ children, variant = 'primary', s
       className={`${baseStyles} ${variantStyles} ${sizeStyles} ${className || ''}`}
       {...props}
     >
-      {leftIcon && <span className="mr-2 -ml-1 h-5 w-5">{leftIcon}</span>}
+      {leftIcon && <span className="flex items-center h-5 w-5">{leftIcon}</span>}
       {children}
-      {rightIcon && <span className="ml-2 -mr-1 h-5 w-5">{rightIcon}</span>}
+      {rightIcon && <span className="flex items-center h-5 w-5">{rightIcon}</span>}
     </button>
   );
 };

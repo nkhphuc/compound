@@ -79,45 +79,43 @@ export const SingleNMRDataForm: React.FC<SingleNMRDataFormProps> = ({
 
         {/* NMR Conditions part - simplified to a single set of fields */}
         <div className="mb-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start p-3 border border-gray-200 rounded-md mb-3 bg-slate-50 shadow-sm">
-                <div>
-                  <Input
-                    label={t('nmrForm.solvent')}
-                    name="dmNMR"
-                    value={currentCondition.dmNMR}
-                    onChange={handleConditionFieldChange}
-                    placeholder={t('nmrForm.solventPlaceholder')}
-                    wrapperClassName="mb-1" // Adjusted for guide text
-                  />
-                  <p className="text-xs text-gray-500 px-1">
-                    <Trans
-                      i18nKey="formulaHelpText"
-                      components={{
-                        code1: <code key="code1" className="bg-gray-200 text-gray-800 rounded px-1 py-0.5 font-mono" />,
-                        code2: <code key="code2" className="bg-gray-200 text-gray-800 rounded px-1 py-0.5 font-mono" />,
-                        code3: <code key="code3" className="bg-gray-200 text-gray-800 rounded px-1 py-0.5 font-mono" />,
-                        code4: <code key="code4" className="bg-gray-200 text-gray-800 rounded px-1 py-0.5 font-mono" />
-                      }}
-                    />
-                  </p>
-                </div>
-                <Input
-                  label={t('nmrForm.freq13c')}
-                  name="tanSo13C"
-                  value={currentCondition.tanSo13C}
-                  onChange={handleConditionFieldChange}
-                  placeholder={t('nmrForm.freq13cPlaceholder')}
-                  wrapperClassName="mb-0 md:mt-[22px]" // Align with label + guide text
-                />
-                <Input
-                  label={t('nmrForm.freq1h')}
-                  name="tanSo1H"
-                  value={currentCondition.tanSo1H}
-                  onChange={handleConditionFieldChange}
-                  placeholder={t('nmrForm.freq1hPlaceholder')}
-                  wrapperClassName="mb-0 md:mt-[22px]" // Align with label + guide text
-                />
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start p-3 border border-gray-200 rounded-md mb-1 bg-slate-50 shadow-sm">
+            <Input
+              label={t('nmrForm.solvent')}
+              name="dmNMR"
+              value={currentCondition.dmNMR}
+              onChange={handleConditionFieldChange}
+              placeholder={t('nmrForm.solventPlaceholder')}
+              wrapperClassName="mb-0"
+            />
+            <Input
+              label={t('nmrForm.freq13c')}
+              name="tanSo13C"
+              value={currentCondition.tanSo13C}
+              onChange={handleConditionFieldChange}
+              placeholder={t('nmrForm.freq13cPlaceholder')}
+              wrapperClassName="mb-0"
+            />
+            <Input
+              label={t('nmrForm.freq1h')}
+              name="tanSo1H"
+              value={currentCondition.tanSo1H}
+              onChange={handleConditionFieldChange}
+              placeholder={t('nmrForm.freq1hPlaceholder')}
+              wrapperClassName="mb-0"
+            />
+          </div>
+          <p className="text-xs text-gray-500 px-1 mt-1">
+            <Trans
+              i18nKey="formulaHelpText"
+              components={{
+                code1: <code key="code1" className="bg-gray-200 text-gray-800 rounded px-1 py-0.5 font-mono" />,
+                code2: <code key="code2" className="bg-gray-200 text-gray-800 rounded px-1 py-0.5 font-mono" />,
+                code3: <code key="code3" className="bg-gray-200 text-gray-800 rounded px-1 py-0.5 font-mono" />,
+                code4: <code key="code4" className="bg-gray-200 text-gray-800 rounded px-1 py-0.5 font-mono" />
+              }}
+            />
+          </p>
         </div>
 
         <Textarea

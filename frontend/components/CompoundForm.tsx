@@ -214,7 +214,6 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
           };
         })()
       : (() => {
-          const newId = crypto.randomUUID();
           const defaultPho = SPECTRAL_FIELDS.reduce((acc, field) => {
               acc[field.key] = '';
               return acc;
