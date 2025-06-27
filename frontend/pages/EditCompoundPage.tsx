@@ -46,7 +46,6 @@ export const EditCompoundPage: React.FC = () => {
       setIsSaving(true);
       setSaveError(null);
       await saveCompound({ ...data, id }); // Ensure ID is preserved
-      console.log('Compound updated successfully! Navigating to view page...');
       requestAnimationFrame(() => {
         navigate(`/view/${id}`);
       });

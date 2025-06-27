@@ -73,15 +73,12 @@ export const ViewCompoundPage: React.FC = () => {
   }
 
   const openDeleteConfirmModal = () => {
-    console.log(`[ViewCompoundPage] openDeleteConfirmModal called for ID: ${compound.id}`);
     setIsConfirmModalOpen(true);
   };
 
   const handleConfirmDelete = async () => {
-    console.log(`[ViewCompoundPage] User confirmed deletion for ID: ${compound.id} via custom modal.`);
     try {
       await deleteCompound(compound.id);
-      console.log(`[ViewCompoundPage] Deletion successful for ID: ${compound.id}. Navigating home...`);
       requestAnimationFrame(() => {
         navigate('/');
       });
@@ -164,7 +161,6 @@ export const ViewCompoundPage: React.FC = () => {
         isOpen={isConfirmModalOpen}
         onClose={() => {
           setIsConfirmModalOpen(false);
-          console.log("[ViewCompoundPage] Custom confirm modal closed by user.");
         }}
         onConfirm={handleConfirmDelete}
         title={t('viewCompoundPage.deleteConfirmTitle')}

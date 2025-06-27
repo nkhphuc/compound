@@ -16,7 +16,6 @@ export const AddCompoundPage: React.FC = () => {
       setIsSaving(true);
       setSaveError(null);
       await saveCompound(data);
-      console.log('Compound saved successfully! Navigating home...');
       requestAnimationFrame(() => {
         navigate('/');
       });
