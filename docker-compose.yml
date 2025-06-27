@@ -1,0 +1,18 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: compound-postgres
+    environment:
+      POSTGRES_DB: compound_chemistry
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: your_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./db/data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5

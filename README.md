@@ -9,6 +9,8 @@ compound/
 ├── frontend/          # React + TypeScript + Vite
 ├── backend/           # Express.js + TypeScript + PostgreSQL
 ├── shared/            # Shared types and utilities
+├── db/                # PostgreSQL data directory
+├── docker-compose.yml # Docker configuration
 ├── package.json       # Root package.json for monorepo
 └── pnpm-workspace.yaml
 ```
@@ -31,15 +33,84 @@ compound/
    ```
 
 2. **Set up PostgreSQL**:
-   ```bash
-   # Create database
-   createdb compound_chemistry
 
-   # Or using psql
+   **Option A: Using Docker (Recommended)**
+   ```bash
+   # Pull and run PostgreSQL container
+   docker run --name compound-postgres \
+     -e POSTGRES_DB=compound_chemistry \
+     -e POSTGRES_USER=postgres \
+     -e POSTGRES_PASSWORD=your_password \
+     -p 5432:5432 \
+     -d postgres:15
+
+   # Check if container is running
+   docker ps
+
+   # View logs if needed
+   docker logs compound-postgres
+   ```
+
+   **Option B: Using Docker Compose (Even better)**
+   ```bash
+   # Start PostgreSQL (uses existing docker-compose.yml)
+   docker-compose up -d postgres
+
+   # Stop when done
+   docker-compose down
+   ```
+
+   **Option C: Using createdb (if PostgreSQL is in your PATH)**
+   ```bash
+   # Create database directly
+   createdb compound_chemistry
+   ```
+
+   **Option D: Using psql command line**
+   ```bash
+   # Connect to PostgreSQL as postgres user
    psql -U postgres
+
+   # Create the database
    CREATE DATABASE compound_chemistry;
+
+   # Exit psql
    \q
    ```
+
+   **Option E: If PostgreSQL is installed via Homebrew (macOS)**
+   ```bash
+   # Start PostgreSQL service if not running
+   brew services start postgresql
+
+   # Create database
+   createdb compound_chemistry
+   ```
+
+   **Option F: If you need to install PostgreSQL first**
+   ```bash
+   # macOS with Homebrew
+   brew install postgresql
+   brew services start postgresql
+
+   # Ubuntu/Debian
+   sudo apt update
+   sudo apt install postgresql postgresql-contrib
+   sudo systemctl start postgresql
+   sudo systemctl enable postgresql
+
+   # Then create database
+   sudo -u postgres createdb compound_chemistry
+   ```
+
+   **Troubleshooting:**
+   - If you get "connection refused", make sure PostgreSQL is running
+   - If you get "permission denied", you may need to create a user first:
+     ```bash
+     sudo -u postgres createuser --interactive
+     # Follow prompts to create your user
+     ```
+   - For Docker: Make sure port 5432 is not already in use by another PostgreSQL instance
 
 3. **Configure environment**:
    ```bash
