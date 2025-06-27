@@ -13,12 +13,14 @@ This directory contains the favicon files for the Compound Chemistry Data app.
 To generate the missing favicon formats, you can use online tools or command-line tools:
 
 ### Option 1: Online Tools
+
 1. Go to [favicon.io](https://favicon.io/) or [realfavicongenerator.net](https://realfavicongenerator.net/)
 2. Upload the `favicon.svg` file
 3. Download the generated package
 4. Replace the files in this directory
 
 ### Option 2: Command Line (if you have ImageMagick)
+
 ```bash
 # Convert SVG to ICO
 convert favicon.svg -resize 16x16 favicon.ico
@@ -32,6 +34,7 @@ convert favicon.svg -resize 512x512 android-chrome-512x512.png
 ```
 
 ### Option 3: Using Node.js (if you have sharp installed)
+
 ```bash
 npm install -g sharp-cli
 sharp -i favicon.svg -o favicon-16x16.png resize 16 16
@@ -46,6 +49,7 @@ The current setup uses the SVG favicon as the primary favicon, which works well 
 ## Testing
 
 After adding the favicon files:
+
 1. Clear your browser cache
 2. Refresh the page
 3. Check the browser tab to see the favicon
