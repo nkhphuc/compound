@@ -1,7 +1,7 @@
 import { CompoundData, initialCompoundData, NMRDataBlock, initialNMRDataBlock, initialNMRCondition, initialNMRSignalData, CompoundStatus, UVSKLMData, SpectralRecord, NMRCondition } from '../types';
 import { SPECTRAL_FIELDS } from '../constants'; // Import SPECTRAL_FIELDS
 
-const COMPOUNDS_STORAGE_KEY = 'compoundsData';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
 
 // Helper to ensure data integrity for loaded compounds
 const ensureCompoundDataIntegrity = (compound: Partial<CompoundData>): CompoundData => {
@@ -60,72 +60,68 @@ const ensureCompoundDataIntegrity = (compound: Partial<CompoundData>): CompoundD
   return validatedCompound;
 };
 
-// Internal function to get all compounds from storage
-const getAllCompounds = (): CompoundData[] => {
-  try {
-    const data = localStorage.getItem(COMPOUNDS_STORAGE_KEY);
-    if (!data) {
-      return [];
-    }
-    const parsedData = JSON.parse(data) as Partial<CompoundData>[];
-    return parsedData.map(ensureCompoundDataIntegrity);
-  } catch (error) {
-    console.error("Error loading compounds from localStorage:", error);
-    return [];
-  }
-};
+// API helper function
+const apiRequest = async (endpoint: string, options: RequestInit = {}) => {
+  const url = `${API_BASE_URL}${endpoint}`;
+  const response = await fetch(url, {
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+    ...options,
+  });
 
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+  }
+
+  return response.json();
+};
 
 // Public function to get paginated and filtered compounds
-export const getCompounds = (options: { page: number; limit: number; searchTerm?: string }): { data: CompoundData[]; pagination: { totalItems: number; totalPages: number; currentPage: number; limit: number; } } => {
-  const { page, limit, searchTerm = '' } = options;
-  const allCompounds = getAllCompounds();
-
-  const filteredCompounds = searchTerm
-    ? allCompounds.filter(compound =>
-        compound.tenHC.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (compound.sttHC && String(compound.sttHC).toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (compound.loaiHC && compound.loaiHC.toLowerCase().includes(searchTerm.toLowerCase()))
-      )
-    : allCompounds;
-
-  const totalItems = filteredCompounds.length;
-  const totalPages = Math.ceil(totalItems / limit);
-  const startIndex = (page - 1) * limit;
-  const endIndex = startIndex + limit;
-
-  const paginatedData = filteredCompounds.slice(startIndex, endIndex);
-
-  return {
-    data: paginatedData,
-    pagination: {
-      totalItems,
-      totalPages,
-      currentPage: page,
-      limit,
-    },
-  };
-};
-
-export const getNextSttHC = (): number => {
-  const compounds = getAllCompounds();
-  if (compounds.length === 0) {
-    return 1;
-  }
-  const maxSttHC = Math.max(...compounds.map(c => Number(c.sttHC) || 0));
-  return maxSttHC + 1;
-};
-
-export const saveCompound = (compoundToSave: CompoundData): boolean => {
+export const getCompounds = async (options: { page: number; limit: number; searchTerm?: string }): Promise<{ data: CompoundData[]; pagination: { totalItems: number; totalPages: number; currentPage: number; limit: number; } }> => {
   try {
-    const compounds = getAllCompounds();
-    let compoundExists = false;
+    const { page, limit, searchTerm = '' } = options;
+    const params = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+      ...(searchTerm && { searchTerm }),
+    });
 
-    let finalSttHC = compoundToSave.sttHC;
-    if (finalSttHC === 0) {
-      finalSttHC = getNextSttHC();
+    const response = await apiRequest(`/compounds?${params}`);
+
+    if (response.success) {
+      return {
+        data: response.data.map((compound: Partial<CompoundData>) => ensureCompoundDataIntegrity(compound)),
+        pagination: response.pagination,
+      };
+    } else {
+      throw new Error(response.error || 'Failed to fetch compounds');
     }
+  } catch (error) {
+    console.error('Error fetching compounds:', error);
+    throw error;
+  }
+};
 
+export const getCompoundById = async (id: string): Promise<CompoundData | undefined> => {
+  try {
+    const response = await apiRequest(`/compounds/${id}`);
+
+    if (response.success) {
+      return ensureCompoundDataIntegrity(response.data);
+    } else {
+      throw new Error(response.error || 'Failed to fetch compound');
+    }
+  } catch (error) {
+    console.error('Error fetching compound by ID:', error);
+    throw error;
+  }
+};
+
+export const saveCompound = async (compoundToSave: CompoundData): Promise<CompoundData> => {
+  try {
     let finalNmrSttBang = compoundToSave.nmrData.sttBang;
     if (finalNmrSttBang === "") {
         finalNmrSttBang = "1";
@@ -133,74 +129,123 @@ export const saveCompound = (compoundToSave: CompoundData): boolean => {
 
     const validatedDataToSave = ensureCompoundDataIntegrity({
         ...compoundToSave,
-        sttHC: finalSttHC,
         nmrData: {
             ...compoundToSave.nmrData,
             sttBang: finalNmrSttBang,
             id: compoundToSave.nmrData.id || `${compoundToSave.id}-nmr`,
-            // nmrConditions will be handled by ensureCompoundDataIntegrity
         }
     });
 
+    let response;
+    // Check if this is an existing compound (has a valid ID that's not empty or default)
+    const isExistingCompound = validatedDataToSave.id &&
+                              validatedDataToSave.id !== '' &&
+                              validatedDataToSave.id !== '0' &&
+                              validatedDataToSave.id !== 'undefined';
 
-    const updatedCompounds = compounds.map(c => {
-      if (c.id === validatedDataToSave.id) {
-        compoundExists = true;
-        return validatedDataToSave;
-      }
-      return c;
+    if (isExistingCompound) {
+      // Update existing compound
+      response = await apiRequest(`/compounds/${validatedDataToSave.id}`, {
+        method: 'PUT',
+        body: JSON.stringify(validatedDataToSave),
+      });
+    } else {
+      // Create new compound
+      response = await apiRequest('/compounds', {
+        method: 'POST',
+        body: JSON.stringify(validatedDataToSave),
+      });
+    }
+
+    if (response.success) {
+      return ensureCompoundDataIntegrity(response.data);
+    } else {
+      throw new Error(response.error || 'Failed to save compound');
+    }
+  } catch (error) {
+    console.error('Error saving compound:', error);
+    throw error;
+  }
+};
+
+export const deleteCompound = async (id: string): Promise<boolean> => {
+  try {
+    await apiRequest(`/compounds/${id}`, {
+      method: 'DELETE',
+    });
+    return true;
+  } catch (error) {
+    console.error('Error deleting compound:', error);
+    throw error;
+  }
+};
+
+// File upload function
+export const uploadFile = async (file: File): Promise<string> => {
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await fetch(`${API_BASE_URL}/uploads`, {
+      method: 'POST',
+      body: formData,
     });
 
-    if (!compoundExists) {
-      updatedCompounds.push(validatedDataToSave);
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || `Upload failed! status: ${response.status}`);
     }
 
-    localStorage.setItem(COMPOUNDS_STORAGE_KEY, JSON.stringify(updatedCompounds));
-    return true;
+    const result = await response.json();
+    return result.url;
   } catch (error) {
-    console.error("Error saving compound to localStorage:", error);
-    if (error instanceof DOMException && error.name === 'QuotaExceededError') {
-      alert('Failed to save data: LocalStorage is full. Please free up some space or contact support.');
-    } else {
-      alert('An unexpected error occurred while saving. Please try again.');
-    }
-    return false;
+    console.error('Error uploading file:', error);
+    throw error;
   }
 };
-
-export const getCompoundById = (id: string): CompoundData | undefined => {
-  const compounds = getAllCompounds();
-  return compounds.find(compound => compound.id === id);
-};
-
-export const deleteCompound = (id: string): boolean => {
-  try {
-    const compounds = getAllCompounds();
-    const updatedCompounds = compounds.filter(compound => compound.id !== id);
-    localStorage.setItem(COMPOUNDS_STORAGE_KEY, JSON.stringify(updatedCompounds));
-    return true;
-  } catch (error) {
-    console.error("Error deleting compound from localStorage:", error);
-    return false;
-  }
-};
-
 
 // Utility functions to get unique values for dropdowns
-export const getUniqueLoaiHCValues = (): string[] => {
-  const compounds = getAllCompounds();
-  const uniqueValues = new Set(compounds.map(c => c.loaiHC).filter(Boolean));
-  return Array.from(uniqueValues);
+export const getUniqueLoaiHCValues = async (): Promise<string[]> => {
+  try {
+    const response = await apiRequest('/meta/loai-hc');
+
+    if (response.success) {
+      return response.data;
+    } else {
+      throw new Error(response.error || 'Failed to fetch loaiHC values');
+    }
+  } catch (error) {
+    console.error('Error fetching unique loaiHC values:', error);
+    throw error;
+  }
 };
 
-export const getUniqueTrangThaiValues = (): string[] => {
-  const compounds = getAllCompounds();
-  const uniqueValues = new Set(compounds.map(c => c.trangThai).filter(Boolean));
-  return Array.from(uniqueValues);
+export const getUniqueTrangThaiValues = async (): Promise<string[]> => {
+  try {
+    const response = await apiRequest('/meta/trang-thai');
+
+    if (response.success) {
+      return response.data;
+    } else {
+      throw new Error(response.error || 'Failed to fetch trangThai values');
+    }
+  } catch (error) {
+    console.error('Error fetching unique trangThai values:', error);
+    throw error;
+  }
 };
 
-export const getUniqueMauValues = (): string[] => {
-  const compounds = getAllCompounds();
-  const uniqueValues = new Set(compounds.map(c => c.mau).filter(Boolean));
-  return Array.from(uniqueValues);
+export const getUniqueMauValues = async (): Promise<string[]> => {
+  try {
+    const response = await apiRequest('/meta/mau');
+
+    if (response.success) {
+      return response.data;
+    } else {
+      throw new Error(response.error || 'Failed to fetch mau values');
+    }
+  } catch (error) {
+    console.error('Error fetching unique mau values:', error);
+    throw error;
+  }
 };

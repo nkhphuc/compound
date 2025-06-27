@@ -14,8 +14,9 @@ import { CustomFileInput } from './ui/CustomFileInput';
 
 interface CompoundFormProps {
   initialData?: CompoundData;
-  onSave: (data: CompoundData) => boolean;
+  onSave: (data: CompoundData) => Promise<boolean>;
   saveError?: string | null;
+  isSaving?: boolean;
 }
 
 type ImageInputMethod = 'upload' | 'url';
@@ -51,7 +52,7 @@ const initialSpectralFileNamesState: Record<keyof SpectralRecord, string> =
   }, {} as Record<keyof SpectralRecord, string>);
 
 
-export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave, saveError: parentSaveError }) => {
+export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave, saveError: parentSaveError, isSaving }) => {
   const { t } = useTranslation();
   const [formData, setFormData] = useState<CompoundData>(() => {
     if (initialData) {
@@ -139,26 +140,37 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
   const navigate = useNavigate();
 
   useEffect(() => {
-    const uniqueExistingLoaiHc = getUniqueLoaiHCValues();
-    const combinedLoaiHcOptions = new Set([...DEFAULT_LOAI_HC_OPTIONS, ...uniqueExistingLoaiHc]);
-    const sortedLoaiHcOptions = Array.from(combinedLoaiHcOptions).sort();
-    const loaiHcOpts = sortedLoaiHcOptions.map(opt => ({ value: opt, label: opt }));
-    loaiHcOpts.push({ value: LOAI_HC_OTHER_STRING, label: t(LOAI_HC_OTHER_STRING_KEY) }); // Translate "Other"
-    setLoaiHcDropdownOptions(loaiHcOpts);
+    const loadMetadata = async () => {
+      try {
+        const [uniqueExistingLoaiHc, uniqueExistingTrangThai, uniqueExistingMau] = await Promise.all([
+          getUniqueLoaiHCValues(),
+          getUniqueTrangThaiValues(),
+          getUniqueMauValues()
+        ]);
 
-    const uniqueExistingTrangThai = getUniqueTrangThaiValues();
-    const combinedTrangThaiOptions = new Set([...DEFAULT_TRANG_THAI_OPTIONS, ...uniqueExistingTrangThai]);
-    const sortedTrangThaiOptions = Array.from(combinedTrangThaiOptions).sort();
-    const trangThaiOpts = sortedTrangThaiOptions.map(opt => ({ value: opt, label: opt }));
-    trangThaiOpts.push({ value: LOAI_HC_OTHER_STRING, label: t(LOAI_HC_OTHER_STRING_KEY) });
-    setTrangThaiDropdownOptions(trangThaiOpts);
+        const combinedLoaiHcOptions = new Set([...DEFAULT_LOAI_HC_OPTIONS, ...uniqueExistingLoaiHc]);
+        const sortedLoaiHcOptions = Array.from(combinedLoaiHcOptions).sort();
+        const loaiHcOpts = sortedLoaiHcOptions.map(opt => ({ value: opt, label: opt }));
+        loaiHcOpts.push({ value: LOAI_HC_OTHER_STRING, label: t(LOAI_HC_OTHER_STRING_KEY) });
+        setLoaiHcDropdownOptions(loaiHcOpts);
 
-    const uniqueExistingMau = getUniqueMauValues();
-    const combinedMauOptions = new Set([...DEFAULT_MAU_OPTIONS, ...uniqueExistingMau]);
-    const sortedMauOptions = Array.from(combinedMauOptions).sort();
-    const mauOpts = sortedMauOptions.map(opt => ({ value: opt, label: opt }));
-    mauOpts.push({ value: LOAI_HC_OTHER_STRING, label: t(LOAI_HC_OTHER_STRING_KEY) });
-    setMauDropdownOptions(mauOpts);
+        const combinedTrangThaiOptions = new Set([...DEFAULT_TRANG_THAI_OPTIONS, ...uniqueExistingTrangThai]);
+        const sortedTrangThaiOptions = Array.from(combinedTrangThaiOptions).sort();
+        const trangThaiOpts = sortedTrangThaiOptions.map(opt => ({ value: opt, label: opt }));
+        trangThaiOpts.push({ value: LOAI_HC_OTHER_STRING, label: t(LOAI_HC_OTHER_STRING_KEY) });
+        setTrangThaiDropdownOptions(trangThaiOpts);
+
+        const combinedMauOptions = new Set([...DEFAULT_MAU_OPTIONS, ...uniqueExistingMau]);
+        const sortedMauOptions = Array.from(combinedMauOptions).sort();
+        const mauOpts = sortedMauOptions.map(opt => ({ value: opt, label: opt }));
+        mauOpts.push({ value: LOAI_HC_OTHER_STRING, label: t(LOAI_HC_OTHER_STRING_KEY) });
+        setMauDropdownOptions(mauOpts);
+      } catch (error) {
+        console.error('Error loading metadata:', error);
+      }
+    };
+
+    loadMetadata();
   }, [t]);
 
   useEffect(() => {
@@ -524,11 +536,14 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
     });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (isSaving) return; // Prevent multiple submissions
+
     const errors: FormErrors = {};
     if (!formData.tenHC || formData.tenHC.trim() === '') {
-        errors.tenHC = t('compoundForm.tenHC') + " is required."; // Example of translating error
+        errors.tenHC = t('compoundForm.tenHC') + " is required.";
     }
     if (formData.status === '') {
         errors.status = t('compoundForm.statusLabel') + " is required.";
@@ -545,7 +560,6 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
     } else if (selectedLoaiHcInDropdown === LOAI_HC_OTHER_STRING && finalLoaiHc === '') {
         errors.loaiHC = "Please enter a custom " + t('compoundForm.loaiHC').toLowerCase() + " if '" + t(LOAI_HC_OTHER_STRING_KEY) + "' is selected.";
     }
-
 
     let finalTrangThai = selectedTrangThaiInDropdown;
     if (selectedTrangThaiInDropdown === LOAI_HC_OTHER_STRING) {
@@ -579,7 +593,7 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
     SPECTRAL_FIELDS.forEach(sf => {
       const key = sf.key;
       const phoValue = formData.pho[key];
-      const label = t(`spectralFields.${key}`, sf.label); // Get translated label
+      const label = t(`spectralFields.${key}`, sf.label);
       if (spectralInputMethods[key] === 'url' && phoValue && !phoValue.startsWith('http')) {
         phoErrors[key] = `For ${label}, please enter a valid HTTP/S URL.`;
       }
@@ -605,7 +619,7 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
         nmrData: {
           ...formData.nmrData,
           id: formData.nmrData.id || `${formData.id}-nmr`,
-          nmrConditions: { // Ensure nmrConditions is an object and has an ID
+          nmrConditions: {
              ...(formData.nmrData.nmrConditions || initialNMRCondition),
              id: (formData.nmrData.nmrConditions && formData.nmrData.nmrConditions.id) ? formData.nmrData.nmrConditions.id : crypto.randomUUID(),
           },
@@ -613,7 +627,7 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
         }
     };
 
-    onSave(dataToSave);
+    await onSave(dataToSave);
   };
 
   const handleCancel = () => {
@@ -1054,8 +1068,10 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
       )}
 
       <div className="flex justify-end space-x-4 pt-8 border-t border-gray-300">
-        <Button type="button" variant="secondary" onClick={handleCancel}>{t('buttons.cancel')}</Button>
-        <Button type="submit" variant="primary">{initialData ? t('buttons.update') : t('buttons.save')}</Button>
+        <Button type="button" variant="secondary" onClick={handleCancel} disabled={isSaving}>{t('buttons.cancel')}</Button>
+        <Button type="submit" variant="primary" disabled={isSaving}>
+          {isSaving ? t('buttons.saving') : (initialData ? t('buttons.update') : t('buttons.save'))}
+        </Button>
       </div>
     </form>
   );

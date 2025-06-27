@@ -14,20 +14,31 @@ export const HomePage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [compoundIdToDelete, setCompoundIdToDelete] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [totalItems, setTotalItems] = useState(0);
 
-  const fetchCompounds = useCallback(() => {
-    const { data, pagination } = getCompounds({
-      page: currentPage,
-      limit: ITEMS_PER_PAGE,
-      searchTerm: searchTerm
-    });
-    setCompounds(data);
-    setTotalPages(pagination.totalPages);
-    setTotalItems(pagination.totalItems);
+  const fetchCompounds = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const { data, pagination } = await getCompounds({
+        page: currentPage,
+        limit: ITEMS_PER_PAGE,
+        searchTerm: searchTerm
+      });
+      setCompounds(data);
+      setTotalPages(pagination.totalPages);
+      setTotalItems(pagination.totalItems);
+    } catch (err) {
+      console.error('Error fetching compounds:', err);
+      setError(err instanceof Error ? err.message : 'Failed to fetch compounds');
+    } finally {
+      setLoading(false);
+    }
   }, [currentPage, searchTerm]);
 
   useEffect(() => {
@@ -43,16 +54,20 @@ export const HomePage: React.FC = () => {
     setIsConfirmModalOpen(true);
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (!compoundIdToDelete) return;
-    const success = deleteCompound(compoundIdToDelete);
-    if (success) {
+
+    try {
+      await deleteCompound(compoundIdToDelete);
       // After deleting, refetch. If the last item on a page is deleted, we might need to go to the previous page.
       if (compounds.length === 1 && currentPage > 1) {
         setCurrentPage(prev => prev - 1);
       } else {
         fetchCompounds();
       }
+    } catch (err) {
+      console.error('Error deleting compound:', err);
+      setError(err instanceof Error ? err.message : 'Failed to delete compound');
     }
     setCompoundIdToDelete(null);
   };
@@ -64,6 +79,16 @@ export const HomePage: React.FC = () => {
 
   const startItem = totalItems > 0 ? (currentPage - 1) * ITEMS_PER_PAGE + 1 : 0;
   const endItem = Math.min(currentPage * ITEMS_PER_PAGE, totalItems);
+
+  if (loading && compounds.length === 0) {
+    return (
+      <div className="container mx-auto p-4 md:p-6 lg:p-8">
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto p-4 md:p-6 lg:p-8">
@@ -79,6 +104,12 @@ export const HomePage: React.FC = () => {
             />
         </div>
       </div>
+
+      {error && (
+        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
+          <p className="text-red-800">{error}</p>
+        </div>
+      )}
 
       {compounds.length > 0 ? (
         <>
@@ -116,7 +147,7 @@ export const HomePage: React.FC = () => {
           setCompoundIdToDelete(null);
         }}
         onConfirm={handleConfirmDelete}
-        title={t('viewCompoundPage.deleteConfirmTitle')} // Reusing title, consider specific if needed
+        title={t('viewCompoundPage.deleteConfirmTitle')}
         message={t('viewCompoundPage.deleteConfirmMessage', { compoundName: compounds.find(c => c.id === compoundIdToDelete)?.tenHC || ''})}
       />
     </div>

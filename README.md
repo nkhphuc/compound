@@ -119,6 +119,12 @@ compound/
 
    # Edit backend/.env with your database URL
    DATABASE_URL=postgresql://postgres:your_password@localhost:5432/compound_chemistry
+
+   # Copy frontend environment file (optional - has defaults)
+   cp frontend/env.example frontend/.env
+
+   # Edit frontend/.env if you need to change API URL
+   VITE_API_BASE_URL=http://localhost:3001/api
    ```
 
 4. **Run database migrations**:
@@ -218,6 +224,14 @@ DATABASE_URL=postgresql://postgres:your_password@localhost:5432/compound_chemist
 CORS_ORIGIN=http://localhost:5173
 LOG_LEVEL=info
 ```
+
+### Frontend (.env)
+```env
+VITE_API_BASE_URL=http://localhost:3001/api
+VITE_APP_TITLE=Compound Chemistry Data Manager
+```
+
+**Note:** Frontend environment variables must be prefixed with `VITE_` to be accessible in the browser.
 
 ## 📝 Development
 
