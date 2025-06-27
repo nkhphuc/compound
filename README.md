@@ -38,6 +38,7 @@ compound/
    # Or using psql
    psql -U postgres
    CREATE DATABASE compound_chemistry;
+   \q
    ```
 
 3. **Configure environment**:
@@ -51,6 +52,13 @@ compound/
 
 4. **Run database migrations**:
    ```bash
+   # Navigate to backend directory
+   cd backend
+
+   # Run migrations to create tables
+   pnpm db:migrate
+
+   # Or from root directory
    pnpm --filter backend db:migrate
    ```
 
