@@ -609,7 +609,6 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
 
     const dataToSave: CompoundData = {
         ...formData,
-        sttHC: Number(formData.sttHC) || 0,
         loaiHC: finalLoaiHc,
         status: formData.status as CompoundStatus,
         trangThai: finalTrangThai,

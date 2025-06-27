@@ -94,17 +94,16 @@ export class CompoundService {
       // Insert compound with JSONB fields
       const compoundQuery = `
         INSERT INTO compounds (
-          id, stt_hc, ten_hc, ten_hc_khac, loai_hc, status, ten_latin, ten_ta, ten_tv, bpnc,
+          id, ten_hc, ten_hc_khac, loai_hc, status, ten_latin, ten_ta, ten_tv, bpnc,
           trang_thai, mau, uv_sklm, diem_nong_chay, alpha_d, dung_moi_hoa_tan_tcvl,
           ctpt, klpt, hinh_cau_truc, cau_hinh_tuyet_doi, smiles, pho,
           dm_nmr_general, cart_coor, img_freq, te
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25)
         RETURNING *
       `;
 
       const compoundValues = [
         compoundId,
-        compoundData.sttHC || 0,
         compoundData.tenHC || '',
         compoundData.tenHCKhac || null,
         compoundData.loaiHC || '',

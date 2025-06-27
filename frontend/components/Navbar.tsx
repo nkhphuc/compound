@@ -50,7 +50,12 @@ export const Navbar: React.FC = () => {
           <div className="flex items-center space-x-4">
             <LanguageSwitcher />
             <Link to="/new">
-              <Button variant="secondary" size="sm" className="bg-white text-indigo-700 hover:bg-indigo-50" leftIcon={<PlusIcon className="w-4 h-4"/>}>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="flex items-center h-10 px-4 ml-2 border border-white/30 rounded-lg text-white hover:bg-white/20 transition"
+              >
+                <PlusIcon className="w-5 h-5 mr-2" />
                 {t('navbar.addNew')}
               </Button>
             </Link>
