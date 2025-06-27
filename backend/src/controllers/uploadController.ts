@@ -42,15 +42,9 @@ async function ensureBucketExists() {
 
 export const uploadFile = async (req: Request, res: Response): Promise<void> => {
   try {
-    if (!req.files || Object.keys(req.files).length === 0) {
-      res.status(400).json({ success: false, error: 'No file uploaded' });
-      return;
-    }
-    const uploadedFile = req.files.file as any;
-    if (Array.isArray(uploadedFile)) {
-      res.status(400).json({ success: false, error: 'Only single file uploads are supported' });
-      return;
-    }
+    // Validation is now handled by middleware, so we can assume file exists
+    const uploadedFile = req.files!.file as any;
+
     await ensureBucketExists();
     const fileExtension = path.extname(uploadedFile.name);
     const fileName = `${uuidv4()}${fileExtension}`;
