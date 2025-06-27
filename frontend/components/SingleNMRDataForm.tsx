@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation, Trans } from 'react-i18next';
-import { NMRDataBlock, NMRSignalData, NMRCondition, initialNMRSignalData, initialNMRCondition } from '../types';
+import { NMRDataBlock, NMRSignalData, NMRCondition, initialNMRCondition } from '../types';
 import { Input } from './ui/Input';
 import { Textarea } from './ui/Textarea';
 import { Button } from './ui/Button';
@@ -11,10 +11,10 @@ import { PlusIcon } from './icons/PlusIcon';
 interface SingleNMRDataFormProps {
   nmrDataBlock: NMRDataBlock;
   onFieldChange: (field: keyof Omit<NMRDataBlock, 'signals' | 'id' | 'nmrConditions'>, value: string) => void;
-  
+
   onConditionChange: (field: keyof Omit<NMRCondition, 'id'>, value: string) => void; // UPDATED: no index
   // onAddCondition and onRemoveCondition are removed
-  
+
   onSignalChange: (signalIndex: number, field: keyof Omit<NMRSignalData, 'id'>, value: string) => void;
   onAddSignal: () => void;
   onRemoveSignal: (signalIndex: number) => void;
@@ -42,7 +42,7 @@ export const SingleNMRDataForm: React.FC<SingleNMRDataFormProps> = ({
 
   const sttBangDisplayValue = nmrDataBlock.sttBang === "" ? "" : nmrDataBlock.sttBang;
   const sttBangPlaceholder = nmrDataBlock.sttBang === "" ? t('nmrForm.tableIdPlaceholder') : undefined;
-  
+
   // Ensure nmrConditions exists, providing a fallback if somehow undefined.
   // This should ideally be guaranteed by the parent component and data service.
   const currentCondition = nmrDataBlock.nmrConditions || { ...initialNMRCondition, id: crypto.randomUUID() };
@@ -76,7 +76,7 @@ export const SingleNMRDataForm: React.FC<SingleNMRDataFormProps> = ({
 
       <div className="mt-6 pt-3 border-t border-indigo-200">
         <h5 className="text-md font-medium text-gray-700 mb-2">{t('nmrForm.notesTitle')}</h5>
-        
+
         {/* NMR Conditions part - simplified to a single set of fields */}
         <div className="mb-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start p-3 border border-gray-200 rounded-md mb-3 bg-slate-50 shadow-sm">
@@ -114,7 +114,7 @@ export const SingleNMRDataForm: React.FC<SingleNMRDataFormProps> = ({
                 />
             </div>
         </div>
-        
+
         <Textarea
           label={t('nmrForm.generalNotes')} // This is the general notes field, distinct from NMR conditions
           name="luuYNMR"
@@ -125,7 +125,7 @@ export const SingleNMRDataForm: React.FC<SingleNMRDataFormProps> = ({
           wrapperClassName="mt-4 pt-4 border-t border-dashed border-indigo-200"
         />
       </div>
-      
+
       <div className="mt-6 pt-3 border-t border-indigo-200">
         <Textarea
           label={t('nmrForm.references')}

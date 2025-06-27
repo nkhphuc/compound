@@ -70,7 +70,7 @@ export const HomePage: React.FC = () => {
       <div className="flex flex-col sm:flex-row justify-between items-center mb-8 pb-4 border-b border-gray-300">
         <h1 className="text-3xl font-bold text-gray-800 mb-4 sm:mb-0">{t('compoundListPage.title')}</h1>
         <div className="w-full sm:w-auto flex flex-col sm:flex-row items-center gap-4">
-            <input 
+            <input
                 type="text"
                 placeholder={t('compoundListPage.searchPlaceholder')}
                 value={searchTerm}

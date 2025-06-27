@@ -5,7 +5,6 @@ import { CompoundData, initialCompoundData, UVSKLMData, SpectralRecord, NMRDataB
 import { COMPOUND_STATUS_OPTIONS_KEYS, SPECTRAL_FIELDS, DEFAULT_LOAI_HC_OPTIONS, LOAI_HC_OTHER_STRING, DEFAULT_TRANG_THAI_OPTIONS, DEFAULT_MAU_OPTIONS, LOAI_HC_OTHER_STRING_KEY } from '../constants';
 import { getUniqueLoaiHCValues, getUniqueTrangThaiValues, getUniqueMauValues } from '../services/compoundService';
 import { Input } from './ui/Input';
-import { Textarea } from './ui/Textarea';
 import { Button } from './ui/Button';
 import { Select } from './ui/Select';
 import { SectionCard } from './SectionCard';
@@ -22,11 +21,11 @@ interface CompoundFormProps {
 type ImageInputMethod = 'upload' | 'url';
 type SpectralInputMethod = 'upload' | 'url';
 
-type FormErrors = { 
-  tenHC?: string; 
-  status?: string; 
-  loaiHC?: string; 
-  trangThai?: string; 
+type FormErrors = {
+  tenHC?: string;
+  status?: string;
+  loaiHC?: string;
+  trangThai?: string;
   mau?: string;
   hinhCauTruc?: string;
   pho?: Partial<Record<keyof SpectralRecord, string>>;
@@ -57,7 +56,7 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
   const [formData, setFormData] = useState<CompoundData>(() => {
     if (initialData) {
       const parsedInitial = JSON.parse(JSON.stringify(initialData));
-      
+
       // Handle NMRConditions: if array (old data), take first; otherwise, use as is or default
       let initialNmrConditionsObj: NMRCondition;
       const rawNmrConditions = parsedInitial.nmrData?.nmrConditions;
@@ -76,16 +75,16 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
           ? parsedInitial.nmrData.signals.map((sig: Partial<NMRSignalData>) => ({ ...initialNMRSignalData, ...sig, id: sig.id || crypto.randomUUID() }))
           : []
       };
-      
-      const sanitizedPho: SpectralRecord = {} as SpectralRecord; 
+
+      const sanitizedPho: SpectralRecord = {} as SpectralRecord;
       SPECTRAL_FIELDS.forEach(field => {
         sanitizedPho[field.key] = typeof parsedInitial.pho?.[field.key] === 'string' ? parsedInitial.pho[field.key] : '';
       });
 
-      return { 
-        ...initialCompoundData, 
+      return {
+        ...initialCompoundData,
         ...parsedInitial,
-        status: parsedInitial.status || '', 
+        status: parsedInitial.status || '',
         loaiHC: parsedInitial.loaiHC || '',
         trangThai: parsedInitial.trangThai || '',
         mau: parsedInitial.mau || '',
@@ -103,13 +102,13 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
     }, {} as SpectralRecord);
 
     return {
-      ...JSON.parse(JSON.stringify(initialCompoundData)), 
+      ...JSON.parse(JSON.stringify(initialCompoundData)),
       id: newId,
       nmrData: { ...initialNMRDataBlock, id: `${newId}-nmr` }, // initialNMRDataBlock now has single condition obj
       pho: defaultPho
     };
   });
-  
+
   const [formErrors, setFormErrors] = useState<FormErrors>({});
   const [currentSaveError, setCurrentSaveError] = useState<string | null>(null);
 
@@ -151,7 +150,7 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
     const combinedTrangThaiOptions = new Set([...DEFAULT_TRANG_THAI_OPTIONS, ...uniqueExistingTrangThai]);
     const sortedTrangThaiOptions = Array.from(combinedTrangThaiOptions).sort();
     const trangThaiOpts = sortedTrangThaiOptions.map(opt => ({ value: opt, label: opt }));
-    trangThaiOpts.push({ value: LOAI_HC_OTHER_STRING, label: t(LOAI_HC_OTHER_STRING_KEY) }); 
+    trangThaiOpts.push({ value: LOAI_HC_OTHER_STRING, label: t(LOAI_HC_OTHER_STRING_KEY) });
     setTrangThaiDropdownOptions(trangThaiOpts);
 
     const uniqueExistingMau = getUniqueMauValues();
@@ -163,10 +162,10 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
   }, [t]);
 
   useEffect(() => {
-    const dataToSet = initialData 
+    const dataToSet = initialData
       ? (() => {
           const parsedInitial = JSON.parse(JSON.stringify(initialData));
-          
+
           let initialNmrConditionsObj: NMRCondition;
           const rawNmrConditions = parsedInitial.nmrData?.nmrConditions;
           if (Array.isArray(rawNmrConditions) && rawNmrConditions.length > 0) {
@@ -184,16 +183,16 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
               ? parsedInitial.nmrData.signals.map((sig: Partial<NMRSignalData>) => ({ ...initialNMRSignalData, ...sig, id: sig.id || crypto.randomUUID() }))
               : []
           };
-          
+
           const sanitizedPho: SpectralRecord = {} as SpectralRecord;
           SPECTRAL_FIELDS.forEach(field => {
             sanitizedPho[field.key] = typeof parsedInitial.pho?.[field.key] === 'string' ? parsedInitial.pho[field.key] : '';
           });
 
           return {
-            ...initialCompoundData, 
+            ...initialCompoundData,
             ...parsedInitial,
-            status: parsedInitial.status || '', 
+            status: parsedInitial.status || '',
             loaiHC: parsedInitial.loaiHC || '',
             trangThai: parsedInitial.trangThai || '',
             mau: parsedInitial.mau || '',
@@ -203,20 +202,20 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
             nmrData: nmrData
           };
         })()
-      : (() => { 
+      : (() => {
           const newId = crypto.randomUUID();
           const defaultPho = SPECTRAL_FIELDS.reduce((acc, field) => {
               acc[field.key] = '';
               return acc;
           }, {} as SpectralRecord);
           return {
-            ...JSON.parse(JSON.stringify(initialCompoundData)), 
+            ...JSON.parse(JSON.stringify(initialCompoundData)),
             id: newId,
             nmrData: { ...initialNMRDataBlock, id: `${newId}-nmr` },
             pho: defaultPho
           };
         })();
-    
+
     setFormData(dataToSet);
 
     // Initialize LoaiHC dropdown state
@@ -227,11 +226,11 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
       const isStandardLoaiHc = loaiHcDropdownOptions.some(opt => opt.value === initialType && opt.value !== LOAI_HC_OTHER_STRING);
       if (isStandardLoaiHc) {
         setSelectedLoaiHcInDropdown(initialType); setCustomLoaiHcInput(''); setShowCustomLoaiHcInput(false);
-      } else { 
+      } else {
         setSelectedLoaiHcInDropdown(LOAI_HC_OTHER_STRING); setCustomLoaiHcInput(initialType); setShowCustomLoaiHcInput(true);
       }
     }
-    
+
     const initialTrangThai = dataToSet.trangThai || '';
     if (initialTrangThai === '') {
       setSelectedTrangThaiInDropdown(''); setCustomTrangThaiInput(''); setShowCustomTrangThaiInput(false);
@@ -243,7 +242,7 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
         setSelectedTrangThaiInDropdown(LOAI_HC_OTHER_STRING); setCustomTrangThaiInput(initialTrangThai); setShowCustomTrangThaiInput(true);
       }
     }
-    
+
     const initialMau = dataToSet.mau || '';
     if (initialMau === '') {
       setSelectedMauInDropdown(''); setCustomMauInput(''); setShowCustomMauInput(false);
@@ -258,15 +257,15 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
 
     const initialImageSrc = dataToSet.hinhCauTruc || '';
     if (initialImageSrc.startsWith('data:image')) {
-      setImageInputMethod('upload'); 
+      setImageInputMethod('upload');
       setImageUrlInput('');
       setStructureImageFileName(t('compoundForm.uploadedFilePlaceholder'));
     } else if (initialImageSrc.startsWith('http')) {
-      setImageInputMethod('url'); 
+      setImageInputMethod('url');
       setImageUrlInput(initialImageSrc);
       setStructureImageFileName('');
     } else {
-      setImageInputMethod('upload'); 
+      setImageInputMethod('upload');
       setImageUrlInput('');
       setStructureImageFileName('');
     }
@@ -277,21 +276,21 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
 
     SPECTRAL_FIELDS.forEach(sf => {
       const key = sf.key;
-      const phoValue = (dataToSet.pho as SpectralRecord)[key]; 
-      
-      if (phoValue) { 
+      const phoValue = (dataToSet.pho as SpectralRecord)[key];
+
+      if (phoValue) {
         if (phoValue.startsWith('data:')) {
           iSpectralInputMethods[key] = 'upload';
-          iSpectralFileNames[key] = t('compoundForm.uploadedFilePlaceholder'); 
-          iSpectralUrlInputs[key] = ''; 
+          iSpectralFileNames[key] = t('compoundForm.uploadedFilePlaceholder');
+          iSpectralUrlInputs[key] = '';
         } else if (phoValue.startsWith('http')) {
           iSpectralInputMethods[key] = 'url';
           iSpectralUrlInputs[key] = phoValue;
-          iSpectralFileNames[key] = ''; 
-        } else { 
+          iSpectralFileNames[key] = '';
+        } else {
           iSpectralInputMethods[key] = 'upload';
           iSpectralUrlInputs[key] = '';
-          iSpectralFileNames[key] = ''; 
+          iSpectralFileNames[key] = '';
         }
       }
     });
@@ -299,8 +298,8 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
     setSpectralUrlInputs(iSpectralUrlInputs);
     setSpectralFileNames(iSpectralFileNames);
 
-    setFormErrors({}); 
-    setCurrentSaveError(null); 
+    setFormErrors({});
+    setCurrentSaveError(null);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialData, t, loaiHcDropdownOptions.length, trangThaiDropdownOptions.length, mauDropdownOptions.length]);
 
@@ -312,7 +311,7 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
     const checked = type === 'checkbox' ? (e.target as HTMLInputElement).checked : undefined;
-    
+
     if (name === 'tenHC' && formErrors.tenHC) setFormErrors(prev => ({ ...prev, tenHC: undefined }));
     if (name === 'status' && formErrors.status) setFormErrors(prev => ({ ...prev, status: undefined }));
     if ((name === 'selectedLoaiHcInDropdown' || name === 'customLoaiHcInput') && formErrors.loaiHC) {
@@ -335,10 +334,10 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
       if (value === LOAI_HC_OTHER_STRING) {
         setShowCustomLoaiHcInput(true);
         setFormData(prev => ({ ...prev, loaiHC: customLoaiHcInput }));
-      } else { 
+      } else {
         setShowCustomLoaiHcInput(false);
         setCustomLoaiHcInput('');
-        setFormData(prev => ({ ...prev, loaiHC: value })); 
+        setFormData(prev => ({ ...prev, loaiHC: value }));
       }
     } else if (name === 'customLoaiHcInput') {
       setCustomLoaiHcInput(value);
@@ -347,12 +346,12 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
       }
     } else if (name === 'selectedTrangThaiInDropdown') {
         setSelectedTrangThaiInDropdown(value);
-        if (value === LOAI_HC_OTHER_STRING) { 
+        if (value === LOAI_HC_OTHER_STRING) {
             setShowCustomTrangThaiInput(true);
             setFormData(prev => ({ ...prev, trangThai: customTrangThaiInput }));
         } else {
             setShowCustomTrangThaiInput(false);
-            setCustomTrangThaiInput(''); 
+            setCustomTrangThaiInput('');
             setFormData(prev => ({ ...prev, trangThai: value }));
         }
     } else if (name === 'customTrangThaiInput') {
@@ -386,22 +385,22 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
         ...prev,
         uvSklm: { ...prev.uvSklm, [field]: type === 'checkbox' ? checked : value } as UVSKLMData,
       }));
-    } else if (name === 'cauHinhTuyetDoi') { 
+    } else if (name === 'cauHinhTuyetDoi') {
         setFormData(prev => ({ ...prev, cauHinhTuyetDoi: checked as boolean }));
     } else if (name === 'sttHC') {
         setFormData(prev => ({ ...prev, [name]: parseInt(value, 10) || 0 }));
-    } else { 
+    } else {
       setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
     }
   };
 
   const handleImageInputMethodChange = (method: ImageInputMethod) => {
     setImageInputMethod(method);
-    setFormData(prev => ({ ...prev, hinhCauTruc: '' })); 
+    setFormData(prev => ({ ...prev, hinhCauTruc: '' }));
     setImageUrlInput('');
-    setStructureImageFileName(''); 
+    setStructureImageFileName('');
     const fileInput = document.getElementById('hinhCauTrucFile') as HTMLInputElement;
-    if (fileInput) fileInput.value = ''; 
+    if (fileInput) fileInput.value = '';
     setFormErrors(prev => ({ ...prev, hinhCauTruc: undefined }));
   };
 
@@ -478,7 +477,7 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
     setFormData(prev => ({ ...prev, pho: { ...prev.pho, [fieldKey]: '' } }));
     setSpectralUrlInputs(prev => ({ ...prev, [fieldKey]: '' }));
     setSpectralFileNames(prev => ({ ...prev, [fieldKey]: '' }));
-    setSpectralInputMethods(prev => ({ ...prev, [fieldKey]: 'upload' })); 
+    setSpectralInputMethods(prev => ({ ...prev, [fieldKey]: 'upload' }));
     const fileInput = document.getElementById(`spectral-file-${fieldKey}`) as HTMLInputElement;
     if (fileInput) fileInput.value = '';
      setFormErrors(prev => {
@@ -505,7 +504,7 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
       },
     }));
   };
-  
+
   const handleNmrSignalChange = (signalIndex: number, field: keyof Omit<NMRSignalData, 'id'>, value: string) => {
     setFormData(prev => {
       const newSignals = [...prev.nmrData.signals];
@@ -538,7 +537,7 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
     let finalLoaiHc = selectedLoaiHcInDropdown;
     if (selectedLoaiHcInDropdown === LOAI_HC_OTHER_STRING) {
       finalLoaiHc = customLoaiHcInput.trim();
-    } else if (selectedLoaiHcInDropdown === '') { 
+    } else if (selectedLoaiHcInDropdown === '') {
       finalLoaiHc = '';
     }
     if (finalLoaiHc === '') {
@@ -571,7 +570,7 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
     } else if (selectedMauInDropdown === LOAI_HC_OTHER_STRING && finalMau === '') {
         errors.mau = "Please enter a custom color if '" + t(LOAI_HC_OTHER_STRING_KEY) + "' is selected.";
     }
-    
+
     if (imageInputMethod === 'url' && formData.hinhCauTruc && !formData.hinhCauTruc.startsWith('http')) {
         errors.hinhCauTruc = "Please enter a valid HTTP/S URL for the image.";
     }
@@ -579,7 +578,7 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
     const phoErrors: Partial<Record<keyof SpectralRecord, string>> = {};
     SPECTRAL_FIELDS.forEach(sf => {
       const key = sf.key;
-      const phoValue = formData.pho[key]; 
+      const phoValue = formData.pho[key];
       const label = t(`spectralFields.${key}`, sf.label); // Get translated label
       if (spectralInputMethods[key] === 'url' && phoValue && !phoValue.startsWith('http')) {
         phoErrors[key] = `For ${label}, please enter a valid HTTP/S URL.`;
@@ -594,12 +593,12 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
         return;
     }
     setFormErrors({});
-    
-    const dataToSave: CompoundData = { 
+
+    const dataToSave: CompoundData = {
         ...formData,
-        sttHC: Number(formData.sttHC) || 0, 
+        sttHC: Number(formData.sttHC) || 0,
         loaiHC: finalLoaiHc,
-        status: formData.status as CompoundStatus, 
+        status: formData.status as CompoundStatus,
         trangThai: finalTrangThai,
         mau: finalMau,
         hinhCauTruc: imageInputMethod === 'url' ? imageUrlInput.trim() : formData.hinhCauTruc,
@@ -637,12 +636,12 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
       <SectionCard title={t('compoundForm.generalInfo.title')}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6">
           <div>
-            <Input 
-              label={t('compoundForm.sttHC')} 
-              name="sttHC" 
+            <Input
+              label={t('compoundForm.sttHC')}
+              name="sttHC"
               value={sttHCDisplayValue}
               placeholder={sttHCPlaceholder}
-              readOnly 
+              readOnly
               className="bg-gray-100 cursor-not-allowed"
             />
           </div>
@@ -677,13 +676,13 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
             {formErrors.loaiHC && <p id="loaiHC-error" className="text-red-500 text-xs mt-1 mb-3">{formErrors.loaiHC}</p>}
           </div>
           <div>
-            <Select 
-              label={t('compoundForm.statusLabel')} 
-              name="status" 
-              value={formData.status} 
-              onChange={handleChange} 
+            <Select
+              label={t('compoundForm.statusLabel')}
+              name="status"
+              value={formData.status}
+              onChange={handleChange}
               options={statusOptions}
-              placeholder={t('compoundForm.selectStatus')} 
+              placeholder={t('compoundForm.selectStatus')}
               aria-describedby="status-error"
               required
             />
@@ -760,7 +759,7 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
                         type="checkbox"
                         checked={!!formData.uvSklm?.nm254}
                         onChange={handleChange}
-                        className="custom-styled-checkbox" 
+                        className="custom-styled-checkbox"
                     />
                     <label htmlFor="uvSklm.nm254" className="text-sm font-medium text-gray-700">
                         {t('excelExport.mainInfo.uv254nm')}
@@ -786,11 +785,11 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
             <Input label={t('excelExport.mainInfo.opticalRotation')} name="alphaD" value={formData.alphaD || ''} onChange={handleChange} />
         </div>
         <div>
-            <Input 
-                label={t('excelExport.mainInfo.solventTCVL').replace(':','')} 
-                name="dungMoiHoaTanTCVL" 
-                value={formData.dungMoiHoaTanTCVL || ''} 
-                onChange={handleChange} 
+            <Input
+                label={t('excelExport.mainInfo.solventTCVL').replace(':','')}
+                name="dungMoiHoaTanTCVL"
+                value={formData.dungMoiHoaTanTCVL || ''}
+                onChange={handleChange}
                 placeholder="e.g., CHCl_3, H_2O, DMSO"
                 wrapperClassName="mb-1"
             />
@@ -802,15 +801,15 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
             </p>
         </div>
       </SectionCard>
-      
+
       <SectionCard title={t('compoundForm.structure.title')}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6">
           <div>
-            <Input 
-              label={t('excelExport.mainInfo.molecularFormula')} 
-              name="ctpt" 
-              value={formData.ctpt || ''} 
-              onChange={handleChange} 
+            <Input
+              label={t('excelExport.mainInfo.molecularFormula')}
+              name="ctpt"
+              value={formData.ctpt || ''}
+              onChange={handleChange}
               placeholder="e.g., H_2O, C_6H_{12}O_6, SO_4^{2-}"
               wrapperClassName="mb-1"
             />
@@ -823,29 +822,29 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
           </div>
           <Input label={t('excelExport.mainInfo.molecularWeight')} name="klpt" value={formData.klpt || ''} onChange={handleChange} />
         </div>
-        
+
         <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">
                 {t('compoundForm.structureImage')}
             </label>
             <div className="flex space-x-4 mb-2">
                 <label className="flex items-center space-x-2">
-                    <input 
-                        type="radio" 
-                        name="imageInputMethod" 
-                        value="upload" 
-                        checked={imageInputMethod === 'upload'} 
+                    <input
+                        type="radio"
+                        name="imageInputMethod"
+                        value="upload"
+                        checked={imageInputMethod === 'upload'}
                         onChange={() => handleImageInputMethodChange('upload')}
                         className="custom-styled-radio"
                     />
                     <span className="text-sm text-gray-700">{t('compoundForm.uploadFile')}</span>
                 </label>
                 <label className="flex items-center space-x-2">
-                    <input 
-                        type="radio" 
-                        name="imageInputMethod" 
-                        value="url" 
-                        checked={imageInputMethod === 'url'} 
+                    <input
+                        type="radio"
+                        name="imageInputMethod"
+                        value="url"
+                        checked={imageInputMethod === 'url'}
                         onChange={() => handleImageInputMethodChange('url')}
                         className="custom-styled-radio"
                     />
@@ -880,17 +879,17 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
             {formData.hinhCauTruc && (
                 <div className="mt-4">
                     <p className="text-sm font-medium text-gray-700">{t('compoundForm.preview')}</p>
-                    <img 
-                        src={formData.hinhCauTruc} 
-                        alt="Structure Preview" 
+                    <img
+                        src={formData.hinhCauTruc}
+                        alt="Structure Preview"
                         className="mt-2 max-w-xs max-h-60 border rounded-md shadow-sm"
-                        onError={(e) => (e.currentTarget.style.display = 'none')} 
+                        onError={(e) => (e.currentTarget.style.display = 'none')}
                         onLoad={(e) => (e.currentTarget.style.display = 'block')}
                     />
-                    <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={removeStructureImage} 
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={removeStructureImage}
                         className="mt-2 text-red-600 hover:bg-red-50"
                         leftIcon={<TrashIcon className="w-4 h-4"/>}
                     >
@@ -914,7 +913,7 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
             </label>
         </div>
       </SectionCard>
-      
+
       <SectionCard title={t('compoundForm.smiles.title')}>
         <Input name="smiles" value={formData.smiles || ''} onChange={handleChange} />
       </SectionCard>
@@ -923,14 +922,14 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
         <div className="space-y-6">
           {SPECTRAL_FIELDS.map(field => {
             const fieldKey = field.key;
-            const currentData = formData.pho[fieldKey]; 
-            const currentMethod = spectralInputMethods[fieldKey]; 
+            const currentData = formData.pho[fieldKey];
+            const currentMethod = spectralInputMethods[fieldKey];
             const fieldLabel = t(`spectralFields.${field.key}`, field.label); // Translate label
 
             return (
               <div key={fieldKey} className="p-4 border border-gray-200 rounded-md bg-slate-50 shadow-sm">
                 <h4 className="text-md font-semibold text-gray-700 mb-3">{fieldLabel}</h4>
-                
+
                 <div className="flex space-x-4 mb-3">
                   <label className="flex items-center space-x-2 cursor-pointer">
                     <input
@@ -969,7 +968,7 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
                 {currentMethod === 'url' && (
                   <Input
                     type="url"
-                    value={spectralUrlInputs[fieldKey] || ''} 
+                    value={spectralUrlInputs[fieldKey] || ''}
                     onChange={(e) => handleSpectralUrlInputChange(fieldKey, e)}
                     placeholder={`https://example.com/${fieldLabel.toLowerCase().replace(' ', '-')}.pdf`}
                     className="mt-1 w-full"
@@ -1008,14 +1007,14 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
           })}
         </div>
       </SectionCard>
-      
+
       <SectionCard title={t('compoundForm.nmrSolvent.title')}>
         <div>
-            <Input 
-                label={t('excelExport.mainInfo.nmrSolvent').replace(':','')} 
-                name="dmNMRGeneral" 
-                value={formData.dmNMRGeneral || ''} 
-                onChange={handleChange} 
+            <Input
+                label={t('excelExport.mainInfo.nmrSolvent').replace(':','')}
+                name="dmNMRGeneral"
+                value={formData.dmNMRGeneral || ''}
+                onChange={handleChange}
                 placeholder="e.g., CDCl_3, DMSO-d_6"
                 wrapperClassName="mb-1"
             />

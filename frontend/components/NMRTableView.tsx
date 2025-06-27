@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { NMRDataBlock, NMRCondition } from '../types'; // Updated import
+import { NMRDataBlock } from '../types'; // Updated import
 import { ChemicalFormulaDisplay } from './ui/ChemicalFormulaDisplay';
 
 interface NMRTableViewProps {
@@ -10,13 +10,13 @@ interface NMRTableViewProps {
 
 export const NMRTableView: React.FC<NMRTableViewProps> = ({ nmrDataBlock, compoundSttHC }) => {
   const { t } = useTranslation();
-  
+
   if (!nmrDataBlock) return <p>{t('nmrView.noData')}</p>;
 
   const condition = nmrDataBlock.nmrConditions; // Now a single object
   const hasMeaningfulConditions = condition && (
-                                   (condition.dmNMR && condition.dmNMR.trim() !== '') || 
-                                   (condition.tanSo13C && condition.tanSo13C.trim() !== '') || 
+                                   (condition.dmNMR && condition.dmNMR.trim() !== '') ||
+                                   (condition.tanSo13C && condition.tanSo13C.trim() !== '') ||
                                    (condition.tanSo1H && condition.tanSo1H.trim() !== '')
                                  );
 
@@ -27,16 +27,16 @@ export const NMRTableView: React.FC<NMRTableViewProps> = ({ nmrDataBlock, compou
       <h3 className="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">
         {t('nmrView.title', { tableId: nmrDataBlock.sttBang || t('variousLabels.notAvailable', 'N/A'), compoundSttHC })}
       </h3>
-      
+
       {hasSignals && (
         <div className="mb-6">
           <h4 className="text-md font-medium text-black mb-2">{t('nmrView.spectralDataTable')}</h4>
           <div className="overflow-x-auto table-responsive">
             <table className="min-w-full custom-table table-fixed">
               <colgroup>
-                <col className="w-[25%] sm:w-[20%]" /> 
-                <col className="w-[35%] sm:w-[35%]" /> 
-                <col className="w-[40%] sm:w-[45%]" /> 
+                <col className="w-[25%] sm:w-[20%]" />
+                <col className="w-[35%] sm:w-[35%]" />
+                <col className="w-[40%] sm:w-[45%]" />
               </colgroup>
               <thead className="bg-gray-100">
                 <tr>
@@ -65,9 +65,9 @@ export const NMRTableView: React.FC<NMRTableViewProps> = ({ nmrDataBlock, compou
           <div className="overflow-x-auto table-responsive">
             <table className="min-w-full custom-table table-fixed">
               <colgroup>
-                <col className="w-[40%]" /> 
-                <col className="w-[30%]" /> 
-                <col className="w-[30%]" /> 
+                <col className="w-[40%]" />
+                <col className="w-[30%]" />
+                <col className="w-[30%]" />
               </colgroup>
               <thead className="bg-gray-100">
                 <tr>

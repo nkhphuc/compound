@@ -26,9 +26,9 @@ export const CompoundListItem: React.FC<CompoundListItemProps> = ({ compound, on
         <Link to={`/edit/${compound.id}`}>
             <Button variant="secondary" size="sm">{t('buttons.edit')}</Button>
         </Link>
-        <Button 
-            variant="danger" 
-            size="sm" 
+        <Button
+            variant="danger"
+            size="sm"
             onClick={(e) => { e.stopPropagation(); onDelete(compound.id); }}
             leftIcon={<TrashIcon className="w-4 h-4"/>}
         >

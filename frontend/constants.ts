@@ -64,16 +64,16 @@ export const DEFAULT_LOAI_HC_OPTIONS: string[] = [
   // Or map them to translation keys. For simplicity, custom inputs are already supported.
 
 export const DEFAULT_TRANG_THAI_OPTIONS: string[] = [
-  "Bột", 
+  "Bột",
   "Tinh thể",
-  "Dầu", 
+  "Dầu",
 ];
 
 export const DEFAULT_MAU_OPTIONS: string[] = [
-  "Đỏ", 
-  "Cam", 
-  "Vàng", 
-  "Trắng", 
+  "Đỏ",
+  "Cam",
+  "Vàng",
+  "Trắng",
 ];
 
 export const LOAI_HC_OTHER_STRING_KEY = "variousLabels.other"; // Translation key for "Other"

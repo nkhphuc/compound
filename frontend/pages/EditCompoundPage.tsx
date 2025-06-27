@@ -13,7 +13,7 @@ export const EditCompoundPage: React.FC = () => {
   const [saveError, setSaveError] = useState<string | null>(null);
 
   const handleSave = (data: CompoundData): boolean => {
-    if (!id) return false; 
+    if (!id) return false;
     const success = saveCompound({ ...data, id }); // Ensure ID is preserved
     if (success) {
       console.log('Compound updated successfully! Navigating to view page...');

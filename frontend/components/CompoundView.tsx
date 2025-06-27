@@ -1,9 +1,9 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { CompoundData, UVSKLMData, SpectralRecord } from '../types';
+import { CompoundData, SpectralRecord } from '../types';
 import { SPECTRAL_FIELDS_CONFIG } from '../constants';
 import { SectionCard } from './SectionCard';
-import { ChemicalFormulaDisplay } from './ui/ChemicalFormulaDisplay'; 
+import { ChemicalFormulaDisplay } from './ui/ChemicalFormulaDisplay';
 // NMRTableView is not directly used here anymore, it's in ViewCompoundPage
 
 interface CompoundViewProps {
@@ -14,7 +14,7 @@ const DataField: React.FC<{ label: string; value?: string | number | boolean | n
   if (value === null || value === undefined || value === '') {
     if (typeof value !== 'boolean') return null;
   }
-  
+
   let displayValue: React.ReactNode;
 
   if (typeof value === 'boolean') {
@@ -30,7 +30,7 @@ const DataField: React.FC<{ label: string; value?: string | number | boolean | n
   } else {
     displayValue = <span className="whitespace-pre-wrap break-words">{String(value)}</span>;
   }
-  
+
   return (
     <div className="py-2 sm:grid sm:grid-cols-3 sm:gap-4">
       <dt className="text-sm font-medium text-gray-600">{label}:</dt>
@@ -77,7 +77,7 @@ export const CompoundView: React.FC<CompoundViewProps> = ({ compound }) => {
   // Conditions for showing sections
   const hasGeneralInfo = !!(compound.sttHC || compound.tenHC || compound.tenHCKhac || compound.loaiHC || compound.status);
   const hasSourceData = !!(compound.tenLatin || compound.tenTA || compound.tenTV || compound.bpnc);
-  
+
   const uvSklmHasTrueValue = compound.uvSklm && (compound.uvSklm.nm254 === true || compound.uvSklm.nm365 === true);
   const hasPhysicalPropertiesData = !!(
       compound.trangThai ||
@@ -85,7 +85,7 @@ export const CompoundView: React.FC<CompoundViewProps> = ({ compound }) => {
       compound.diemNongChay ||
       compound.alphaD ||
       (compound.dungMoiHoaTanTCVL && compound.dungMoiHoaTanTCVL !== '') ||
-      uvSklmHasTrueValue 
+      uvSklmHasTrueValue
   );
 
   const hasStructureData = !!(
@@ -171,38 +171,38 @@ export const CompoundView: React.FC<CompoundViewProps> = ({ compound }) => {
                 <DataField label={t('excelExport.mainInfo.absoluteConfiguration').replace(':', '')} value={compound.cauHinhTuyetDoi} />
             )}
           </dl>
-          {compound.hinhCauTruc && ( 
+          {compound.hinhCauTruc && (
               <div className="mt-4">
                   <h4 className="text-md font-medium text-gray-700 mb-2">{t('compoundForm.structureImage')}:</h4>
-                  <img 
-                      src={compound.hinhCauTruc} 
-                      alt="Structure" 
+                  <img
+                      src={compound.hinhCauTruc}
+                      alt="Structure"
                       className="max-w-md w-full h-auto rounded-md shadow-md border"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
                         target.alt = "Image not found or invalid URL";
-                        target.src = ''; 
-                        target.style.display = 'none'; 
+                        target.src = '';
+                        target.style.display = 'none';
                       }}
                   />
               </div>
           )}
         </SectionCard>
       )}
-      
+
       {hasSmilesData && (
         <SectionCard title={t('compoundForm.smiles.title')}>
           {compound.smiles && <p className="text-sm text-gray-900 whitespace-pre-wrap break-words">{compound.smiles}</p>}
         </SectionCard>
       )}
-      
+
       {hasSpectralData && (
         <SectionCard title={t('compoundForm.spectra.title')}>
           <dl className="divide-y divide-gray-200">
             {SPECTRAL_FIELDS_CONFIG.map(fieldConfig => {
                 const spectrumData = (compound.pho as SpectralRecord)?.[fieldConfig.key];
-                if (!spectrumData) return null; 
-                
+                if (!spectrumData) return null;
+
                 const label = t(fieldConfig.labelKey);
 
                 return (
@@ -242,7 +242,7 @@ export const CompoundView: React.FC<CompoundViewProps> = ({ compound }) => {
           </dl>
         </SectionCard>
       )}
-      
+
       {/* NMR Data is handled in ViewCompoundPage.tsx as it's not in a SectionCard within CompoundView */}
     </div>
   );

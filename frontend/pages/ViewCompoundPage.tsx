@@ -6,7 +6,7 @@ import { CompoundView } from '../components/CompoundView';
 import { NMRTableView } from '../components/NMRTableView';
 import { Button } from '../components/ui/Button';
 import { TrashIcon } from '../components/icons/TrashIcon';
-import { ConfirmModal } from '../components/ui/ConfirmModal'; 
+import { ConfirmModal } from '../components/ui/ConfirmModal';
 import { exportCompoundToXlsx } from '../services/xlsxExportService'; // Import the new XLSX service
 
 export const ViewCompoundPage: React.FC = () => {
@@ -24,7 +24,7 @@ export const ViewCompoundPage: React.FC = () => {
   if (!compound) {
     return <p className="text-center text-red-500 mt-10 text-xl">Compound not found for ID: {id}.</p>;
   }
-  
+
   const openDeleteConfirmModal = () => {
     console.log(`[ViewCompoundPage] openDeleteConfirmModal called for ID: ${compound.id}`);
     setIsConfirmModalOpen(true);
@@ -82,9 +82,9 @@ export const ViewCompoundPage: React.FC = () => {
           <Link to={`/edit/${compound.id}`}>
             <Button variant="secondary" size="sm">{t('buttons.edit')}</Button>
           </Link>
-          <Button 
-            variant="ghost" 
-            onClick={handleExportToXlsx} 
+          <Button
+            variant="ghost"
+            onClick={handleExportToXlsx}
             disabled={isExporting}
             className="text-green-600 hover:bg-green-50"
             size="sm"
@@ -96,7 +96,7 @@ export const ViewCompoundPage: React.FC = () => {
           </Button>
         </div>
       </div>
-      
+
       <CompoundView compound={compound} />
 
       {nmrDataContentExists && (

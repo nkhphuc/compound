@@ -1,4 +1,3 @@
-
 import { CompoundData, initialCompoundData, NMRDataBlock, initialNMRDataBlock, initialNMRCondition, initialNMRSignalData, CompoundStatus, UVSKLMData, SpectralRecord, NMRCondition } from '../types';
 import { SPECTRAL_FIELDS } from '../constants'; // Import SPECTRAL_FIELDS
 
@@ -9,8 +8,8 @@ const ensureCompoundDataIntegrity = (compound: Partial<CompoundData>): CompoundD
   const defaults = {
     ...initialCompoundData,
     id: compound.id || crypto.randomUUID(), // Ensure ID
-    nmrData: { 
-      ...initialNMRDataBlock, 
+    nmrData: {
+      ...initialNMRDataBlock,
       id: `${compound.id || crypto.randomUUID()}-nmr`,
       ...(compound.nmrData || {}),
     }
@@ -19,7 +18,7 @@ const ensureCompoundDataIntegrity = (compound: Partial<CompoundData>): CompoundD
   const validatedPho: SpectralRecord = {};
   SPECTRAL_FIELDS.forEach(field => {
       const key = field.key;
-      const existingValue = compound.pho?.[key as any]; 
+      const existingValue = compound.pho?.[key as keyof SpectralRecord];
       validatedPho[key] = typeof existingValue === 'string' ? existingValue : '';
   });
 
@@ -42,9 +41,9 @@ const ensureCompoundDataIntegrity = (compound: Partial<CompoundData>): CompoundD
     ...defaults,
     ...compound,
     sttHC: typeof compound.sttHC === 'number' ? compound.sttHC : (parseInt(String(compound.sttHC), 10) || 0),
-    hinhCauTruc: compound.hinhCauTruc || '', 
+    hinhCauTruc: compound.hinhCauTruc || '',
     status: compound.status || CompoundStatus.NEW,
-    uvSklm: { 
+    uvSklm: {
         nm254: typeof compound.uvSklm?.nm254 === 'boolean' ? compound.uvSklm.nm254 : false,
         nm365: typeof compound.uvSklm?.nm365 === 'boolean' ? compound.uvSklm.nm365 : false,
     } as UVSKLMData,
@@ -53,7 +52,7 @@ const ensureCompoundDataIntegrity = (compound: Partial<CompoundData>): CompoundD
     nmrData: {
       ...defaults.nmrData,
       id: defaults.nmrData.id || `${compound.id || crypto.randomUUID()}-nmr`, // Ensure nmrData.id
-      sttBang: (typeof compound.nmrData?.sttBang === 'string' && compound.nmrData.sttBang.trim() !== '') ? compound.nmrData.sttBang : "", 
+      sttBang: (typeof compound.nmrData?.sttBang === 'string' && compound.nmrData.sttBang.trim() !== '') ? compound.nmrData.sttBang : "",
       nmrConditions: finalNmrConditions, // Use the processed single condition object
       signals: (compound.nmrData?.signals || []).map(sig => ({ ...initialNMRSignalData, ...sig, id: sig.id || crypto.randomUUID() })),
     } as NMRDataBlock,
@@ -123,15 +122,15 @@ export const saveCompound = (compoundToSave: CompoundData): boolean => {
     let compoundExists = false;
 
     let finalSttHC = compoundToSave.sttHC;
-    if (finalSttHC === 0) { 
+    if (finalSttHC === 0) {
       finalSttHC = getNextSttHC();
     }
 
     let finalNmrSttBang = compoundToSave.nmrData.sttBang;
-    if (finalNmrSttBang === "") { 
-        finalNmrSttBang = "1"; 
+    if (finalNmrSttBang === "") {
+        finalNmrSttBang = "1";
     }
-    
+
     const validatedDataToSave = ensureCompoundDataIntegrity({
         ...compoundToSave,
         sttHC: finalSttHC,

@@ -1,5 +1,5 @@
 import ExcelJS from 'exceljs';
-import { CompoundData, SpectralRecord, CompoundStatus } from '../types';
+import { CompoundData, CompoundStatus } from '../types';
 // Removed SPECTRAL_FIELDS import, will use SPECTRAL_FIELDS_CONFIG from constants and i18n
 import { SPECTRAL_FIELDS_CONFIG } from '../constants'; 
 import i18n from 'i18next'; // Import i18n instance
