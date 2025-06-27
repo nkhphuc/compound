@@ -1,0 +1,6 @@
+{
+  "name": "Compound Chemistry Data Manager",
+  "description": "A web application to manage and view chemical compound data, including their properties, sources, spectra, and NMR data.",
+  "requestFramePermissions": [],
+  "prompt": ""
+}
