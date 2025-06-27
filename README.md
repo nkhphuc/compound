@@ -45,12 +45,8 @@ compound/
    # Copy backend environment file
    cp backend/env.example backend/.env
 
-   # Edit backend/.env with your database credentials
-   DB_HOST=localhost
-   DB_PORT=5432
-   DB_NAME=compound_chemistry
-   DB_USER=postgres
-   DB_PASSWORD=your_password
+   # Edit backend/.env with your database URL
+   DATABASE_URL=postgresql://postgres:your_password@localhost:5432/compound_chemistry
    ```
 
 4. **Run database migrations**:
@@ -139,11 +135,7 @@ The application uses PostgreSQL with the following main tables:
 ```env
 PORT=3001
 NODE_ENV=development
-DB_HOST=localhost
-DB_PORT=5432
-DB_NAME=compound_chemistry
-DB_USER=postgres
-DB_PASSWORD=your_password
+DATABASE_URL=postgresql://postgres:your_password@localhost:5432/compound_chemistry
 CORS_ORIGIN=http://localhost:5173
 LOG_LEVEL=info
 ```
