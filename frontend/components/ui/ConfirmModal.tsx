@@ -1,6 +1,6 @@
-
 import React from 'react';
 import { Button } from './Button';
+import { useTranslation } from 'react-i18next';
 
 interface ConfirmModalProps {
   isOpen: boolean;
@@ -11,16 +11,17 @@ interface ConfirmModalProps {
 }
 
 export const ConfirmModal: React.FC<ConfirmModalProps> = ({ isOpen, onClose, onConfirm, title, message }) => {
+  const { t } = useTranslation();
   if (!isOpen) return null;
 
   return (
-    <div 
+    <div
       className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex justify-center items-center"
       onClick={onClose}
       aria-modal="true"
       role="dialog"
     >
-      <div 
+      <div
         className="relative mx-auto p-5 border w-full max-w-md shadow-lg rounded-md bg-white"
         onClick={e => e.stopPropagation()} // Prevent click inside modal from closing it
       >
@@ -34,12 +35,12 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({ isOpen, onClose, onC
             </p>
           </div>
           <div className="items-center px-4 py-3 space-x-4">
-            <Button 
+            <Button
               variant="secondary"
               onClick={onClose}
               className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300"
             >
-              Cancel
+              {t('confirmModal.cancelButton')}
             </Button>
             <Button
               variant="danger"
@@ -49,7 +50,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({ isOpen, onClose, onC
               }}
               className="px-4 py-2"
             >
-              Confirm Delete
+              {t('confirmModal.confirmDeleteButton')}
             </Button>
           </div>
         </div>
