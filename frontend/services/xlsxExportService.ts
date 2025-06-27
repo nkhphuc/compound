@@ -1,14 +1,14 @@
 import ExcelJS from 'exceljs';
 import { CompoundData, CompoundStatus } from '../types';
 // Removed SPECTRAL_FIELDS import, will use SPECTRAL_FIELDS_CONFIG from constants and i18n
-import { SPECTRAL_FIELDS_CONFIG } from '../constants'; 
+import { SPECTRAL_FIELDS_CONFIG } from '../constants';
 import i18n from 'i18next'; // Import i18n instance
 
 // Helper to convert base64 data URL to buffer for ExcelJS
 function base64ToBuffer(base64String: string): ArrayBuffer | null {
   try {
     const parts = base64String.split(',');
-    if (parts.length !== 2 || !parts[0].startsWith('data:image')) return null; 
+    if (parts.length !== 2 || !parts[0].startsWith('data:image')) return null;
     const pureBase64 = parts[1];
     const byteString = atob(pureBase64);
     const ab = new ArrayBuffer(byteString.length);
@@ -27,10 +27,10 @@ function base64ToBuffer(base64String: string): ArrayBuffer | null {
 function formatFormulaRichText(formula?: string | null): ExcelJS.RichText[] {
   const t = i18n.t.bind(i18n); // Bind t function for use
   if (!formula || formula.trim() === "") return [{ text: t('excelExport.common.no', '-'), font: { name: 'Arial', size: 10, family: 2 } }];
-  
+
   const richTextArray: ExcelJS.RichText[] = [];
   let currentTextSegment = "";
-  
+
   for (let i = 0; i < formula.length; i++) {
     const char = formula[i];
     let scriptType: 'subscript' | 'superscript' | null = null;
@@ -42,31 +42,31 @@ function formatFormulaRichText(formula?: string | null): ExcelJS.RichText[] {
         currentTextSegment = "";
       }
       scriptType = char === '_' ? 'subscript' : 'superscript';
-      
+
       if (formula[i+1] === '{') {
         const closingBraceIndex = formula.indexOf('}', i + 2);
         if (closingBraceIndex !== -1) {
           scriptContent = formula.substring(i + 2, closingBraceIndex);
           i = closingBraceIndex;
-        } else { 
-          currentTextSegment += char + '{'; 
-          i++; 
+        } else {
+          currentTextSegment += char + '{';
+          i++;
           continue;
         }
       } else if (i + 1 < formula.length && !['{', '}', '_', '^'].includes(formula[i+1])) {
         scriptContent = formula[i+1];
         i++;
-      } else { 
-        currentTextSegment += char; 
+      } else {
+        currentTextSegment += char;
         continue;
       }
-      
+
       if (scriptContent) {
-        richTextArray.push({ 
-          text: scriptContent, 
-          font: { vertAlign: scriptType, size: 10, name: 'Arial', family: 2 } 
+        richTextArray.push({
+          text: scriptContent,
+          font: { vertAlign: scriptType, size: 10, name: 'Arial', family: 2 }
         });
-      } else { 
+      } else {
           currentTextSegment += char;
       }
 
@@ -77,7 +77,7 @@ function formatFormulaRichText(formula?: string | null): ExcelJS.RichText[] {
   if (currentTextSegment) {
     richTextArray.push({ text: currentTextSegment, font: { name: 'Arial', size: 10, family: 2 } });
   }
-  
+
   return richTextArray.length > 0 ? richTextArray : [{ text: t('excelExport.common.no', '-'), font: { name: 'Arial', size: 10, family: 2 } }];
 }
 
@@ -103,7 +103,7 @@ export const exportCompoundToXlsx = async (compound: CompoundData): Promise<void
 
   const mainInfoSheet = workbook.addWorksheet(t('excelExport.sheetNames.mainInfo', 'Main Info'));
   mainInfoSheet.properties.defaultRowHeight = 18;
-  mainInfoSheet.columns = [ 
+  mainInfoSheet.columns = [
     { width: 5 }, { width: 20 }, { width: 12 }, { width: 10 }, { width: 10 }, { width: 10 }, { width: 10 },
     { width: 12 }, { width: 10 }, { width: 10 }, { width: 10 }, { width: 10 }, { width: 10 }, { width: 10 }
   ];
@@ -120,7 +120,7 @@ export const exportCompoundToXlsx = async (compound: CompoundData): Promise<void
   applyCellStyle(mainInfoSheet.getCell(rowNum, 2), false, {horizontal: 'left', vertical: 'middle'});
   mainInfoSheet.getRow(rowNum).height = 22;
   rowNum++;
-  
+
   mainInfoSheet.getCell(rowNum, 1).value = t('excelExport.mainInfo.otherName', 'Tên khác:'); applyCellStyle(mainInfoSheet.getCell(rowNum, 1), true);
   mainInfoSheet.getCell(rowNum, 2).value = compound.tenHCKhac || no; mainInfoSheet.mergeCells(rowNum, 2, rowNum, 14); applyCellStyle(mainInfoSheet.getCell(rowNum, 2));
   rowNum++;
@@ -134,7 +134,7 @@ export const exportCompoundToXlsx = async (compound: CompoundData): Promise<void
   rowNum++;
 
   const nguonStartRow = rowNum;
-  mainInfoSheet.getCell(nguonStartRow, 1).value = t('excelExport.mainInfo.source', 'Nguồn:'); 
+  mainInfoSheet.getCell(nguonStartRow, 1).value = t('excelExport.mainInfo.source', 'Nguồn:');
   mainInfoSheet.getCell(rowNum, 2).value = t('excelExport.mainInfo.latinName', '1. Tên Latin:'); applyCellStyle(mainInfoSheet.getCell(rowNum, 2), true);
   mainInfoSheet.getCell(rowNum, 3).value = compound.tenLatin || no; mainInfoSheet.mergeCells(rowNum, 3, rowNum, 14); applyCellStyle(mainInfoSheet.getCell(rowNum, 3));
   rowNum++;
@@ -149,7 +149,7 @@ export const exportCompoundToXlsx = async (compound: CompoundData): Promise<void
   mainInfoSheet.mergeCells(nguonStartRow, 1, rowNum, 1);
   applyCellStyle(mainInfoSheet.getCell(nguonStartRow, 1), true, {vertical: 'middle', horizontal: 'left'});
   rowNum++;
-  
+
   const tcvlStartRow = rowNum;
   mainInfoSheet.getCell(tcvlStartRow, 1).value = t('excelExport.mainInfo.physicalProperties', 'TCVL:');
   mainInfoSheet.getCell(rowNum, 2).value = t('excelExport.mainInfo.state', 'Trạng thái:'); applyCellStyle(mainInfoSheet.getCell(rowNum, 2), true);
@@ -159,15 +159,15 @@ export const exportCompoundToXlsx = async (compound: CompoundData): Promise<void
   mainInfoSheet.getCell(rowNum, 3).value = compound.mau || no; mainInfoSheet.mergeCells(rowNum, 3, rowNum, 14); applyCellStyle(mainInfoSheet.getCell(rowNum, 3));
   rowNum++;
 
-  mainInfoSheet.getCell(rowNum, 2).value = t('excelExport.mainInfo.uvSklm', 'UV SKLM'); applyCellStyle(mainInfoSheet.getCell(rowNum, 2), true); 
-  mainInfoSheet.getCell(rowNum, 3).value = t('excelExport.mainInfo.uv254nm', '254nm'); applyCellStyle(mainInfoSheet.getCell(rowNum, 3), false, {horizontal: 'left'}); 
+  mainInfoSheet.getCell(rowNum, 2).value = t('excelExport.mainInfo.uvSklm', 'UV SKLM'); applyCellStyle(mainInfoSheet.getCell(rowNum, 2), true);
+  mainInfoSheet.getCell(rowNum, 3).value = t('excelExport.mainInfo.uv254nm', '254nm'); applyCellStyle(mainInfoSheet.getCell(rowNum, 3), false, {horizontal: 'left'});
   mainInfoSheet.getCell(rowNum, 4).value = compound.uvSklm?.nm254 ? yes : no; applyCellStyle(mainInfoSheet.getCell(rowNum, 4), false, {horizontal: 'center'});
-  mainInfoSheet.getCell(rowNum, 5).value = t('excelExport.mainInfo.uv365nm', '365nm'); applyCellStyle(mainInfoSheet.getCell(rowNum, 5), false, {horizontal: 'left'}); 
+  mainInfoSheet.getCell(rowNum, 5).value = t('excelExport.mainInfo.uv365nm', '365nm'); applyCellStyle(mainInfoSheet.getCell(rowNum, 5), false, {horizontal: 'left'});
   mainInfoSheet.getCell(rowNum, 6).value = compound.uvSklm?.nm365 ? yes : no; applyCellStyle(mainInfoSheet.getCell(rowNum, 6), false, {horizontal: 'center'});
   mainInfoSheet.getCell(rowNum, 7).value = t('excelExport.mainInfo.meltingPoint', 'Điểm nóng chảy'); mainInfoSheet.mergeCells(rowNum, 7, rowNum, 9); applyCellStyle(mainInfoSheet.getCell(rowNum, 7), true, {horizontal: 'center', vertical: 'middle'});
   mainInfoSheet.getCell(rowNum, 10).value = compound.diemNongChay || no; mainInfoSheet.mergeCells(rowNum, 10, rowNum, 14); applyCellStyle(mainInfoSheet.getCell(rowNum, 10), false, {horizontal: 'center', vertical: 'middle'});
   rowNum++;
-  
+
   mainInfoSheet.getCell(rowNum, 2).value = t('excelExport.mainInfo.solventTCVL', 'Dung môi hòa tan:'); applyCellStyle(mainInfoSheet.getCell(rowNum, 2), true);
   mainInfoSheet.getCell(rowNum, 3).value = {richText: formatFormulaRichText(compound.dungMoiHoaTanTCVL)}; mainInfoSheet.mergeCells(rowNum, 3, rowNum, 6); applyCellStyle(mainInfoSheet.getCell(rowNum, 3));
   mainInfoSheet.getCell(rowNum, 7).value = t('excelExport.mainInfo.opticalRotation', '[α]D'); mainInfoSheet.mergeCells(rowNum, 7, rowNum, 9); applyCellStyle(mainInfoSheet.getCell(rowNum, 7), true, {horizontal: 'center', vertical: 'middle'});
@@ -177,20 +177,20 @@ export const exportCompoundToXlsx = async (compound: CompoundData): Promise<void
   rowNum++;
 
   const cauTrucStartRow = rowNum;
-  mainInfoSheet.getCell(cauTrucStartRow, 1).value = t('excelExport.mainInfo.structure', 'Cấu trúc:'); 
+  mainInfoSheet.getCell(cauTrucStartRow, 1).value = t('excelExport.mainInfo.structure', 'Cấu trúc:');
   mainInfoSheet.getCell(rowNum, 2).value = t('excelExport.mainInfo.molecularFormula', 'CTPT'); applyCellStyle(mainInfoSheet.getCell(rowNum, 2), true);
   mainInfoSheet.getCell(rowNum, 3).value = {richText: formatFormulaRichText(compound.ctpt)}; mainInfoSheet.mergeCells(rowNum, 3, rowNum, 7); applyCellStyle(mainInfoSheet.getCell(rowNum, 3));
   mainInfoSheet.getCell(rowNum, 8).value = t('excelExport.mainInfo.molecularWeight', 'KLPT'); applyCellStyle(mainInfoSheet.getCell(rowNum, 8), true);
   mainInfoSheet.getCell(rowNum, 9).value = compound.klpt || no; mainInfoSheet.mergeCells(rowNum, 9, rowNum, 14); applyCellStyle(mainInfoSheet.getCell(rowNum, 9));
   rowNum++;
-  
+
   const imageDisplayStartRow = rowNum;
   let imageRowsToSpan = 10;
   if (compound.hinhCauTruc && compound.hinhCauTruc.startsWith('data:image')) {
     const imageBuffer = base64ToBuffer(compound.hinhCauTruc);
     if (imageBuffer) {
       const imageId = workbook.addImage({ buffer: imageBuffer, extension: compound.hinhCauTruc.substring(compound.hinhCauTruc.indexOf('/') + 1, compound.hinhCauTruc.indexOf(';')) as 'png' | 'jpeg' | 'gif' });
-      const imgTargetHeightPx = 180; const imgTargetWidthPx = 250; 
+      const imgTargetHeightPx = 180; const imgTargetWidthPx = 250;
       imageRowsToSpan = Math.ceil(imgTargetHeightPx / 18);
       mainInfoSheet.addImage(imageId, { tl: { col: 1.1, row: imageDisplayStartRow - 1 + 0.1 }, ext: { width: imgTargetWidthPx, height: imgTargetHeightPx } });
       for(let i = 0; i < imageRowsToSpan; i++) {
@@ -199,20 +199,20 @@ export const exportCompoundToXlsx = async (compound: CompoundData): Promise<void
       }
     }
   } else { for(let i = 0; i < imageRowsToSpan; i++) { for(let j=2; j<=14; j++) { applyCellStyle(mainInfoSheet.getCell(imageDisplayStartRow + i, j)); } } }
-  rowNum += imageRowsToSpan; 
+  rowNum += imageRowsToSpan;
 
   mainInfoSheet.getCell(rowNum, 2).value = t('excelExport.mainInfo.absoluteConfiguration', 'Cấu hình tuyệt đối:'); applyCellStyle(mainInfoSheet.getCell(rowNum, 2), true);
   mainInfoSheet.getCell(rowNum, 3).value = compound.cauHinhTuyetDoi ? yes : no; mainInfoSheet.mergeCells(rowNum,3,rowNum,14); applyCellStyle(mainInfoSheet.getCell(rowNum, 3), false, {horizontal: 'center'});
   mainInfoSheet.mergeCells(cauTrucStartRow, 1, rowNum, 1);
   applyCellStyle(mainInfoSheet.getCell(cauTrucStartRow, 1), true, {vertical: 'middle', horizontal: 'left'});
   rowNum++;
-  
+
   mainInfoSheet.getCell(rowNum, 1).value = t('excelExport.mainInfo.smiles', 'SMILES:'); applyCellStyle(mainInfoSheet.getCell(rowNum, 1), true);
   mainInfoSheet.getCell(rowNum, 2).value = compound.smiles || no; mainInfoSheet.mergeCells(rowNum, 2, rowNum, 14); applyCellStyle(mainInfoSheet.getCell(rowNum, 2));
   rowNum++;
 
   const phoStartRow = rowNum;
-  mainInfoSheet.getCell(phoStartRow, 1).value = t('excelExport.mainInfo.spectra', 'Phổ:'); 
+  mainInfoSheet.getCell(phoStartRow, 1).value = t('excelExport.mainInfo.spectra', 'Phổ:');
   SPECTRAL_FIELDS_CONFIG.forEach((fieldConfig, index) => { // Use SPECTRAL_FIELDS_CONFIG
     if (index < 13) {
       const cell = mainInfoSheet.getCell(rowNum, index + 2);
@@ -237,7 +237,7 @@ export const exportCompoundToXlsx = async (compound: CompoundData): Promise<void
   rowNum++;
 
   const ccStartRow = rowNum;
-  mainInfoSheet.getCell(ccStartRow, 1).value = t('excelExport.mainInfo.compChemData', 'CC. Data:'); 
+  mainInfoSheet.getCell(ccStartRow, 1).value = t('excelExport.mainInfo.compChemData', 'CC. Data:');
   mainInfoSheet.getCell(rowNum, 2).value = t('excelExport.mainInfo.cartCoords', 'Cartesian coordinates'); mainInfoSheet.mergeCells(rowNum, 2, rowNum, 5); applyCellStyle(mainInfoSheet.getCell(rowNum, 2), true, {horizontal: 'center'});
   mainInfoSheet.getCell(rowNum, 6).value = t('excelExport.mainInfo.imaginaryFreq', '# of imaginary freq.'); mainInfoSheet.mergeCells(rowNum, 6, rowNum, 9); applyCellStyle(mainInfoSheet.getCell(rowNum, 6), true, {horizontal: 'center'});
   mainInfoSheet.getCell(rowNum, 10).value = t('excelExport.mainInfo.totalEnergy', 'Total Energy'); mainInfoSheet.mergeCells(rowNum, 10, rowNum, 14); applyCellStyle(mainInfoSheet.getCell(rowNum, 10), true, {horizontal: 'center'});
@@ -292,7 +292,7 @@ export const exportCompoundToXlsx = async (compound: CompoundData): Promise<void
   nmrDetailsRowNum++;
   const notesCell = nmrDetailsSheet.getCell(nmrDetailsRowNum, 2);
   notesCell.value = compound.nmrData.luuYNMR && compound.nmrData.luuYNMR.trim() !== "" ? compound.nmrData.luuYNMR : no;
-  nmrDetailsSheet.mergeCells(nmrDetailsRowNum, 2, nmrDetailsRowNum, 4); 
+  nmrDetailsSheet.mergeCells(nmrDetailsRowNum, 2, nmrDetailsRowNum, 4);
   applyCellStyle(notesCell);
   nmrDetailsSheet.getRow(nmrDetailsRowNum).height = (compound.nmrData.luuYNMR && compound.nmrData.luuYNMR.trim() !== "") ? Math.max(20, Math.ceil(compound.nmrData.luuYNMR.length / 50) * 15) : 20;
   nmrDetailsRowNum++;
@@ -312,7 +312,7 @@ export const exportCompoundToXlsx = async (compound: CompoundData): Promise<void
   spectraImagesSheet.mergeCells(spectraRowNum,1,spectraRowNum,5);
   spectraImagesSheet.getRow(spectraRowNum).height = 25;
   spectraRowNum+=2;
-  let imageCount = 0; const imagePixelHeight = 300; const imagePixelWidth = 400; 
+  let imageCount = 0; const imagePixelHeight = 300; const imagePixelWidth = 400;
   for (const fieldConfig of SPECTRAL_FIELDS_CONFIG) { // Use SPECTRAL_FIELDS_CONFIG
     const spectrumData = compound.pho[fieldConfig.key];
     if (spectrumData) {
