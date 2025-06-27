@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { CompoundData } from '../types';
 import { getCompounds, deleteCompound } from '../services/compoundService';
 import { CompoundListItem } from '../components/CompoundListItem';
@@ -12,6 +12,7 @@ export const HomePage: React.FC = () => {
   const { t } = useTranslation();
   const [compounds, setCompounds] = useState<CompoundData[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [compoundIdToDelete, setCompoundIdToDelete] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -21,6 +22,9 @@ export const HomePage: React.FC = () => {
   const [totalPages, setTotalPages] = useState(0);
   const [totalItems, setTotalItems] = useState(0);
 
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const wasFocusedRef = useRef(false);
+
   const fetchCompounds = useCallback(async () => {
     try {
       setLoading(true);
@@ -28,7 +32,7 @@ export const HomePage: React.FC = () => {
       const { data, pagination } = await getCompounds({
         page: currentPage,
         limit: ITEMS_PER_PAGE,
-        searchTerm: searchTerm
+        searchTerm: debouncedSearchTerm
       });
       setCompounds(data);
       setTotalPages(pagination.totalPages);
@@ -39,15 +43,42 @@ export const HomePage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [currentPage, searchTerm]);
+  }, [currentPage, debouncedSearchTerm]);
 
   useEffect(() => {
     fetchCompounds();
   }, [fetchCompounds]);
 
+  // Debounce search term
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300); // 300ms delay
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
   useEffect(() => {
     setCurrentPage(1); // Reset to first page on new search
-  }, [searchTerm]);
+  }, [debouncedSearchTerm]);
+
+  // Maintain focus after re-renders
+  useEffect(() => {
+    if (wasFocusedRef.current && searchInputRef.current) {
+      searchInputRef.current.focus();
+      // Restore cursor position to end of input
+      const length = searchInputRef.current.value.length;
+      searchInputRef.current.setSelectionRange(length, length);
+    }
+  });
+
+  const handleSearchFocus = () => {
+    wasFocusedRef.current = true;
+  };
+
+  const handleSearchBlur = () => {
+    wasFocusedRef.current = false;
+  };
 
   const openDeleteConfirmModal = (id: string) => {
     setCompoundIdToDelete(id);
@@ -96,10 +127,13 @@ export const HomePage: React.FC = () => {
         <h1 className="text-3xl font-bold text-gray-800 mb-4 sm:mb-0">{t('compoundListPage.title')}</h1>
         <div className="w-full sm:w-auto flex flex-col sm:flex-row items-center gap-4">
             <input
+                ref={searchInputRef}
                 type="text"
                 placeholder={t('compoundListPage.searchPlaceholder')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                onFocus={handleSearchFocus}
+                onBlur={handleSearchBlur}
                 className="px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 w-full sm:w-64"
             />
         </div>
@@ -111,35 +145,39 @@ export const HomePage: React.FC = () => {
         </div>
       )}
 
-      {compounds.length > 0 ? (
-        <>
-          <p className="text-sm text-gray-600 mb-4">
-            {t('pagination.showingResults', { start: startItem, end: endItem, total: totalItems })}
-          </p>
-          <div className="space-y-4">
-            {compounds.map(compound => (
-              <CompoundListItem key={compound.id} compound={compound} onDelete={openDeleteConfirmModal} />
-            ))}
+      {/* Always render the content area to maintain consistent DOM structure */}
+      <div className="min-h-[400px]">
+        {compounds.length > 0 ? (
+          <>
+            <p className="text-sm text-gray-600 mb-4">
+              {t('pagination.showingResults', { start: startItem, end: endItem, total: totalItems })}
+            </p>
+            <div className="space-y-4">
+              {compounds.map(compound => (
+                <CompoundListItem key={compound.id} compound={compound} onDelete={openDeleteConfirmModal} />
+              ))}
+            </div>
+            <div className="mt-8">
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+              />
+            </div>
+          </>
+        ) : (
+          <div className="text-center py-10">
+            <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+              <path vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+            </svg>
+            <h3 className="mt-2 text-lg font-medium text-gray-700">{t('compoundListPage.noCompoundsFound')}</h3>
+            <p className="mt-1 text-sm text-gray-500">
+              {debouncedSearchTerm ? t('compoundListPage.noCompoundsFoundWithSearch') : t('compoundListPage.noCompoundsFoundGeneral')}
+            </p>
           </div>
-          <div className="mt-8">
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={handlePageChange}
-            />
-          </div>
-        </>
-      ) : (
-        <div className="text-center py-10">
-          <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-            <path vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
-          </svg>
-          <h3 className="mt-2 text-lg font-medium text-gray-700">{t('compoundListPage.noCompoundsFound')}</h3>
-          <p className="mt-1 text-sm text-gray-500">
-            {searchTerm ? t('compoundListPage.noCompoundsFoundWithSearch') : t('compoundListPage.noCompoundsFoundGeneral')}
-          </p>
-        </div>
-      )}
+        )}
+      </div>
+
       <ConfirmModal
         isOpen={isConfirmModalOpen}
         onClose={() => {
