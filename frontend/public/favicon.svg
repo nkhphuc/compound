@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- Background circle -->
+  <circle cx="16" cy="16" r="15" fill="#4338ca" stroke="#312e81" stroke-width="2"/>
+
+  <!-- Chemistry flask -->
+  <path d="M12 8h8v2h-8z" fill="white"/>
+  <path d="M10 10h12v2h-12z" fill="white"/>
+  <path d="M8 12h16l-2 12h-12z" fill="white"/>
+
+  <!-- Bubbles -->
+  <circle cx="14" cy="18" r="1.5" fill="#4338ca"/>
+  <circle cx="18" cy="20" r="1" fill="#4338ca"/>
+  <circle cx="16" cy="22" r="1.2" fill="#4338ca"/>
+</svg>
