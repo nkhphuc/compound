@@ -13,7 +13,7 @@ import { uploadRoutes } from './routes/uploadRoutes';
 dotenv.config();
 
 const app: Express = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3002;
 
 // Middleware
 app.use(helmet()); // Security headers

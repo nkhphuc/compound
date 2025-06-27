@@ -135,8 +135,8 @@ compound/
    cp frontend/env.example frontend/.env
 
    # Edit frontend/.env if you need to change API URL or file URL
-   VITE_API_BASE_URL=http://localhost:3001/api
-   VITE_FILE_BASE_URL=http://localhost:3001
+   VITE_API_BASE_URL=http://localhost:3002/api
+   VITE_FILE_BASE_URL=http://localhost:3002
    ```
 
 4. **Run database migrations**:
@@ -160,7 +160,7 @@ compound/
 
    # Or start individually
    pnpm dev:frontend  # Frontend on http://localhost:5173
-   pnpm dev:backend   # Backend on http://localhost:3001
+   pnpm dev:backend   # Backend on http://localhost:3002
    ```
 
 ## 📦 Available Scripts
@@ -241,7 +241,7 @@ The application uses PostgreSQL with the following main tables:
 ### Backend (.env)
 
 ```env
-PORT=3001
+PORT=3002
 NODE_ENV=development
 DATABASE_URL=postgresql://postgres:your_password@localhost:5432/compound_chemistry
 CORS_ORIGIN=http://localhost:5173
@@ -251,8 +251,8 @@ LOG_LEVEL=info
 ### Frontend (.env)
 
 ```env
-VITE_API_BASE_URL=http://localhost:3001/api
-VITE_FILE_BASE_URL=http://localhost:3001
+VITE_API_BASE_URL=http://localhost:3002/api
+VITE_FILE_BASE_URL=http://localhost:3002
 VITE_APP_TITLE=Compound Chemistry Data Manager
 ```
 

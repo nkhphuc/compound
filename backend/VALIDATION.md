@@ -102,7 +102,7 @@ The backend validation is designed to be **identical** to frontend validation, e
 ### **Test Required Fields**
 
 ```bash
-curl -X POST http://localhost:3001/api/compounds \
+curl -X POST http://localhost:3002/api/compounds \
   -H "Content-Type: application/json" \
   -d '{}'
 ```
@@ -110,7 +110,7 @@ curl -X POST http://localhost:3001/api/compounds \
 ### **Test URL Validation**
 
 ```bash
-curl -X POST http://localhost:3001/api/compounds \
+curl -X POST http://localhost:3002/api/compounds \
   -H "Content-Type: application/json" \
   -d '{
     "tenHC": "Test",
@@ -125,7 +125,7 @@ curl -X POST http://localhost:3001/api/compounds \
 ### **Test File Upload**
 
 ```bash
-curl -X POST http://localhost:3001/api/uploads \
+curl -X POST http://localhost:3002/api/uploads \
   -F "file=@test.txt"
 ```
 

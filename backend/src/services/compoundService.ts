@@ -1,5 +1,5 @@
 import { pool } from '../config/database';
-import { CompoundData, CompoundStatus, SpectralRecord, NMRDataBlock, NMRCondition, NMRSignalData } from '@compound/shared';
+import { CompoundData, CompoundStatus, SpectralRecord, NMRDataBlock, NMRCondition, NMRSignalData } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 
 export class CompoundService {
