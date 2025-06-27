@@ -107,10 +107,7 @@ export const deleteCompound = async (req: Request, res: Response) => {
       });
     }
 
-    res.json({
-      success: true,
-      message: 'Compound deleted successfully'
-    });
+    res.status(204).send();
   } catch (error) {
     console.error('Error deleting compound:', error);
     res.status(500).json({
@@ -133,6 +130,58 @@ export const getNextSttHC = async (req: Request, res: Response) => {
     res.status(500).json({
       success: false,
       error: 'Failed to get next SttHC'
+    });
+  }
+};
+
+// Metadata endpoints for dropdown values
+export const getUniqueLoaiHCValues = async (req: Request, res: Response) => {
+  try {
+    const values = await compoundService.getUniqueLoaiHCValues();
+
+    res.json({
+      success: true,
+      data: values
+    });
+  } catch (error) {
+    console.error('Error getting unique loaiHC values:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get unique loaiHC values'
+    });
+  }
+};
+
+export const getUniqueTrangThaiValues = async (req: Request, res: Response) => {
+  try {
+    const values = await compoundService.getUniqueTrangThaiValues();
+
+    res.json({
+      success: true,
+      data: values
+    });
+  } catch (error) {
+    console.error('Error getting unique trangThai values:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get unique trangThai values'
+    });
+  }
+};
+
+export const getUniqueMauValues = async (req: Request, res: Response) => {
+  try {
+    const values = await compoundService.getUniqueMauValues();
+
+    res.json({
+      success: true,
+      data: values
+    });
+  } catch (error) {
+    console.error('Error getting unique mau values:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get unique mau values'
     });
   }
 };

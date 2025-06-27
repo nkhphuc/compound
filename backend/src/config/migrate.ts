@@ -4,79 +4,72 @@ const createTables = async () => {
   const client = await pool.connect();
 
   try {
-    // Create compounds table
+    // Create compounds table - following the frontend guidelines exactly
     await client.query(`
       CREATE TABLE IF NOT EXISTS compounds (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        stt_hc INTEGER NOT NULL,
-        ten_hc VARCHAR(500) NOT NULL,
-        ten_hc_khac TEXT,
-        loai_hc VARCHAR(200),
-        status VARCHAR(50),
-        ten_latin TEXT,
-        ten_ta TEXT,
-        ten_tv TEXT,
+        stt_hc SERIAL NOT NULL UNIQUE,
+        ten_hc VARCHAR(255) NOT NULL,
+        ten_hc_khac VARCHAR(255),
+        loai_hc VARCHAR(100) NOT NULL,
+        status VARCHAR(50) NOT NULL,
+        ten_latin VARCHAR(255),
+        ten_ta VARCHAR(255),
+        ten_tv VARCHAR(255),
         bpnc TEXT,
-        trang_thai VARCHAR(100),
-        mau VARCHAR(100),
-        uv_sklm_nm254 BOOLEAN DEFAULT FALSE,
-        uv_sklm_nm365 BOOLEAN DEFAULT FALSE,
-        diem_nong_chay TEXT,
-        alpha_d TEXT,
+        trang_thai VARCHAR(100) NOT NULL,
+        mau VARCHAR(100) NOT NULL,
+        uv_sklm JSONB DEFAULT '{"nm254": false, "nm365": false}',
+        diem_nong_chay VARCHAR(100),
+        alpha_d VARCHAR(100),
         dung_moi_hoa_tan_tcvl TEXT,
-        ctpt TEXT,
-        klpt TEXT,
+        ctpt TEXT NOT NULL,
+        klpt VARCHAR(50),
         hinh_cau_truc TEXT,
         cau_hinh_tuyet_doi BOOLEAN DEFAULT FALSE,
         smiles TEXT,
-        pho_1h TEXT,
-        pho_13c TEXT,
-        pho_dept TEXT,
-        pho_hsqc TEXT,
-        pho_hmbc TEXT,
-        pho_cosy TEXT,
-        pho_noesy TEXT,
-        pho_roesy TEXT,
-        pho_hrms TEXT,
-        pho_lrms TEXT,
-        pho_ir TEXT,
-        pho_uv_pho TEXT,
-        pho_cd TEXT,
+        pho JSONB DEFAULT '{}',
         dm_nmr_general TEXT,
         cart_coor TEXT,
-        img_freq TEXT,
-        te TEXT,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        img_freq VARCHAR(100),
+        te VARCHAR(100),
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       )
     `);
 
-    // Create nmr_data table
+    // Create nmr_data_blocks table - following the frontend guidelines exactly
     await client.query(`
-      CREATE TABLE IF NOT EXISTS nmr_data (
+      CREATE TABLE IF NOT EXISTS nmr_data_blocks (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        compound_id UUID REFERENCES compounds(id) ON DELETE CASCADE,
+        compound_id UUID NOT NULL REFERENCES compounds(id) ON DELETE CASCADE,
         stt_bang VARCHAR(50),
-        dm_nmr VARCHAR(100),
+        dm_nmr TEXT,
         tan_so_13c VARCHAR(50),
         tan_so_1h VARCHAR(50),
         luu_y_nmr TEXT,
         tltk_nmr TEXT,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       )
     `);
 
-    // Create nmr_signals table
+    // Create unique index to enforce one-to-one relationship
+    await client.query(`
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_nmr_data_compound_id ON nmr_data_blocks(compound_id)
+    `);
+
+    // Create nmr_signals table - following the frontend guidelines exactly
     await client.query(`
       CREATE TABLE IF NOT EXISTS nmr_signals (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        nmr_data_id UUID REFERENCES nmr_data(id) ON DELETE CASCADE,
+        nmr_data_block_id UUID NOT NULL REFERENCES nmr_data_blocks(id) ON DELETE CASCADE,
         vi_tri VARCHAR(100),
-        scab VARCHAR(100),
-        shac_jhz VARCHAR(100),
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        scab TEXT,
+        shac_j_hz TEXT,
+        sort_order SERIAL,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       )
     `);
 
@@ -85,11 +78,11 @@ const createTables = async () => {
       CREATE INDEX IF NOT EXISTS idx_compounds_stt_hc ON compounds(stt_hc);
       CREATE INDEX IF NOT EXISTS idx_compounds_ten_hc ON compounds(ten_hc);
       CREATE INDEX IF NOT EXISTS idx_compounds_loai_hc ON compounds(loai_hc);
-      CREATE INDEX IF NOT EXISTS idx_nmr_data_compound_id ON nmr_data(compound_id);
-      CREATE INDEX IF NOT EXISTS idx_nmr_signals_nmr_data_id ON nmr_signals(nmr_data_id);
+      CREATE INDEX IF NOT EXISTS idx_nmr_data_blocks_compound_id ON nmr_data_blocks(compound_id);
+      CREATE INDEX IF NOT EXISTS idx_nmr_signals_nmr_data_block_id ON nmr_signals(nmr_data_block_id);
     `);
 
-    console.log('Database tables created successfully');
+    console.log('Database tables created successfully following frontend guidelines');
   } catch (error) {
     console.error('Error creating tables:', error);
     throw error;

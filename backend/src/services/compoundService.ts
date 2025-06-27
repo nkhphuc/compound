@@ -10,15 +10,15 @@ export class CompoundService {
     let query = `
       SELECT
         c.*,
-        nd.id as nmr_data_id,
-        nd.stt_bang,
-        nd.dm_nmr,
-        nd.tan_so_13c,
-        nd.tan_so_1h,
-        nd.luu_y_nmr,
-        nd.tltk_nmr
+        ndb.id as nmr_data_block_id,
+        ndb.stt_bang,
+        ndb.dm_nmr,
+        ndb.tan_so_13c,
+        ndb.tan_so_1h,
+        ndb.luu_y_nmr,
+        ndb.tltk_nmr
       FROM compounds c
-      LEFT JOIN nmr_data nd ON c.id = nd.compound_id
+      LEFT JOIN nmr_data_blocks ndb ON c.id = ndb.compound_id
     `;
 
     const queryParams: any[] = [];
@@ -59,15 +59,15 @@ export class CompoundService {
     const query = `
       SELECT
         c.*,
-        nd.id as nmr_data_id,
-        nd.stt_bang,
-        nd.dm_nmr,
-        nd.tan_so_13c,
-        nd.tan_so_1h,
-        nd.luu_y_nmr,
-        nd.tltk_nmr
+        ndb.id as nmr_data_block_id,
+        ndb.stt_bang,
+        ndb.dm_nmr,
+        ndb.tan_so_13c,
+        ndb.tan_so_1h,
+        ndb.luu_y_nmr,
+        ndb.tltk_nmr
       FROM compounds c
-      LEFT JOIN nmr_data nd ON c.id = nd.compound_id
+      LEFT JOIN nmr_data_blocks ndb ON c.id = ndb.compound_id
       WHERE c.id = $1
     `;
 
@@ -89,17 +89,16 @@ export class CompoundService {
 
       // Generate IDs
       const compoundId = uuidv4();
-      const nmrDataId = uuidv4();
+      const nmrDataBlockId = uuidv4();
 
-      // Insert compound
+      // Insert compound with JSONB fields
       const compoundQuery = `
         INSERT INTO compounds (
           id, stt_hc, ten_hc, ten_hc_khac, loai_hc, status, ten_latin, ten_ta, ten_tv, bpnc,
-          trang_thai, mau, uv_sklm_nm254, uv_sklm_nm365, diem_nong_chay, alpha_d, dung_moi_hoa_tan_tcvl,
-          ctpt, klpt, hinh_cau_truc, cau_hinh_tuyet_doi, smiles,
-          pho_1h, pho_13c, pho_dept, pho_hsqc, pho_hmbc, pho_cosy, pho_noesy, pho_roesy, pho_hrms, pho_lrms, pho_ir, pho_uv_pho, pho_cd,
+          trang_thai, mau, uv_sklm, diem_nong_chay, alpha_d, dung_moi_hoa_tan_tcvl,
+          ctpt, klpt, hinh_cau_truc, cau_hinh_tuyet_doi, smiles, pho,
           dm_nmr_general, cart_coor, img_freq, te
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35, $36, $37, $38, $39)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26)
         RETURNING *
       `;
 
@@ -116,8 +115,7 @@ export class CompoundService {
         compoundData.bpnc || null,
         compoundData.trangThai || '',
         compoundData.mau || '',
-        compoundData.uvSklm?.nm254 || false,
-        compoundData.uvSklm?.nm365 || false,
+        JSON.stringify(compoundData.uvSklm || { nm254: false, nm365: false }),
         compoundData.diemNongChay || null,
         compoundData.alphaD || null,
         compoundData.dungMoiHoaTanTCVL || null,
@@ -126,19 +124,7 @@ export class CompoundService {
         compoundData.hinhCauTruc || '',
         compoundData.cauHinhTuyetDoi || false,
         compoundData.smiles || null,
-        compoundData.pho?.['1h'] || null,
-        compoundData.pho?.['13c'] || null,
-        compoundData.pho?.dept || null,
-        compoundData.pho?.hsqc || null,
-        compoundData.pho?.hmbc || null,
-        compoundData.pho?.cosy || null,
-        compoundData.pho?.noesy || null,
-        compoundData.pho?.roesy || null,
-        compoundData.pho?.hrms || null,
-        compoundData.pho?.lrms || null,
-        compoundData.pho?.ir || null,
-        compoundData.pho?.uv_pho || null,
-        compoundData.pho?.cd || null,
+        JSON.stringify(compoundData.pho || {}),
         compoundData.dmNMRGeneral || null,
         compoundData.cartCoor || null,
         compoundData.imgFreq || null,
@@ -147,15 +133,15 @@ export class CompoundService {
 
       await client.query(compoundQuery, compoundValues);
 
-      // Insert NMR data
+      // Insert NMR data block
       if (compoundData.nmrData) {
         const nmrQuery = `
-          INSERT INTO nmr_data (id, compound_id, stt_bang, dm_nmr, tan_so_13c, tan_so_1h, luu_y_nmr, tltk_nmr)
+          INSERT INTO nmr_data_blocks (id, compound_id, stt_bang, dm_nmr, tan_so_13c, tan_so_1h, luu_y_nmr, tltk_nmr)
           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
         `;
 
         const nmrValues = [
-          nmrDataId,
+          nmrDataBlockId,
           compoundId,
           compoundData.nmrData.sttBang || '',
           compoundData.nmrData.nmrConditions?.dmNMR || '',
@@ -171,13 +157,13 @@ export class CompoundService {
         if (compoundData.nmrData.signals && compoundData.nmrData.signals.length > 0) {
           for (const signal of compoundData.nmrData.signals) {
             const signalQuery = `
-              INSERT INTO nmr_signals (id, nmr_data_id, vi_tri, scab, shac_jhz)
+              INSERT INTO nmr_signals (id, nmr_data_block_id, vi_tri, scab, shac_j_hz)
               VALUES ($1, $2, $3, $4, $5)
             `;
 
             const signalValues = [
               signal.id || uuidv4(),
-              nmrDataId,
+              nmrDataBlockId,
               signal.viTri || '',
               signal.scab || '',
               signal.shacJHz || ''
@@ -212,18 +198,15 @@ export class CompoundService {
         return null;
       }
 
-      // Update compound
+      // Update compound with JSONB fields
       const compoundQuery = `
         UPDATE compounds SET
           stt_hc = $2, ten_hc = $3, ten_hc_khac = $4, loai_hc = $5, status = $6,
           ten_latin = $7, ten_ta = $8, ten_tv = $9, bpnc = $10, trang_thai = $11,
-          mau = $12, uv_sklm_nm254 = $13, uv_sklm_nm365 = $14, diem_nong_chay = $15,
-          alpha_d = $16, dung_moi_hoa_tan_tcvl = $17, ctpt = $18, klpt = $19,
-          hinh_cau_truc = $20, cau_hinh_tuyet_doi = $21, smiles = $22,
-          pho_1h = $23, pho_13c = $24, pho_dept = $25, pho_hsqc = $26, pho_hmbc = $27,
-          pho_cosy = $28, pho_noesy = $29, pho_roesy = $30, pho_hrms = $31, pho_lrms = $32,
-          pho_ir = $33, pho_uv_pho = $34, pho_cd = $35, dm_nmr_general = $36,
-          cart_coor = $37, img_freq = $38, te = $39, updated_at = CURRENT_TIMESTAMP
+          mau = $12, uv_sklm = $13, diem_nong_chay = $14, alpha_d = $15,
+          dung_moi_hoa_tan_tcvl = $16, ctpt = $17, klpt = $18, hinh_cau_truc = $19,
+          cau_hinh_tuyet_doi = $20, smiles = $21, pho = $22, dm_nmr_general = $23,
+          cart_coor = $24, img_freq = $25, te = $26, updated_at = CURRENT_TIMESTAMP
         WHERE id = $1
       `;
 
@@ -240,8 +223,7 @@ export class CompoundService {
         compoundData.bpnc ?? existingCompound.bpnc,
         compoundData.trangThai ?? existingCompound.trangThai,
         compoundData.mau ?? existingCompound.mau,
-        compoundData.uvSklm?.nm254 ?? existingCompound.uvSklm.nm254,
-        compoundData.uvSklm?.nm365 ?? existingCompound.uvSklm.nm365,
+        JSON.stringify(compoundData.uvSklm ?? existingCompound.uvSklm),
         compoundData.diemNongChay ?? existingCompound.diemNongChay,
         compoundData.alphaD ?? existingCompound.alphaD,
         compoundData.dungMoiHoaTanTCVL ?? existingCompound.dungMoiHoaTanTCVL,
@@ -250,19 +232,7 @@ export class CompoundService {
         compoundData.hinhCauTruc ?? existingCompound.hinhCauTruc,
         compoundData.cauHinhTuyetDoi ?? existingCompound.cauHinhTuyetDoi,
         compoundData.smiles ?? existingCompound.smiles,
-        compoundData.pho?.['1h'] ?? existingCompound.pho['1h'],
-        compoundData.pho?.['13c'] ?? existingCompound.pho['13c'],
-        compoundData.pho?.dept ?? existingCompound.pho.dept,
-        compoundData.pho?.hsqc ?? existingCompound.pho.hsqc,
-        compoundData.pho?.hmbc ?? existingCompound.pho.hmbc,
-        compoundData.pho?.cosy ?? existingCompound.pho.cosy,
-        compoundData.pho?.noesy ?? existingCompound.pho.noesy,
-        compoundData.pho?.roesy ?? existingCompound.pho.roesy,
-        compoundData.pho?.hrms ?? existingCompound.pho.hrms,
-        compoundData.pho?.lrms ?? existingCompound.pho.lrms,
-        compoundData.pho?.ir ?? existingCompound.pho.ir,
-        compoundData.pho?.uv_pho ?? existingCompound.pho.uv_pho,
-        compoundData.pho?.cd ?? existingCompound.pho.cd,
+        JSON.stringify(compoundData.pho ?? existingCompound.pho),
         compoundData.dmNMRGeneral ?? existingCompound.dmNMRGeneral,
         compoundData.cartCoor ?? existingCompound.cartCoor,
         compoundData.imgFreq ?? existingCompound.imgFreq,
@@ -271,10 +241,10 @@ export class CompoundService {
 
       await client.query(compoundQuery, compoundValues);
 
-      // Update NMR data if provided
+      // Update NMR data block if provided
       if (compoundData.nmrData) {
         const nmrQuery = `
-          UPDATE nmr_data SET
+          UPDATE nmr_data_blocks SET
             stt_bang = $2, dm_nmr = $3, tan_so_13c = $4, tan_so_1h = $5,
             luu_y_nmr = $6, tltk_nmr = $7, updated_at = CURRENT_TIMESTAMP
           WHERE compound_id = $1
@@ -295,13 +265,13 @@ export class CompoundService {
         // Update NMR signals if provided
         if (compoundData.nmrData.signals) {
           // Delete existing signals
-          await client.query('DELETE FROM nmr_signals WHERE nmr_data_id = (SELECT id FROM nmr_data WHERE compound_id = $1)', [id]);
+          await client.query('DELETE FROM nmr_signals WHERE nmr_data_block_id = (SELECT id FROM nmr_data_blocks WHERE compound_id = $1)', [id]);
 
           // Insert new signals
           for (const signal of compoundData.nmrData.signals) {
             const signalQuery = `
-              INSERT INTO nmr_signals (id, nmr_data_id, vi_tri, scab, shac_jhz)
-              VALUES ($1, (SELECT id FROM nmr_data WHERE compound_id = $2), $3, $4, $5)
+              INSERT INTO nmr_signals (id, nmr_data_block_id, vi_tri, scab, shac_j_hz)
+              VALUES ($1, (SELECT id FROM nmr_data_blocks WHERE compound_id = $2), $3, $4, $5)
             `;
 
             const signalValues = [
@@ -331,7 +301,7 @@ export class CompoundService {
 
   async deleteCompound(id: string): Promise<boolean> {
     const result = await pool.query('DELETE FROM compounds WHERE id = $1', [id]);
-    return result.rowCount > 0;
+    return (result.rowCount || 0) > 0;
   }
 
   async getNextSttHC(): Promise<number> {
@@ -339,11 +309,31 @@ export class CompoundService {
     return parseInt(result.rows[0].next_stt_hc);
   }
 
+  // Metadata methods for dropdown values
+  async getUniqueLoaiHCValues(): Promise<string[]> {
+    const result = await pool.query('SELECT DISTINCT loai_hc FROM compounds WHERE loai_hc IS NOT NULL AND loai_hc != \'\' ORDER BY loai_hc');
+    return result.rows.map(row => row.loai_hc);
+  }
+
+  async getUniqueTrangThaiValues(): Promise<string[]> {
+    const result = await pool.query('SELECT DISTINCT trang_thai FROM compounds WHERE trang_thai IS NOT NULL AND trang_thai != \'\' ORDER BY trang_thai');
+    return result.rows.map(row => row.trang_thai);
+  }
+
+  async getUniqueMauValues(): Promise<string[]> {
+    const result = await pool.query('SELECT DISTINCT mau FROM compounds WHERE mau IS NOT NULL AND mau != \'\' ORDER BY mau');
+    return result.rows.map(row => row.mau);
+  }
+
   private async transformRowsToCompounds(rows: any[]): Promise<CompoundData[]> {
     const compoundsMap = new Map<string, CompoundData>();
 
     for (const row of rows) {
       if (!compoundsMap.has(row.id)) {
+        // Parse JSONB fields
+        const uvSklm = typeof row.uv_sklm === 'string' ? JSON.parse(row.uv_sklm) : row.uv_sklm || { nm254: false, nm365: false };
+        const pho = typeof row.pho === 'string' ? JSON.parse(row.pho) : row.pho || {};
+
         // Create base compound
         const compound: CompoundData = {
           id: row.id,
@@ -358,10 +348,7 @@ export class CompoundService {
           bpnc: row.bpnc,
           trangThai: row.trang_thai,
           mau: row.mau,
-          uvSklm: {
-            nm254: row.uv_sklm_nm254,
-            nm365: row.uv_sklm_nm365
-          },
+          uvSklm,
           diemNongChay: row.diem_nong_chay,
           alphaD: row.alpha_d,
           dungMoiHoaTanTCVL: row.dung_moi_hoa_tan_tcvl,
@@ -370,27 +357,13 @@ export class CompoundService {
           hinhCauTruc: row.hinh_cau_truc,
           cauHinhTuyetDoi: row.cau_hinh_tuyet_doi,
           smiles: row.smiles,
-          pho: {
-            '1h': row.pho_1h,
-            '13c': row.pho_13c,
-            dept: row.pho_dept,
-            hsqc: row.pho_hsqc,
-            hmbc: row.pho_hmbc,
-            cosy: row.pho_cosy,
-            noesy: row.pho_noesy,
-            roesy: row.pho_roesy,
-            hrms: row.pho_hrms,
-            lrms: row.pho_lrms,
-            ir: row.pho_ir,
-            uv_pho: row.pho_uv_pho,
-            cd: row.pho_cd
-          },
+          pho,
           dmNMRGeneral: row.dm_nmr_general,
           cartCoor: row.cart_coor,
           imgFreq: row.img_freq,
           te: row.te,
           nmrData: {
-            id: row.nmr_data_id || '',
+            id: row.nmr_data_block_id || '',
             sttBang: row.stt_bang || '',
             nmrConditions: {
               id: uuidv4(),
@@ -408,19 +381,20 @@ export class CompoundService {
       }
 
       // Add NMR signals if available
-      if (row.nmr_data_id) {
+      if (row.nmr_data_block_id) {
         const signalsQuery = `
-          SELECT id, vi_tri, scab, shac_jhz
+          SELECT id, vi_tri, scab, shac_j_hz
           FROM nmr_signals
-          WHERE nmr_data_id = $1
+          WHERE nmr_data_block_id = $1
+          ORDER BY sort_order
         `;
 
-        const signalsResult = await pool.query(signalsQuery, [row.nmr_data_id]);
+        const signalsResult = await pool.query(signalsQuery, [row.nmr_data_block_id]);
         const signals: NMRSignalData[] = signalsResult.rows.map(signalRow => ({
           id: signalRow.id,
           viTri: signalRow.vi_tri,
           scab: signalRow.scab,
-          shacJHz: signalRow.shac_jhz
+          shacJHz: signalRow.shac_j_hz
         }));
 
         const compound = compoundsMap.get(row.id)!;

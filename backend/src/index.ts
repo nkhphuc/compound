@@ -1,14 +1,18 @@
-import express from 'express';
+import express, { Express } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
+import path from 'path';
+import fileUpload from 'express-fileupload';
 import { compoundRoutes } from './routes/compoundRoutes';
+import { metadataRoutes } from './routes/metadataRoutes';
+import { uploadRoutes } from './routes/uploadRoutes';
 
 // Load environment variables
 dotenv.config();
 
-const app = express();
+const app: Express = express();
 const PORT = process.env.PORT || 3001;
 
 // Middleware
@@ -20,6 +24,13 @@ app.use(cors({
 app.use(morgan('combined')); // Logging
 app.use(express.json({ limit: '10mb' })); // Parse JSON bodies
 app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
+app.use(fileUpload({
+  createParentPath: true,
+  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB limit
+}));
+
+// Serve uploaded files statically
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -32,6 +43,8 @@ app.get('/health', (req, res) => {
 
 // API routes
 app.use('/api/compounds', compoundRoutes);
+app.use('/api/meta', metadataRoutes);
+app.use('/api/uploads', uploadRoutes);
 
 // 404 handler
 app.use('*', (req, res) => {
