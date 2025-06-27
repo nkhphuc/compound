@@ -29,6 +29,13 @@ app.use(fileUpload({
   limits: { fileSize: 50 * 1024 * 1024 }, // 50MB limit
 }));
 
+// Add CORP and CORS headers for uploads
+app.use('/uploads', (req, res, next) => {
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  next();
+});
+
 // Serve uploaded files statically
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 

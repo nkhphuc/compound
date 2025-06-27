@@ -123,8 +123,9 @@ compound/
    # Copy frontend environment file (optional - has defaults)
    cp frontend/env.example frontend/.env
 
-   # Edit frontend/.env if you need to change API URL
+   # Edit frontend/.env if you need to change API URL or file URL
    VITE_API_BASE_URL=http://localhost:3001/api
+   VITE_FILE_BASE_URL=http://localhost:3001
    ```
 
 4. **Run database migrations**:
@@ -228,6 +229,7 @@ LOG_LEVEL=info
 ### Frontend (.env)
 ```env
 VITE_API_BASE_URL=http://localhost:3001/api
+VITE_FILE_BASE_URL=http://localhost:3001
 VITE_APP_TITLE=Compound Chemistry Data Manager
 ```
 

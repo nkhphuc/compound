@@ -210,29 +210,25 @@ export const deleteCompound = async (id: string): Promise<boolean> => {
   }
 };
 
-// File upload function
-export const uploadFile = async (file: File): Promise<string> => {
+// Upload a file to the backend and return the file URL
+export async function uploadFile(file: File): Promise<string> {
+  const formData = new FormData();
+  formData.append('file', file);
   try {
-    const formData = new FormData();
-    formData.append('file', file);
-
     const response = await fetch(`${API_BASE_URL}/uploads`, {
       method: 'POST',
       body: formData,
     });
-
+    const data = await response.json();
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || `Upload failed! status: ${response.status}`);
+      throw new Error('File upload failed: ' + (data?.error || response.status));
     }
-
-    const result = await response.json();
-    return result.url;
-  } catch (error) {
-    console.error('Error uploading file:', error);
-    throw error;
+    return data.data?.url || data.data?.path;
+  } catch (err) {
+    console.error('[uploadFile] Upload error:', err);
+    throw err;
   }
-};
+}
 
 // Utility functions to get unique values for dropdowns
 export const getUniqueLoaiHCValues = async (): Promise<string[]> => {

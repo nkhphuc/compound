@@ -4,6 +4,7 @@ import { CompoundData, SpectralRecord } from '../types';
 import { SPECTRAL_FIELDS_CONFIG } from '../constants';
 import { SectionCard } from './SectionCard';
 import { ChemicalFormulaDisplay } from './ui/ChemicalFormulaDisplay';
+import { getImageUrl } from '../services/urlService';
 // NMRTableView is not directly used here anymore, it's in ViewCompoundPage
 
 interface CompoundViewProps {
@@ -45,7 +46,7 @@ const renderSpectrumLinkOrPreview = (data: string | undefined, label: string, t:
   if (!data) return <span className="text-gray-500">{t('variousLabels.notAvailable')}</span>;
 
   if (data.startsWith('data:image/')) {
-    return <img src={data} alt={`${label} Preview`} className="max-w-xs max-h-48 border rounded-md shadow" />;
+    return <img src={getImageUrl(data)} alt={`${label} Preview`} className="max-w-xs max-h-48 border rounded-md shadow" />;
   } else if (data.startsWith('data:application/pdf')) {
     return (
       <a href={data} download={`${label.replace(/\s+/g, '_')}.pdf`} className="text-indigo-600 hover:text-indigo-800 underline">
@@ -175,7 +176,7 @@ export const CompoundView: React.FC<CompoundViewProps> = ({ compound }) => {
               <div className="mt-4">
                   <h4 className="text-md font-medium text-gray-700 mb-2">{t('compoundForm.structureImage')}:</h4>
                   <img
-                      src={compound.hinhCauTruc}
+                      src={getImageUrl(compound.hinhCauTruc)}
                       alt="Structure"
                       className="max-w-md w-full h-auto rounded-md shadow-md border"
                       onError={(e) => {

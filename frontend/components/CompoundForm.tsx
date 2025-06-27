@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation, Trans } from 'react-i18next';
 import { CompoundData, initialCompoundData, UVSKLMData, SpectralRecord, NMRDataBlock, NMRSignalData, CompoundStatus, initialNMRDataBlock, initialNMRSignalData, NMRCondition, initialNMRCondition } from '../types';
 import { COMPOUND_STATUS_OPTIONS_KEYS, SPECTRAL_FIELDS, DEFAULT_LOAI_HC_OPTIONS, LOAI_HC_OTHER_STRING, DEFAULT_TRANG_THAI_OPTIONS, DEFAULT_MAU_OPTIONS, LOAI_HC_OTHER_STRING_KEY } from '../constants';
-import { getUniqueLoaiHCValues, getUniqueTrangThaiValues, getUniqueMauValues } from '../services/compoundService';
+import { getUniqueLoaiHCValues, getUniqueTrangThaiValues, getUniqueMauValues, uploadFile } from '../services/compoundService';
+import { getImageUrl } from '../services/urlService';
 import { Input } from './ui/Input';
 import { Button } from './ui/Button';
 import { Select } from './ui/Select';
@@ -50,7 +51,6 @@ const initialSpectralFileNamesState: Record<keyof SpectralRecord, string> =
     acc[field.key] = ''; // Default empty file name
     return acc;
   }, {} as Record<keyof SpectralRecord, string>);
-
 
 export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave, saveError: parentSaveError, isSaving }) => {
   const { t } = useTranslation();
@@ -414,16 +414,17 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
     setFormErrors(prev => ({ ...prev, hinhCauTruc: undefined }));
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file && imageInputMethod === 'upload') {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData(prev => ({ ...prev, hinhCauTruc: reader.result as string }));
+      try {
+        const url = await uploadFile(file);
+        setFormData(prev => ({ ...prev, hinhCauTruc: url }));
         setStructureImageFileName(file.name);
-      };
-      reader.readAsDataURL(file);
-      setFormErrors(prev => ({ ...prev, hinhCauTruc: undefined }));
+        setFormErrors(prev => ({ ...prev, hinhCauTruc: undefined }));
+      } catch (err) {
+        setFormErrors(prev => ({ ...prev, hinhCauTruc: 'File upload failed' }));
+      }
     }
   };
 
@@ -449,20 +450,21 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
     });
   };
 
-  const handleSpectralFileChange = (fieldKey: keyof SpectralRecord, e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSpectralFileChange = async (fieldKey: keyof SpectralRecord, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData(prev => ({ ...prev, pho: { ...prev.pho, [fieldKey]: reader.result as string } }));
+      try {
+        const url = await uploadFile(file);
+        setFormData(prev => ({ ...prev, pho: { ...prev.pho, [fieldKey]: url } }));
         setSpectralFileNames(prev => ({ ...prev, [fieldKey]: file.name }));
-      };
-      reader.readAsDataURL(file);
-      setFormErrors(prev => {
-        const newPhoErrors = { ...(prev.pho || {}) };
-        delete newPhoErrors[fieldKey];
-        return { ...prev, pho: newPhoErrors };
-      });
+        setFormErrors(prev => {
+          const newPhoErrors = { ...(prev.pho || {}) };
+          delete newPhoErrors[fieldKey];
+          return { ...prev, pho: newPhoErrors };
+        });
+      } catch (err) {
+        setFormErrors(prev => ({ ...(prev || {}), pho: { ...(prev?.pho || {}), [fieldKey]: 'File upload failed' } }));
+      }
     }
   };
 
@@ -901,7 +903,7 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
                 <div className="mt-4">
                     <p className="text-sm font-medium text-gray-700">{t('compoundForm.preview')}</p>
                     <img
-                        src={formData.hinhCauTruc}
+                        src={getImageUrl(formData.hinhCauTruc)}
                         alt="Structure Preview"
                         className="mt-2 max-w-xs max-h-60 border rounded-md shadow-sm"
                         onError={(e) => (e.currentTarget.style.display = 'none')}
@@ -1002,7 +1004,7 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
                 {currentData && (
                   <div className="mt-3">
                     {currentData.startsWith('data:image') && (
-                        <img src={currentData} alt={`${fieldLabel} preview`} className="mt-2 max-w-xs max-h-32 border rounded"/>
+                        <img src={getImageUrl(currentData)} alt={`${fieldLabel} preview`} className="mt-2 max-w-xs max-h-32 border rounded"/>
                     )}
                     {currentData.startsWith('data:application/pdf') && (
                         <a href={currentData} download={`${spectralFileNames[fieldKey] || fieldLabel}.pdf`} className="text-indigo-600 hover:underline text-sm block mt-1">Download PDF</a>
