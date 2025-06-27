@@ -130,7 +130,7 @@ export const ViewCompoundPage: React.FC = () => {
       <div className="flex flex-col sm:flex-row justify-between items-center mb-6 pb-4 border-b border-gray-300">
         <h1 className="text-2xl md:text-3xl font-bold text-gray-800 break-all">{compound.tenHC}</h1>
         <div className="flex flex-wrap items-center gap-2 mt-4 sm:mt-0">
-          <Button variant="ghost" onClick={handleBackToList} className="text-indigo-600 hover:bg-indigo-50">
+          <Button variant="ghost" onClick={handleBackToList} className="text-indigo-600 hover:bg-indigo-50" size="sm">
             {t('buttons.backToList')}
           </Button>
           <Link to={`/edit/${compound.id}`}>
