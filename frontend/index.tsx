@@ -64,7 +64,8 @@ const enTranslations = {
     browse: "Browse...",
     noFileSelected: "No file selected.",
     uploadedFilePlaceholder: "Uploaded file",
-    preview: "Preview:"
+    preview: "Preview:",
+    validationErrors: "Please fix the following validation errors:"
   },
   compoundListPage: {
     title: "Compound List",
@@ -244,7 +245,8 @@ const viTranslations = {
     browse: "Chọn tệp...",
     noFileSelected: "Chưa có tệp nào được chọn.",
     uploadedFilePlaceholder: "Tệp đã tải lên",
-    preview: "Xem trước:"
+    preview: "Xem trước:",
+    validationErrors: "Vui lòng sửa các lỗi xác thực sau:"
   },
   compoundListPage: {
     title: "Danh sách Hợp chất",

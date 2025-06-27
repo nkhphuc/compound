@@ -12,6 +12,7 @@ import { SectionCard } from './SectionCard';
 import { SingleNMRDataForm } from './SingleNMRDataForm';
 import { TrashIcon } from './icons/TrashIcon';
 import { CustomFileInput } from './ui/CustomFileInput';
+import { Notification } from './ui/Notification';
 
 interface CompoundFormProps {
   initialData?: CompoundData;
@@ -111,6 +112,10 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
 
   const [formErrors, setFormErrors] = useState<FormErrors>({});
   const [currentSaveError, setCurrentSaveError] = useState<string | null>(null);
+  const [validationNotification, setValidationNotification] = useState<{
+    show: boolean;
+    errors: string[];
+  }>({ show: false, errors: [] });
 
   const [loaiHcDropdownOptions, setLoaiHcDropdownOptions] = useState<Array<{ value: string; label: string }>>([]);
   const [selectedLoaiHcInDropdown, setSelectedLoaiHcInDropdown] = useState<string>('');
@@ -604,9 +609,34 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
 
     if (Object.keys(errors).length > 0 || (errors.pho && Object.keys(errors.pho).length > 0)) {
         setFormErrors(errors);
+
+        // Collect all validation error messages for notification
+        const errorMessages: string[] = [];
+
+        if (errors.tenHC) errorMessages.push(errors.tenHC);
+        if (errors.status) errorMessages.push(errors.status);
+        if (errors.loaiHC) errorMessages.push(errors.loaiHC);
+        if (errors.trangThai) errorMessages.push(errors.trangThai);
+        if (errors.mau) errorMessages.push(errors.mau);
+        if (errors.hinhCauTruc) errorMessages.push(errors.hinhCauTruc);
+        if (errors.pho) {
+          Object.values(errors.pho).forEach(error => {
+            if (error) errorMessages.push(error);
+          });
+        }
+
+        setValidationNotification({
+          show: true,
+          errors: errorMessages
+        });
+
+        // Scroll to top to show notification
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+
         return;
     }
     setFormErrors({});
+    setValidationNotification({ show: false, errors: [] });
 
     const dataToSave: CompoundData = {
         ...formData,
@@ -646,6 +676,15 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8 p-4 md:p-6 lg:p-8 max-w-5xl mx-auto bg-gray-50 rounded-xl shadow-2xl">
+      {validationNotification.show && (
+        <Notification
+          type="error"
+          title={t('compoundForm.validationErrors')}
+          message={validationNotification.errors}
+          onClose={() => setValidationNotification({ show: false, errors: [] })}
+          className="mb-6"
+        />
+      )}
       <SectionCard title={t('compoundForm.generalInfo.title')}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6">
           <div>
