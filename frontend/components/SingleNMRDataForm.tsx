@@ -92,7 +92,12 @@ export const SingleNMRDataForm: React.FC<SingleNMRDataFormProps> = ({
                   <p className="text-xs text-gray-500 px-1">
                     <Trans
                       i18nKey="formulaHelpText"
-                      components={{ code: <code className="bg-gray-200 text-gray-800 rounded px-1 py-0.5 font-mono" /> }}
+                      components={{
+                        code1: <code key="code1" className="bg-gray-200 text-gray-800 rounded px-1 py-0.5 font-mono" />,
+                        code2: <code key="code2" className="bg-gray-200 text-gray-800 rounded px-1 py-0.5 font-mono" />,
+                        code3: <code key="code3" className="bg-gray-200 text-gray-800 rounded px-1 py-0.5 font-mono" />,
+                        code4: <code key="code4" className="bg-gray-200 text-gray-800 rounded px-1 py-0.5 font-mono" />
+                      }}
                     />
                   </p>
                 </div>

@@ -144,10 +144,9 @@ const enTranslations = {
     common: { yes: "X", no: "-", notAvailable: "N/A" }
   },
   footer: {
-    allRightsReserved: "All rights reserved.",
     bugReport: "Bug report to: "
   },
-  formulaHelpText: "Use <code>_</code> for subscript, <code>^</code> for superscript. For groups: <code>_{group}</code> or <code>^{group}</code>.",
+  formulaHelpText: "Use <code1>_</code1> for subscript, <code2>^</code2> for superscript. For groups: <code3>_{group}</code3> or <code4>^{group}</code4>.",
   nmrForm: {
     tableId: "Table ID (SttBang)",
     tableIdPlaceholder: "Auto-assigned on save",
@@ -325,10 +324,9 @@ const viTranslations = {
     common: { yes: "X", no: "-", notAvailable: "N/A" }
   },
   footer: {
-    allRightsReserved: "Đã đăng ký bản quyền.",
     bugReport: "Báo cáo lỗi đến: "
   },
-  formulaHelpText: "Sử dụng <code>_</code> cho chỉ số dưới, <code>^</code> cho chỉ số trên. Cho nhóm: <code>_{nhóm}</code> hoặc <code>^{nhóm}</code>.",
+  formulaHelpText: "Sử dụng <code1>_</code1> cho chỉ số dưới, <code2>^</code2> cho chỉ số trên. Cho nhóm: <code3>_{nhóm}</code3> hoặc <code4>^{nhóm}</code4>.",
   nmrForm: {
     tableId: "Stt Bảng (ID)",
     tableIdPlaceholder: "Tự động gán khi lưu",

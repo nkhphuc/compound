@@ -23,7 +23,7 @@ const App: React.FC = () => {
           </Routes>
         </main>
         <footer className="bg-gray-800 text-white text-center p-4 text-sm">
-            <div>© {new Date().getFullYear()} {t('appName')}. {t('footer.allRightsReserved')}</div>
+            <div>© {new Date().getFullYear()} {t('appName')}.</div>
             <div className="mt-2 text-gray-400">
                 {t('footer.bugReport')}
                 <a href="mailto:nkhphuc@gmail.com" className="text-indigo-300 hover:text-indigo-100 underline ml-1">

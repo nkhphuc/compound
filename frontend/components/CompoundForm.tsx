@@ -96,7 +96,6 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
       };
     }
     // For new compound
-    const newId = crypto.randomUUID();
     const defaultPho = SPECTRAL_FIELDS.reduce((acc, field) => {
         acc[field.key] = '';
         return acc;
@@ -104,8 +103,8 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
 
     return {
       ...JSON.parse(JSON.stringify(initialCompoundData)),
-      id: newId,
-      nmrData: { ...initialNMRDataBlock, id: `${newId}-nmr` }, // initialNMRDataBlock now has single condition obj
+      id: '', // Don't generate ID for new compounds - let backend generate it
+      nmrData: { ...initialNMRDataBlock, id: '' }, // Don't generate NMR ID either
       pho: defaultPho
     };
   });
@@ -148,23 +147,23 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
           getUniqueMauValues()
         ]);
 
-        const combinedLoaiHcOptions = new Set([...DEFAULT_LOAI_HC_OPTIONS, ...uniqueExistingLoaiHc]);
-        const sortedLoaiHcOptions = Array.from(combinedLoaiHcOptions).sort();
-        const loaiHcOpts = sortedLoaiHcOptions.map(opt => ({ value: opt, label: opt }));
+    const combinedLoaiHcOptions = new Set([...DEFAULT_LOAI_HC_OPTIONS, ...uniqueExistingLoaiHc]);
+    const sortedLoaiHcOptions = Array.from(combinedLoaiHcOptions).sort();
+    const loaiHcOpts = sortedLoaiHcOptions.map(opt => ({ value: opt, label: opt }));
         loaiHcOpts.push({ value: LOAI_HC_OTHER_STRING, label: t(LOAI_HC_OTHER_STRING_KEY) });
-        setLoaiHcDropdownOptions(loaiHcOpts);
+    setLoaiHcDropdownOptions(loaiHcOpts);
 
-        const combinedTrangThaiOptions = new Set([...DEFAULT_TRANG_THAI_OPTIONS, ...uniqueExistingTrangThai]);
-        const sortedTrangThaiOptions = Array.from(combinedTrangThaiOptions).sort();
-        const trangThaiOpts = sortedTrangThaiOptions.map(opt => ({ value: opt, label: opt }));
-        trangThaiOpts.push({ value: LOAI_HC_OTHER_STRING, label: t(LOAI_HC_OTHER_STRING_KEY) });
-        setTrangThaiDropdownOptions(trangThaiOpts);
+    const combinedTrangThaiOptions = new Set([...DEFAULT_TRANG_THAI_OPTIONS, ...uniqueExistingTrangThai]);
+    const sortedTrangThaiOptions = Array.from(combinedTrangThaiOptions).sort();
+    const trangThaiOpts = sortedTrangThaiOptions.map(opt => ({ value: opt, label: opt }));
+    trangThaiOpts.push({ value: LOAI_HC_OTHER_STRING, label: t(LOAI_HC_OTHER_STRING_KEY) });
+    setTrangThaiDropdownOptions(trangThaiOpts);
 
-        const combinedMauOptions = new Set([...DEFAULT_MAU_OPTIONS, ...uniqueExistingMau]);
-        const sortedMauOptions = Array.from(combinedMauOptions).sort();
-        const mauOpts = sortedMauOptions.map(opt => ({ value: opt, label: opt }));
-        mauOpts.push({ value: LOAI_HC_OTHER_STRING, label: t(LOAI_HC_OTHER_STRING_KEY) });
-        setMauDropdownOptions(mauOpts);
+    const combinedMauOptions = new Set([...DEFAULT_MAU_OPTIONS, ...uniqueExistingMau]);
+    const sortedMauOptions = Array.from(combinedMauOptions).sort();
+    const mauOpts = sortedMauOptions.map(opt => ({ value: opt, label: opt }));
+    mauOpts.push({ value: LOAI_HC_OTHER_STRING, label: t(LOAI_HC_OTHER_STRING_KEY) });
+    setMauDropdownOptions(mauOpts);
       } catch (error) {
         console.error('Error loading metadata:', error);
       }
@@ -222,8 +221,8 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
           }, {} as SpectralRecord);
           return {
             ...JSON.parse(JSON.stringify(initialCompoundData)),
-            id: newId,
-            nmrData: { ...initialNMRDataBlock, id: `${newId}-nmr` },
+            id: '', // Don't generate ID for new compounds - let backend generate it
+            nmrData: { ...initialNMRDataBlock, id: '' }, // Don't generate NMR ID either
             pho: defaultPho
           };
         })();
@@ -810,7 +809,12 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
             <p className="text-xs text-gray-500 px-1 mb-4">
               <Trans
                 i18nKey="formulaHelpText"
-                components={{ code: <code className="bg-gray-200 text-gray-800 rounded px-1 py-0.5 font-mono" /> }}
+                components={{
+                  code1: <code key="code1" className="bg-gray-200 text-gray-800 rounded px-1 py-0.5 font-mono" />,
+                  code2: <code key="code2" className="bg-gray-200 text-gray-800 rounded px-1 py-0.5 font-mono" />,
+                  code3: <code key="code3" className="bg-gray-200 text-gray-800 rounded px-1 py-0.5 font-mono" />,
+                  code4: <code key="code4" className="bg-gray-200 text-gray-800 rounded px-1 py-0.5 font-mono" />
+                }}
               />
             </p>
         </div>
@@ -830,7 +834,12 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
             <p className="text-xs text-gray-500 px-1 mb-4">
               <Trans
                 i18nKey="formulaHelpText"
-                components={{ code: <code className="bg-gray-200 text-gray-800 rounded px-1 py-0.5 font-mono" /> }}
+                components={{
+                  code1: <code key="code1" className="bg-gray-200 text-gray-800 rounded px-1 py-0.5 font-mono" />,
+                  code2: <code key="code2" className="bg-gray-200 text-gray-800 rounded px-1 py-0.5 font-mono" />,
+                  code3: <code key="code3" className="bg-gray-200 text-gray-800 rounded px-1 py-0.5 font-mono" />,
+                  code4: <code key="code4" className="bg-gray-200 text-gray-800 rounded px-1 py-0.5 font-mono" />
+                }}
               />
             </p>
           </div>
@@ -1035,7 +1044,12 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
             <p className="text-xs text-gray-500 px-1 mb-4">
               <Trans
                 i18nKey="formulaHelpText"
-                components={{ code: <code className="bg-gray-200 text-gray-800 rounded px-1 py-0.5 font-mono" /> }}
+                components={{
+                  code1: <code key="code1" className="bg-gray-200 text-gray-800 rounded px-1 py-0.5 font-mono" />,
+                  code2: <code key="code2" className="bg-gray-200 text-gray-800 rounded px-1 py-0.5 font-mono" />,
+                  code3: <code key="code3" className="bg-gray-200 text-gray-800 rounded px-1 py-0.5 font-mono" />,
+                  code4: <code key="code4" className="bg-gray-200 text-gray-800 rounded px-1 py-0.5 font-mono" />
+                }}
               />
             </p>
         </div>

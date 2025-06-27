@@ -76,6 +76,15 @@ const apiRequest = async (endpoint: string, options: RequestInit = {}) => {
     throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
   }
 
+  // Check if response has content before parsing JSON
+  const contentType = response.headers.get('content-type');
+  const contentLength = response.headers.get('content-length');
+
+  // If no content (like 204 No Content) or empty response, return null
+  if (response.status === 204 || contentLength === '0' || !contentType?.includes('application/json')) {
+    return null;
+  }
+
   return response.json();
 };
 
@@ -141,7 +150,8 @@ export const saveCompound = async (compoundToSave: CompoundData): Promise<Compou
     const isExistingCompound = validatedDataToSave.id &&
                               validatedDataToSave.id !== '' &&
                               validatedDataToSave.id !== '0' &&
-                              validatedDataToSave.id !== 'undefined';
+                              validatedDataToSave.id !== 'undefined' &&
+                              validatedDataToSave.id !== 'null';
 
     if (isExistingCompound) {
       // Update existing compound
@@ -150,10 +160,23 @@ export const saveCompound = async (compoundToSave: CompoundData): Promise<Compou
         body: JSON.stringify(validatedDataToSave),
       });
     } else {
-      // Create new compound
+      // Create new compound - remove ID fields to let backend generate them
+      const dataForCreation = {
+        ...validatedDataToSave,
+        id: undefined, // Remove ID for creation
+        nmrData: {
+          ...validatedDataToSave.nmrData,
+          id: undefined, // Remove NMR ID for creation
+          signals: validatedDataToSave.nmrData.signals.map(signal => ({
+            ...signal,
+            id: undefined // Remove signal IDs for creation
+          }))
+        }
+      };
+
       response = await apiRequest('/compounds', {
         method: 'POST',
-        body: JSON.stringify(validatedDataToSave),
+        body: JSON.stringify(dataForCreation),
       });
     }
 
@@ -170,10 +193,17 @@ export const saveCompound = async (compoundToSave: CompoundData): Promise<Compou
 
 export const deleteCompound = async (id: string): Promise<boolean> => {
   try {
-    await apiRequest(`/compounds/${id}`, {
+    const response = await apiRequest(`/compounds/${id}`, {
       method: 'DELETE',
     });
-    return true;
+
+    // For delete operations, a successful response might be null (204 No Content)
+    // or contain a success message
+    if (response === null || (response && response.success)) {
+      return true;
+    }
+
+    throw new Error(response?.error || 'Failed to delete compound');
   } catch (error) {
     console.error('Error deleting compound:', error);
     throw error;
