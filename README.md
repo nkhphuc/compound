@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD024 MD040 -->
 # Compound Chemistry Data Manager
 
 A monorepo containing a full-stack application for managing chemical compound data with React frontend and Express.js backend.
@@ -26,6 +27,7 @@ compound/
 ### Setup
 
 1. **Clone and install dependencies**:
+
    ```bash
    git clone <repository-url>
    cd compound
@@ -35,6 +37,7 @@ compound/
 2. **Set up PostgreSQL**:
 
    **Option A: Using Docker (Recommended)**
+
    ```bash
    # Pull and run PostgreSQL container
    docker run --name compound-postgres \
@@ -52,6 +55,7 @@ compound/
    ```
 
    **Option B: Using Docker Compose (Even better)**
+
    ```bash
    # Start PostgreSQL (uses existing docker-compose.yml)
    docker-compose up -d postgres
@@ -61,12 +65,14 @@ compound/
    ```
 
    **Option C: Using createdb (if PostgreSQL is in your PATH)**
+
    ```bash
    # Create database directly
    createdb compound_chemistry
    ```
 
    **Option D: Using psql command line**
+
    ```bash
    # Connect to PostgreSQL as postgres user
    psql -U postgres
@@ -79,6 +85,7 @@ compound/
    ```
 
    **Option E: If PostgreSQL is installed via Homebrew (macOS)**
+
    ```bash
    # Start PostgreSQL service if not running
    brew services start postgresql
@@ -88,6 +95,7 @@ compound/
    ```
 
    **Option F: If you need to install PostgreSQL first**
+
    ```bash
    # macOS with Homebrew
    brew install postgresql
@@ -106,13 +114,16 @@ compound/
    **Troubleshooting:**
    - If you get "connection refused", make sure PostgreSQL is running
    - If you get "permission denied", you may need to create a user first:
+
      ```bash
      sudo -u postgres createuser --interactive
      # Follow prompts to create your user
      ```
+
    - For Docker: Make sure port 5432 is not already in use by another PostgreSQL instance
 
 3. **Configure environment**:
+
    ```bash
    # Copy backend environment file
    cp backend/env.example backend/.env
@@ -129,6 +140,7 @@ compound/
    ```
 
 4. **Run database migrations**:
+
    ```bash
    # Navigate to backend directory
    cd backend
@@ -141,6 +153,7 @@ compound/
    ```
 
 5. **Start development servers**:
+
    ```bash
    # Start both frontend and backend
    pnpm dev
@@ -153,6 +166,7 @@ compound/
 ## 📦 Available Scripts
 
 ### Root Level
+
 - `pnpm dev` - Start both frontend and backend in development mode
 - `pnpm dev:frontend` - Start only frontend
 - `pnpm dev:backend` - Start only backend
@@ -162,12 +176,14 @@ compound/
 - `pnpm type-check` - Run TypeScript type checking
 
 ### Backend
+
 - `pnpm --filter backend dev` - Start backend development server
 - `pnpm --filter backend build` - Build backend
 - `pnpm --filter backend db:migrate` - Run database migrations
 - `pnpm --filter backend db:seed` - Seed database with sample data
 
 ### Frontend
+
 - `pnpm --filter frontend dev` - Start frontend development server
 - `pnpm --filter frontend build` - Build frontend for production
 
@@ -182,6 +198,7 @@ The application uses PostgreSQL with the following main tables:
 ## 🔧 API Endpoints
 
 ### Compounds
+
 - `GET /api/compounds` - Get all compounds (with pagination and search)
 - `GET /api/compounds/:id` - Get compound by ID
 - `POST /api/compounds` - Create new compound
@@ -190,11 +207,13 @@ The application uses PostgreSQL with the following main tables:
 - `GET /api/compounds/next-stt-hc` - Get next available serial number
 
 ### Health Check
+
 - `GET /health` - Server health status
 
 ## 🛠️ Technology Stack
 
 ### Frontend
+
 - **React 19** - UI framework
 - **TypeScript** - Type safety
 - **Vite** - Build tool and dev server
@@ -203,6 +222,7 @@ The application uses PostgreSQL with the following main tables:
 - **Tailwind CSS** - Styling
 
 ### Backend
+
 - **Express.js** - Web framework
 - **TypeScript** - Type safety
 - **PostgreSQL** - Database
@@ -212,12 +232,14 @@ The application uses PostgreSQL with the following main tables:
 - **Morgan** - HTTP request logging
 
 ### Shared
+
 - **TypeScript** - Shared type definitions
 - **CommonJS** - Module system for compatibility
 
 ## 🔒 Environment Variables
 
 ### Backend (.env)
+
 ```env
 PORT=3001
 NODE_ENV=development
@@ -227,6 +249,7 @@ LOG_LEVEL=info
 ```
 
 ### Frontend (.env)
+
 ```env
 VITE_API_BASE_URL=http://localhost:3001/api
 VITE_FILE_BASE_URL=http://localhost:3001
@@ -238,6 +261,7 @@ VITE_APP_TITLE=Compound Chemistry Data Manager
 ## 📝 Development
 
 ### Adding New Features
+
 1. Update shared types in `shared/src/types.ts`
 2. Build shared package: `pnpm --filter @compound/shared build`
 3. Implement backend API endpoints
@@ -245,6 +269,7 @@ VITE_APP_TITLE=Compound Chemistry Data Manager
 5. Test thoroughly
 
 ### Database Changes
+
 1. Update migration script in `backend/src/config/migrate.ts`
 2. Run migration: `pnpm --filter backend db:migrate`
 3. Update service layer if needed
@@ -252,6 +277,7 @@ VITE_APP_TITLE=Compound Chemistry Data Manager
 ## 🚀 Deployment
 
 ### Production Build
+
 ```bash
 # Build all packages
 pnpm build
@@ -261,6 +287,7 @@ pnpm --filter backend start
 ```
 
 ### Docker (Future)
+
 Docker configuration can be added for containerized deployment.
 
 ## 🤝 Contributing

@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD040 -->
 # Compound Chemistry Data Manager - Frontend
 
 A React-based frontend application for managing chemical compound data with TypeScript, Vite, and modern UI components.
@@ -12,12 +13,14 @@ A React-based frontend application for managing chemical compound data with Type
 ### Setup
 
 1. **Install dependencies**:
+
    ```bash
    cd frontend
    pnpm install
    ```
 
 2. **Configure environment** (optional):
+
    ```bash
    # Copy environment example
    cp env.example .env
@@ -27,6 +30,7 @@ A React-based frontend application for managing chemical compound data with Type
    ```
 
 3. **Start development server**:
+
    ```bash
    pnpm dev
    ```
