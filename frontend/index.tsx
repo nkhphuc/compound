@@ -105,7 +105,8 @@ const enTranslations = {
     spectraDownloadPdf: "Download {{label}} (PDF)",
     spectraDownloadData: "Download {{label}} Data",
     spectraDataUnknownFormat: "Data present (unknown format)",
-    notAvailable: "N/A"
+    notAvailable: "N/A",
+    openInNewTab: "Open in new tab"
   },
   spectralFields: {
     "1h": "1H NMR", "13c": "13C NMR", dept: "DEPT", hsqc: "HSQC",
@@ -286,7 +287,8 @@ const viTranslations = {
     spectraDownloadPdf: "Tải xuống {{label}} (PDF)",
     spectraDownloadData: "Tải xuống Dữ liệu {{label}}",
     spectraDataUnknownFormat: "Có dữ liệu (định dạng không rõ)",
-    notAvailable: "Không có"
+    notAvailable: "Không có",
+    openInNewTab: "Mở trong tab mới"
   },
   spectralFields: {
     "1h": "1H NMR", "13c": "13C NMR", dept: "DEPT", hsqc: "HSQC",

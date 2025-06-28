@@ -1049,9 +1049,32 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
                         <a href={currentData} download={`${spectralFileNames[fieldKey] || fieldLabel}.pdf`} className="text-indigo-600 hover:underline text-sm block mt-1">Download PDF</a>
                     )}
                     {currentData.startsWith('http') && (
-                       <p className="text-sm text-gray-600 truncate">
-                          URL: <a href={currentData} target="_blank" rel="noopener noreferrer" className="text-indigo-500 hover:underline">{currentData}</a>
-                       </p>
+                      <div>
+                        <img
+                          src={getImageUrl(currentData)}
+                          alt={`${fieldLabel} preview`}
+                          className="mt-2 max-w-xs max-h-32 border rounded"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.alt = "Image not found or invalid URL";
+                            target.src = '';
+                            target.style.display = 'none';
+                            // Show fallback link if image fails to load
+                            const fallbackLink = document.createElement('a');
+                            fallbackLink.href = currentData;
+                            fallbackLink.target = '_blank';
+                            fallbackLink.rel = 'noopener noreferrer';
+                            fallbackLink.className = 'text-indigo-600 hover:underline text-sm block mt-1';
+                            fallbackLink.textContent = `View ${fieldLabel} (External URL)`;
+                            target.parentNode?.appendChild(fallbackLink);
+                          }}
+                        />
+                        <div className="mt-1">
+                          <a href={currentData} target="_blank" rel="noopener noreferrer" className="text-xs text-gray-500 hover:text-gray-700 underline">
+                            {t('variousLabels.openInNewTab')}
+                          </a>
+                        </div>
+                      </div>
                     )}
                     <Button
                       variant="ghost"

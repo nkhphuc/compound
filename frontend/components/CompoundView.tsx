@@ -60,10 +60,34 @@ const renderSpectrumLinkOrPreview = (data: string | undefined, label: string, t:
       </a>
     );
   } else if (data.startsWith('http')) {
+    // Display HTTP URLs as images (for MinIO files)
     return (
-      <a href={data} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:text-indigo-800 underline break-all">
-        {t('variousLabels.spectraViewExternalUrl', { label })}
-      </a>
+      <div>
+        <img
+          src={getImageUrl(data)}
+          alt={`${label} Spectrum`}
+          className="max-w-xs max-h-48 border rounded-md shadow"
+          onError={(e) => {
+            const target = e.target as HTMLImageElement;
+            target.alt = "Image not found or invalid URL";
+            target.src = '';
+            target.style.display = 'none';
+            // Show fallback link if image fails to load
+            const fallbackLink = document.createElement('a');
+            fallbackLink.href = data;
+            fallbackLink.target = '_blank';
+            fallbackLink.rel = 'noopener noreferrer';
+            fallbackLink.className = 'text-indigo-600 hover:text-indigo-800 underline break-all';
+            fallbackLink.textContent = t('variousLabels.spectraViewExternalUrl', { label });
+            target.parentNode?.appendChild(fallbackLink);
+          }}
+        />
+        <div className="mt-1">
+          <a href={data} target="_blank" rel="noopener noreferrer" className="text-xs text-gray-500 hover:text-gray-700 underline">
+            {t('variousLabels.openInNewTab')}
+          </a>
+        </div>
+      </div>
     );
   }
   return <span className="text-gray-500 italic">{t('variousLabels.spectraDataUnknownFormat')}</span>;
