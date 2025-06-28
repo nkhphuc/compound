@@ -433,6 +433,23 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file && imageInputMethod === 'upload') {
+      // Validate file type for structure image
+      const allowedImageTypes = [
+        'image/jpeg',
+        'image/jpg',
+        'image/png',
+        'image/gif',
+        'image/webp',
+        'image/svg+xml'
+      ];
+
+      if (!allowedImageTypes.includes(file.type)) {
+        setFormErrors(prev => ({ ...prev, hinhCauTruc: 'Please upload only image files (JPG, PNG, GIF, WebP, SVG).' }));
+        // Clear the file input
+        e.target.value = '';
+        return;
+      }
+
       try {
         const url = await uploadFile(file);
         setFormData(prev => ({ ...prev, hinhCauTruc: url }));
@@ -469,6 +486,30 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
   const handleSpectralFileChange = async (fieldKey: keyof SpectralRecord, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Validate file type
+      const allowedTypes = [
+        'application/pdf',
+        'image/jpeg',
+        'image/jpg',
+        'image/png',
+        'image/gif',
+        'image/webp',
+        'image/svg+xml'
+      ];
+
+      if (!allowedTypes.includes(file.type)) {
+        setFormErrors(prev => ({
+          ...(prev || {}),
+          pho: {
+            ...(prev?.pho || {}),
+            [fieldKey]: 'Please upload only PDF or image files (JPG, PNG, GIF, WebP, SVG).'
+          }
+        }));
+        // Clear the file input
+        e.target.value = '';
+        return;
+      }
+
       try {
         const url = await uploadFile(file);
         setFormData(prev => ({ ...prev, pho: { ...prev.pho, [fieldKey]: url } }));
@@ -1051,6 +1092,7 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
                 {currentMethod === 'upload' && (
                   <CustomFileInput
                     id={`spectral-file-${fieldKey}`}
+                    accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,.svg,image/*,application/pdf"
                     onChange={(e) => handleSpectralFileChange(fieldKey, e)}
                     label={t('compoundForm.browse')}
                     selectedFileName={spectralFileNames[fieldKey]}
@@ -1081,27 +1123,35 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
                     )}
                     {(currentData.startsWith('http') || currentData.startsWith('/compound-uploads/')) && (
                       <div>
-                        <img
-                          src={getImageUrl(currentData)}
-                          alt={`${fieldLabel} preview`}
-                          className="mt-2 max-w-xs max-h-32 border rounded"
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            target.alt = "Image not found or invalid URL";
-                            target.src = '';
-                            target.style.display = 'none';
-                            // Show fallback link if image fails to load
-                            const fallbackLink = document.createElement('a');
-                            fallbackLink.href = getImageUrl(currentData);
-                            fallbackLink.target = '_blank';
-                            fallbackLink.rel = 'noopener noreferrer';
-                            fallbackLink.className = 'text-indigo-600 hover:underline text-sm block mt-1';
-                            fallbackLink.textContent = `View ${fieldLabel} (External URL)`;
-                            target.parentNode?.appendChild(fallbackLink);
-                          }}
-                        />
+                        {(currentData.toLowerCase().includes('.jpg') ||
+                          currentData.toLowerCase().includes('.jpeg') ||
+                          currentData.toLowerCase().includes('.png') ||
+                          currentData.toLowerCase().includes('.gif') ||
+                          currentData.toLowerCase().includes('.webp') ||
+                          currentData.toLowerCase().includes('.svg')) && (
+                          <img
+                            src={getImageUrl(currentData)}
+                            alt={`${fieldLabel} preview`}
+                            className="mt-2 max-w-xs max-h-32 border rounded"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.alt = "Image not found or invalid URL";
+                              target.src = '';
+                              target.style.display = 'none';
+                            }}
+                          />
+                        )}
                         <div className="mt-1">
-                          <a href={getImageUrl(currentData)} target="_blank" rel="noopener noreferrer" className="text-xs text-gray-500 hover:text-gray-700 underline">
+                          {currentData.toLowerCase().includes('.pdf') ? (
+                            <a href={getImageUrl(currentData)} download={`${spectralFileNames[fieldKey] || fieldLabel}.pdf`} className="text-indigo-600 hover:underline text-sm block">
+                              Download PDF
+                            </a>
+                          ) : (
+                            <a href={getImageUrl(currentData)} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline text-sm block">
+                              View File
+                            </a>
+                          )}
+                          <a href={getImageUrl(currentData)} target="_blank" rel="noopener noreferrer" className="text-xs text-gray-500 hover:text-gray-700 underline block mt-1">
                             {t('variousLabels.openInNewTab')}
                           </a>
                         </div>

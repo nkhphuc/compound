@@ -34,7 +34,6 @@ export const SPECTRAL_FIELDS_CONFIG: Array<{ key: keyof SpectralRecord; labelKey
   { key: 'cd', labelKey: 'spectralFields.cd' },
 ];
 
-// Deprecated, use SPECTRAL_FIELDS_CONFIG and translate labels
 export const SPECTRAL_FIELDS: Array<{ key: keyof SpectralRecord; label: string }> = [
   { key: '1h', label: '1H NMR' },
   { key: '13c', label: '13C NMR' },
