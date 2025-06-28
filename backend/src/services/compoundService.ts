@@ -1,6 +1,60 @@
 import { pool } from '../config/database';
 import { CompoundData, CompoundStatus, SpectralRecord, NMRDataBlock, NMRCondition, NMRSignalData } from '../types';
 import { v4 as uuidv4 } from 'uuid';
+// S3/MinIO imports and config
+import { DeleteObjectCommand, HeadBucketCommand } from '@aws-sdk/client-s3';
+import { s3Client, S3_CONFIG } from '../config/s3';
+
+// Helper: extract S3 key from a public file URL
+function extractS3KeyFromUrl(url: string): string | null {
+  // Example: http://localhost:9000/compound-uploads/filename.ext
+  try {
+    const base = S3_CONFIG.PUBLIC_ENDPOINT.replace(/\/$/, '');
+    if (url.startsWith(base)) {
+      // Remove base and leading slash, then extract just the filename
+      const fullPath = url.substring(base.length + 1);
+      // Remove bucket name from path: compound-uploads/filename.ext -> filename.ext
+      const parts = fullPath.split('/');
+      if (parts.length >= 2) {
+        return parts.slice(1).join('/'); // Return everything after the bucket name
+      }
+      return fullPath;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+// Helper: delete a file from S3/MinIO
+async function deleteFileFromS3(key: string): Promise<void> {
+  try {
+    console.log(`S3 Cleanup - Attempting to delete file with key: ${key}`);
+    console.log(`S3 Cleanup - Using bucket: ${S3_CONFIG.BUCKET}`);
+    console.log(`S3 Cleanup - Using endpoint: ${S3_CONFIG.ENDPOINT}`);
+    console.log(`S3 Cleanup - Using access key: ${S3_CONFIG.ACCESS_KEY}`);
+    console.log(`S3 Cleanup - Using region: us-east-1`);
+    console.log(`S3 Cleanup - Using forcePathStyle: true`);
+
+    // Test S3 client connectivity first
+    try {
+      console.log(`S3 Cleanup - Testing S3 client connectivity...`);
+      await s3Client.send(new HeadBucketCommand({ Bucket: S3_CONFIG.BUCKET }));
+      console.log(`S3 Cleanup - S3 client connectivity test successful`);
+    } catch (connectErr) {
+      console.error('S3 Cleanup - S3 client connectivity test failed:', connectErr);
+      return;
+    }
+
+    const result = await s3Client.send(new DeleteObjectCommand({ Bucket: S3_CONFIG.BUCKET, Key: key }));
+    console.log(`S3 Cleanup - Delete successful for key: ${key}`, result);
+    console.log(`S3 Cleanup - Delete result metadata:`, result.$metadata);
+  } catch (err) {
+    // Log but don't throw, so DB ops aren't blocked by S3 errors
+    console.error('S3 Cleanup - Failed to delete file from S3:', key, err);
+    console.error('S3 Cleanup - Error details:', JSON.stringify(err, null, 2));
+  }
+}
 
 export class CompoundService {
   async getCompounds(options: { page: number; limit: number; searchTerm?: string }) {
@@ -197,6 +251,34 @@ export class CompoundService {
         return null;
       }
 
+      // --- S3 file cleanup logic ---
+      // Compare old and new pho fields (file URLs)
+      const oldPho = existingCompound.pho || {};
+      const newPho = compoundData.pho || {};
+
+      console.log('S3 Cleanup - Old pho:', JSON.stringify(oldPho));
+      console.log('S3 Cleanup - New pho:', JSON.stringify(newPho));
+
+      // Find removed/changed files
+      for (const key of Object.keys(oldPho)) {
+        const oldValue = oldPho[key as keyof SpectralRecord];
+        const newValue = newPho[key as keyof SpectralRecord];
+
+        console.log(`S3 Cleanup - Checking field ${key}: old="${oldValue}", new="${newValue}"`);
+
+        if (oldValue && oldValue.startsWith('http') && (!newValue || newValue !== oldValue)) {
+          console.log(`S3 Cleanup - File changed/removed for ${key}: ${oldValue}`);
+          const s3Key = extractS3KeyFromUrl(oldValue);
+          if (s3Key) {
+            console.log(`S3 Cleanup - Deleting S3 key: ${s3Key}`);
+            await deleteFileFromS3(s3Key);
+          } else {
+            console.log(`S3 Cleanup - Could not extract S3 key from URL: ${oldValue}`);
+          }
+        }
+      }
+      // --- end S3 file cleanup logic ---
+
       // Update compound with JSONB fields
       const compoundQuery = `
         UPDATE compounds SET
@@ -299,6 +381,27 @@ export class CompoundService {
   }
 
   async deleteCompound(id: string): Promise<boolean> {
+    // --- S3 file cleanup logic ---
+    // Fetch compound to get file URLs
+    const compound = await this.getCompoundById(id);
+    if (compound && compound.pho) {
+      console.log('S3 Cleanup - Deleting compound files:', JSON.stringify(compound.pho));
+
+      for (const key of Object.keys(compound.pho)) {
+        const value = compound.pho[key as keyof SpectralRecord];
+        if (value && value.startsWith('http')) {
+          console.log(`S3 Cleanup - Deleting file for ${key}: ${value}`);
+          const s3Key = extractS3KeyFromUrl(value);
+          if (s3Key) {
+            console.log(`S3 Cleanup - Deleting S3 key: ${s3Key}`);
+            await deleteFileFromS3(s3Key);
+          } else {
+            console.log(`S3 Cleanup - Could not extract S3 key from URL: ${value}`);
+          }
+        }
+      }
+    }
+    // --- end S3 file cleanup logic ---
     const result = await pool.query('DELETE FROM compounds WHERE id = $1', [id]);
     return (result.rowCount || 0) > 0;
   }
