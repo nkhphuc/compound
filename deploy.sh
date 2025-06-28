@@ -22,9 +22,15 @@ else
     echo "✅ Detected LAN IP: $LAN_IP"
 fi
 
-# Set environment variable for VITE_S3_PUBLIC_ENDPOINT
+# Set environment variables for mobile access
+export VITE_API_BASE_URL="http://$LAN_IP:3002/api"
 export VITE_S3_PUBLIC_ENDPOINT="http://$LAN_IP:9000"
-echo "🔗 VITE_S3_PUBLIC_ENDPOINT set to: $VITE_S3_PUBLIC_ENDPOINT"
+export CORS_ORIGIN="*"
+
+echo "🔗 Environment variables set:"
+echo "   VITE_API_BASE_URL: $VITE_API_BASE_URL"
+echo "   VITE_S3_PUBLIC_ENDPOINT: $VITE_S3_PUBLIC_ENDPOINT"
+echo "   CORS_ORIGIN: $CORS_ORIGIN"
 
 # Create necessary directories
 echo "📁 Creating necessary directories..."
@@ -55,7 +61,17 @@ echo "   Backend API: http://$LAN_IP:3002"
 echo "   MinIO Console: http://$LAN_IP:9001"
 echo "   Health Check: http://$LAN_IP/health"
 echo ""
+echo "📱 Mobile Access:"
+echo "   Your app is now configured for mobile access!"
+echo "   Make sure your mobile device is on the same WiFi network"
+echo "   Access from mobile: http://$LAN_IP"
+echo ""
 echo "🔧 Useful commands:"
 echo "   View logs: docker-compose logs -f"
 echo "   Stop services: docker-compose down"
 echo "   Restart services: docker-compose restart"
+echo ""
+echo "🛠️  Troubleshooting:"
+echo "   If mobile access doesn't work, check your firewall settings:"
+echo "   - macOS: System Preferences > Security & Privacy > Firewall"
+echo "   - Linux: sudo ufw status"

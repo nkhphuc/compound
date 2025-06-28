@@ -1,6 +1,10 @@
 # Use Node.js 22.6.0 as specified in .tool-versions
 FROM node:22.6.0-alpine AS build
 
+# Accept build arguments for environment variables
+ARG VITE_API_BASE_URL
+ARG VITE_S3_PUBLIC_ENDPOINT
+
 # Install dependencies only when needed
 FROM build AS deps
 # Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
@@ -17,6 +21,10 @@ FROM build AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+
+# Set environment variables for the build process
+ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
+ENV VITE_S3_PUBLIC_ENDPOINT=${VITE_S3_PUBLIC_ENDPOINT}
 
 # Build the application
 RUN npm install -g pnpm@10.12.1

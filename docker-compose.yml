@@ -87,8 +87,12 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        - VITE_API_BASE_URL=${VITE_API_BASE_URL:-http://localhost:3002/api}
+        - VITE_S3_PUBLIC_ENDPOINT=${VITE_S3_PUBLIC_ENDPOINT:-http://localhost:9000}
     container_name: compound-frontend
     environment:
+      - VITE_API_BASE_URL=${VITE_API_BASE_URL:-http://localhost:3002/api}
       - VITE_S3_PUBLIC_ENDPOINT=${VITE_S3_PUBLIC_ENDPOINT:-http://localhost:9000}
     ports:
       - "80:80"
