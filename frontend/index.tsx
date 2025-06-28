@@ -185,7 +185,7 @@ const enTranslations = {
     csvInput: {
       title: "Bulk Input (CSV)",
       description: "Enter data in CSV format: Position, δC (ppm), δH (ppm, J Hz)",
-      placeholder: "1,34.1,1.83 m\n2,45.2,2.15 s\n3,67.8,3.45 t (7.2)",
+      placeholder: '1,"34,1","1,83 m; 2,03 dd (2,4; 5,4)"\n2,"45,2","2,15 s"\n3,"67,8","3,45 t (7,2)"',
       pasteExample: "Paste Example",
       preview: "Preview",
       signals: "signals",
@@ -395,7 +395,7 @@ const viTranslations = {
     csvInput: {
       title: "Nhập hàng loạt (CSV)",
       description: "Nhập dữ liệu theo định dạng CSV: Vị trí, δC (ppm), δH (ppm, J Hz)",
-      placeholder: "1,34.1,1.83 m\n2,45.2,2.15 s\n3,67.8,3.45 t (7.2)",
+      placeholder: '1,"34,1","1,83 m; 2,03 dd (2,4; 5,4)"\n2,"45,2","2,15 s"\n3,"67,8","3,45 t (7,2)"',
       pasteExample: "Dán ví dụ",
       preview: "Xem trước",
       signals: "tín hiệu",

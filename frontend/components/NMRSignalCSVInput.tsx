@@ -25,8 +25,44 @@ export const NMRSignalCSVInput: React.FC<NMRSignalCSVInputProps> = ({ onAddSigna
       const line = lines[i].trim();
       if (!line) continue;
 
-      // Split by comma, but handle quoted values
-      const values = line.split(',').map(val => val.trim().replace(/^["']|["']$/g, ''));
+      // Parse CSV line with proper quoted value handling
+      const values: string[] = [];
+      let currentValue = '';
+      let inQuotes = false;
+      let j = 0;
+
+      while (j < line.length) {
+        const char = line[j];
+
+        if (char === '"') {
+          if (inQuotes) {
+            // Check for escaped quote (double quote)
+            if (j + 1 < line.length && line[j + 1] === '"') {
+              currentValue += '"';
+              j += 2; // Skip both quotes
+              continue;
+            } else {
+              // End of quoted value
+              inQuotes = false;
+            }
+          } else {
+            // Start of quoted value
+            inQuotes = true;
+          }
+        } else if (char === ',' && !inQuotes) {
+          // End of value
+          values.push(currentValue.trim());
+          currentValue = '';
+        } else {
+          // Regular character
+          currentValue += char;
+        }
+
+        j++;
+      }
+
+      // Add the last value
+      values.push(currentValue.trim());
 
       if (values.length < 3) {
         throw new Error(`Line ${i + 1}: Expected at least 3 columns (Position, δC, δH), got ${values.length}`);
@@ -104,10 +140,10 @@ export const NMRSignalCSVInput: React.FC<NMRSignalCSVInputProps> = ({ onAddSigna
   };
 
   const handlePasteExample = () => {
-    const example = `1,34.1,1.83 m; 2.03 dd (2.4; 5.4)
-2,45.2,2.15 s
-3,67.8,3.45 t (7.2)
-4,89.3,4.12 d (8.1)`;
+    const example = `1,"34,1","1,83 m; 2,03 dd (2,4; 5,4)"
+2,"45,2","2,15 s"
+3,"67,8","3,45 t (7,2)"
+4,"89,3","4,12 d (8,1)"`;
     setCsvData(example);
     handleCSVChange({ target: { value: example } } as React.ChangeEvent<HTMLTextAreaElement>);
   };
@@ -133,7 +169,7 @@ export const NMRSignalCSVInput: React.FC<NMRSignalCSVInputProps> = ({ onAddSigna
       <Textarea
         value={csvData}
         onChange={handleCSVChange}
-        placeholder={t('nmrForm.csvInput.placeholder', '1,34.1,1.83 m\n2,45.2,2.15 s\n3,67.8,3.45 t (7.2)')}
+        placeholder={`1,"34,1","1,83 m; 2,03 dd (2,4; 5,4)"\n2,"45,2","2,15 s"\n3,"67,8","3,45 t (7,2)"`}
         rows={6}
         className="font-mono text-sm"
       />
