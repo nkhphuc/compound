@@ -1,10 +1,3 @@
-// S3/MinIO Upload Controller (AWS SDK v3)
-// Required env vars:
-// S3_ENDPOINT=http://localhost:9000
-// S3_ACCESS_KEY=minioadmin
-// S3_SECRET_KEY=minioadmin
-// S3_BUCKET=compound-uploads
-
 import { Request, Response } from 'express';
 import { HeadBucketCommand, CreateBucketCommand, PutObjectCommand } from '@aws-sdk/client-s3';
 import { v4 as uuidv4 } from 'uuid';

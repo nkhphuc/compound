@@ -9,6 +9,7 @@ A monorepo containing a full-stack application for managing chemical compound da
 compound/
 ├── frontend/          # React + TypeScript + Vite
 ├── backend/           # Express.js + TypeScript + PostgreSQL
+├── nginx/             # Nginx reverse proxy configuration
 ├── db/                # PostgreSQL data directory
 ├── uploads/           # File uploads directory
 ├── docker-compose.yml # Docker configuration
@@ -166,7 +167,7 @@ compound/
    pnpm dev:backend   # Backend on http://localhost:3002
    ```
 
-## 📦 Available Scripts
+## �� Available Scripts
 
 ### Root Level
 
@@ -198,10 +199,60 @@ compound/
 
 The application uses PostgreSQL with the following main tables:
 
-- **compounds**: Main compound data (ID, name, formula, etc.)
-- **nmr_data**: NMR spectroscopy data
-- **nmr_signals**: Individual NMR signals
-- **nmr_conditions**: NMR measurement conditions
+### compounds
+
+Main compound data table with fields:
+
+- `id` (UUID, Primary Key)
+- `stt_hc` (SERIAL, Unique) - Compound serial number
+- `ten_hc` (VARCHAR) - Compound name
+- `ten_hc_khac` (VARCHAR) - Alternative names
+- `loai_hc` (VARCHAR) - Compound type
+- `status` (VARCHAR) - Status
+- `ten_latin` (VARCHAR) - Latin name
+- `ten_ta` (VARCHAR) - English name
+- `ten_tv` (VARCHAR) - Vietnamese name
+- `bpnc` (TEXT) - Boiling point
+- `trang_thai` (VARCHAR) - Physical state
+- `mau` (VARCHAR) - Color
+- `uv_sklm` (JSONB) - UV spectroscopy data
+- `diem_nong_chay` (VARCHAR) - Melting point
+- `alpha_d` (VARCHAR) - Optical rotation
+- `dung_moi_hoa_tan_tcvl` (TEXT) - Solvent solubility
+- `ctpt` (TEXT) - Chemical formula
+- `klpt` (VARCHAR) - Molecular weight
+- `hinh_cau_truc` (TEXT) - Structural formula
+- `cau_hinh_tuyet_doi` (BOOLEAN) - Absolute configuration
+- `smiles` (TEXT) - SMILES notation
+- `pho` (JSONB) - Spectroscopy data
+- `dm_nmr_general` (TEXT) - NMR solvent
+- `cart_coor` (TEXT) - Cartesian coordinates
+- `img_freq` (VARCHAR) - Image frequency
+- `te` (VARCHAR) - Temperature
+
+### nmr_data_blocks
+
+NMR data blocks table:
+
+- `id` (UUID, Primary Key)
+- `compound_id` (UUID, Foreign Key) - Reference to compounds
+- `stt_bang` (SERIAL, Unique) - Table number
+- `dm_nmr` (TEXT) - NMR solvent
+- `tan_so_13c` (VARCHAR) - 13C frequency
+- `tan_so_1h` (VARCHAR) - 1H frequency
+- `luu_y_nmr` (TEXT) - NMR notes
+- `tltk_nmr` (TEXT) - NMR references
+
+### nmr_signals
+
+Individual NMR signals table:
+
+- `id` (UUID, Primary Key)
+- `nmr_data_block_id` (UUID, Foreign Key) - Reference to nmr_data_blocks
+- `vi_tri` (VARCHAR) - Signal position
+- `scab` (TEXT) - Signal assignment
+- `shac_j_hz` (TEXT) - Chemical shift and coupling
+- `sort_order` (SERIAL) - Display order
 
 ## 🔧 API Endpoints
 
@@ -213,11 +264,17 @@ The application uses PostgreSQL with the following main tables:
 - `PUT /api/compounds/:id` - Update compound
 - `DELETE /api/compounds/:id` - Delete compound
 - `GET /api/compounds/next-stt-hc` - Get next available serial number
+- `GET /api/compounds/next-stt-bang` - Get next available table number
 
 ### File Upload
 
-- `POST /api/upload` - Upload files to S3/MinIO storage
-- `GET /api/metadata` - Get file metadata
+- `POST /api/uploads` - Upload files to S3/MinIO storage
+
+### Metadata
+
+- `GET /api/meta/loai-hc` - Get all unique compound types
+- `GET /api/meta/trang-thai` - Get all unique physical states
+- `GET /api/meta/mau` - Get all unique colors
 
 ### Health Check
 
@@ -272,22 +329,11 @@ DATABASE_URL=postgresql://postgres:your_password@localhost:5432/compound_chemist
 # CORS Configuration
 CORS_ORIGIN=http://localhost:5173
 
-# Logging
-LOG_LEVEL=info
-
 # S3/MinIO Configuration
 S3_ENDPOINT=http://minio:9000
 S3_ACCESS_KEY=minioadmin
 S3_SECRET_KEY=minioadmin
 S3_BUCKET=compound-uploads
-```
-
-### Frontend (.env)
-
-```env
-# File Configuration
-VITE_FILE_BASE_URL=http://localhost:3002
-
 ```
 
 **Note:**
@@ -345,6 +391,7 @@ docker-compose up -d --build
 - **MinIO**: Object storage for file uploads
 - **Backend**: Express.js API server
 - **Frontend**: React application served via Nginx
+- **Nginx**: Reverse proxy serving the application on port 80
 
 **Database Migration:**
 The backend container automatically runs database migrations on startup using the compiled JavaScript files. The migration script creates all necessary tables and indexes.
