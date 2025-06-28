@@ -54,3 +54,44 @@ export const uploadFile = async (req: Request, res: Response): Promise<void> => 
     res.status(500).json({ success: false, error: 'Failed to upload file' });
   }
 };
+
+export const uploadMultipleFiles = async (req: Request, res: Response): Promise<void> => {
+  try {
+    let uploadedFiles = req.files!.files as any[] | any;
+    if (!Array.isArray(uploadedFiles)) {
+      // If it's a single file, wrap it in an array
+      uploadedFiles = [uploadedFiles];
+    }
+
+    await ensureBucketExists();
+    const uploadPromises = uploadedFiles.map(async (file: any) => {
+      const fileExtension = path.extname(file.name);
+      const fileName = `${uuidv4()}${fileExtension}`;
+      const putParams = {
+        Bucket: S3_CONFIG.BUCKET,
+        Key: fileName,
+        Body: file.data,
+        ContentType: file.mimetype,
+        ACL: 'public-read' as const,
+      };
+      await s3Client.send(new PutObjectCommand(putParams));
+      return {
+        url: `/${S3_CONFIG.BUCKET}/${fileName}`,
+        filename: fileName,
+        originalName: file.name,
+        size: file.size,
+        mimetype: file.mimetype,
+      };
+    });
+
+    const results = await Promise.all(uploadPromises);
+
+    res.json({
+      success: true,
+      data: results
+    });
+  } catch (error) {
+    console.error('Error uploading multiple files to S3/MinIO:', error);
+    res.status(500).json({ success: false, error: 'Failed to upload files' });
+  }
+};

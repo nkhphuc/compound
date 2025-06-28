@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation, Trans } from 'react-i18next';
 import { CompoundData, initialCompoundData, UVSKLMData, SpectralRecord, NMRDataBlock, NMRSignalData, CompoundStatus, initialNMRDataBlock, initialNMRSignalData, NMRCondition, initialNMRCondition } from '../types';
 import { COMPOUND_STATUS_OPTIONS_KEYS, SPECTRAL_FIELDS, DEFAULT_LOAI_HC_OPTIONS, LOAI_HC_OTHER_STRING, DEFAULT_TRANG_THAI_OPTIONS, DEFAULT_MAU_OPTIONS, LOAI_HC_OTHER_STRING_KEY } from '../constants';
-import { getUniqueLoaiHCValues, getUniqueTrangThaiValues, getUniqueMauValues, uploadFile } from '../services/compoundService';
+import { getUniqueLoaiHCValues, getUniqueTrangThaiValues, getUniqueMauValues, uploadFile, uploadMultipleFiles } from '../services/compoundService';
 import { getImageUrl } from '../services/urlService';
 import { Input } from './ui/Input';
 import { Button } from './ui/Button';
@@ -12,6 +12,8 @@ import { SectionCard } from './SectionCard';
 import { SingleNMRDataForm } from './SingleNMRDataForm';
 import { TrashIcon } from './icons/TrashIcon';
 import { CustomFileInput } from './ui/CustomFileInput';
+import { MultiFileInput } from './ui/MultiFileInput';
+import { SpectralFilesPreview } from './ui/SpectralFilesPreview';
 import { Notification } from './ui/Notification';
 
 interface CompoundFormProps {
@@ -19,6 +21,14 @@ interface CompoundFormProps {
   onSave: (data: CompoundData) => Promise<boolean>;
   saveError?: string | null;
   isSaving?: boolean;
+}
+
+interface FileInfo {
+  id: string;
+  name: string;
+  url: string;
+  size: number;
+  type: string;
 }
 
 type ImageInputMethod = 'upload' | 'url';
@@ -41,71 +51,26 @@ const initialSpectralMethodsState: Record<keyof SpectralRecord, SpectralInputMet
     return acc;
   }, {} as Record<keyof SpectralRecord, SpectralInputMethod>);
 
-const initialSpectralUrlsState: Record<keyof SpectralRecord, string> =
+const initialSpectralUrlsState: Record<keyof SpectralRecord, string[]> =
   SPECTRAL_FIELDS.reduce((acc, field) => {
-    acc[field.key] = ''; // Default empty URL
+    acc[field.key] = []; // Default empty URL array
     return acc;
-  }, {} as Record<keyof SpectralRecord, string>);
-
-const initialSpectralFileNamesState: Record<keyof SpectralRecord, string> =
-  SPECTRAL_FIELDS.reduce((acc, field) => {
-    acc[field.key] = ''; // Default empty file name
-    return acc;
-  }, {} as Record<keyof SpectralRecord, string>);
+  }, {} as Record<keyof SpectralRecord, string[]>);
 
 export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave, saveError: parentSaveError, isSaving }) => {
   const { t } = useTranslation();
+
+  // Initialize formData with a simple default
   const [formData, setFormData] = useState<CompoundData>(() => {
-    if (initialData) {
-      const parsedInitial = JSON.parse(JSON.stringify(initialData));
-
-      // Handle NMRConditions: if array (old data), take first; otherwise, use as is or default
-      let initialNmrConditionsObj: NMRCondition;
-      const rawNmrConditions = parsedInitial.nmrData?.nmrConditions;
-      if (Array.isArray(rawNmrConditions) && rawNmrConditions.length > 0) {
-        initialNmrConditionsObj = { ...initialNMRCondition, ...rawNmrConditions[0], id: rawNmrConditions[0].id || crypto.randomUUID() };
-      } else if (typeof rawNmrConditions === 'object' && rawNmrConditions !== null && !Array.isArray(rawNmrConditions)) {
-        initialNmrConditionsObj = { ...initialNMRCondition, ...rawNmrConditions, id: rawNmrConditions.id || crypto.randomUUID() };
-      } else {
-        initialNmrConditionsObj = { ...initialNMRCondition, id: crypto.randomUUID() };
-      }
-
-      const nmrData = {
-        ...(parsedInitial.nmrData || { ...initialNMRDataBlock, id: crypto.randomUUID() }),
-        nmrConditions: initialNmrConditionsObj,
-        signals: parsedInitial.nmrData?.signals
-          ? parsedInitial.nmrData.signals.map((sig: Partial<NMRSignalData>) => ({ ...initialNMRSignalData, ...sig, id: sig.id || crypto.randomUUID() }))
-          : []
-      };
-
-      const sanitizedPho: SpectralRecord = {} as SpectralRecord;
-      SPECTRAL_FIELDS.forEach(field => {
-        sanitizedPho[field.key] = typeof parsedInitial.pho?.[field.key] === 'string' ? parsedInitial.pho[field.key] : '';
-      });
-
-      return {
-        ...initialCompoundData,
-        ...parsedInitial,
-        status: parsedInitial.status || '',
-        loaiHC: parsedInitial.loaiHC || '',
-        trangThai: parsedInitial.trangThai || '',
-        mau: parsedInitial.mau || '',
-        sttHC: typeof parsedInitial.sttHC === 'number' ? parsedInitial.sttHC : parseInt(String(parsedInitial.sttHC), 10) || 0,
-        cauHinhTuyetDoi: typeof parsedInitial.cauHinhTuyetDoi === 'boolean' ? parsedInitial.cauHinhTuyetDoi : false,
-        pho: sanitizedPho,
-        nmrData: nmrData
-      };
-    }
-    // For new compound
     const defaultPho = SPECTRAL_FIELDS.reduce((acc, field) => {
-        acc[field.key] = '';
-        return acc;
+      acc[field.key] = [];
+      return acc;
     }, {} as SpectralRecord);
 
     return {
       ...JSON.parse(JSON.stringify(initialCompoundData)),
-      id: '', // Don't generate ID for new compounds - let backend generate it
-      nmrData: { ...initialNMRDataBlock, id: '' }, // Don't generate NMR ID either
+      id: '',
+      nmrData: { ...initialNMRDataBlock, id: '' },
       pho: defaultPho
     };
   });
@@ -137,9 +102,15 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
   const [structureImageFileName, setStructureImageFileName] = useState<string>('');
 
   const [spectralInputMethods, setSpectralInputMethods] = useState<Record<keyof SpectralRecord, SpectralInputMethod>>(initialSpectralMethodsState);
-  const [spectralUrlInputs, setSpectralUrlInputs] = useState<Record<keyof SpectralRecord, string>>(initialSpectralUrlsState);
-  const [spectralFileNames, setSpectralFileNames] = useState<Record<keyof SpectralRecord, string>>(initialSpectralFileNamesState);
+  const [spectralUrlInputs, setSpectralUrlInputs] = useState<Record<keyof SpectralRecord, string[]>>(initialSpectralUrlsState);
 
+  // New state for multiple files
+  const [spectralFiles, setSpectralFiles] = useState<Record<keyof SpectralRecord, FileInfo[]>>(
+    SPECTRAL_FIELDS.reduce((acc, field) => {
+      acc[field.key] = [];
+      return acc;
+    }, {} as Record<keyof SpectralRecord, FileInfo[]>)
+  );
 
   const navigate = useNavigate();
 
@@ -179,65 +150,57 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
 
   useEffect(() => {
     const setupFormData = async () => {
-      const dataToSet = initialData
-        ? (() => {
-            const parsedInitial = JSON.parse(JSON.stringify(initialData));
+      if (!initialData) return; // Only setup if we have initial data
 
-            let initialNmrConditionsObj: NMRCondition;
-            const rawNmrConditions = parsedInitial.nmrData?.nmrConditions;
-            if (Array.isArray(rawNmrConditions) && rawNmrConditions.length > 0) {
-              initialNmrConditionsObj = { ...initialNMRCondition, ...rawNmrConditions[0], id: rawNmrConditions[0].id || crypto.randomUUID() };
-            } else if (typeof rawNmrConditions === 'object' && rawNmrConditions !== null && !Array.isArray(rawNmrConditions)) {
-              initialNmrConditionsObj = { ...initialNMRCondition, ...rawNmrConditions, id: rawNmrConditions.id || crypto.randomUUID() };
-            } else {
-              initialNmrConditionsObj = { ...initialNMRCondition, id: crypto.randomUUID() };
-            }
+      const parsedInitial = JSON.parse(JSON.stringify(initialData));
 
-            const nmrData = {
-              ...(parsedInitial.nmrData || { ...initialNMRDataBlock, id: `${parsedInitial.id}-nmr` }),
-              nmrConditions: initialNmrConditionsObj,
-              signals: parsedInitial.nmrData?.signals
-                ? parsedInitial.nmrData.signals.map((sig: Partial<NMRSignalData>) => ({ ...initialNMRSignalData, ...sig, id: sig.id || crypto.randomUUID() }))
-                : []
-            };
-
-            const sanitizedPho: SpectralRecord = {} as SpectralRecord;
-            SPECTRAL_FIELDS.forEach(field => {
-              sanitizedPho[field.key] = typeof parsedInitial.pho?.[field.key] === 'string' ? parsedInitial.pho[field.key] : '';
-            });
-
-            return {
-              ...initialCompoundData,
-              ...parsedInitial,
-              status: parsedInitial.status || '',
-              loaiHC: parsedInitial.loaiHC || '',
-              trangThai: parsedInitial.trangThai || '',
-              mau: parsedInitial.mau || '',
-              sttHC: typeof parsedInitial.sttHC === 'number' ? parsedInitial.sttHC : parseInt(String(parsedInitial.sttHC), 10) || 0,
-              cauHinhTuyetDoi: typeof parsedInitial.cauHinhTuyetDoi === 'boolean' ? parsedInitial.cauHinhTuyetDoi : false,
-              pho: sanitizedPho,
-              nmrData: nmrData
-            };
-          })()
-        : (() => {
-            const defaultPho = SPECTRAL_FIELDS.reduce((acc, field) => {
-                acc[field.key] = '';
-                return acc;
-            }, {} as SpectralRecord);
-            return {
-              ...JSON.parse(JSON.stringify(initialCompoundData)),
-              id: '', // Don't generate ID for new compounds - let backend generate it
-              nmrData: { ...initialNMRDataBlock, id: '' }, // Don't generate NMR ID either
-              pho: defaultPho
-            };
-          })();
-
-      // For new compounds, the table number will be auto-generated by the backend
-      if (!initialData) {
-        // Table number will be auto-generated by backend when saving
+      // Handle NMRConditions: if array (old data), take first; otherwise, use as is or default
+      let initialNmrConditionsObj: NMRCondition;
+      const rawNmrConditions = parsedInitial.nmrData?.nmrConditions;
+      if (Array.isArray(rawNmrConditions) && rawNmrConditions.length > 0) {
+        initialNmrConditionsObj = { ...initialNMRCondition, ...rawNmrConditions[0], id: rawNmrConditions[0].id || crypto.randomUUID() };
+      } else if (typeof rawNmrConditions === 'object' && rawNmrConditions !== null && !Array.isArray(rawNmrConditions)) {
+        initialNmrConditionsObj = { ...initialNMRCondition, ...rawNmrConditions, id: rawNmrConditions.id || crypto.randomUUID() };
       } else {
-        // Editing existing compound - keep existing table number
+        initialNmrConditionsObj = { ...initialNMRCondition, id: crypto.randomUUID() };
       }
+
+      const nmrData = {
+        ...(parsedInitial.nmrData || { ...initialNMRDataBlock, id: crypto.randomUUID() }),
+        nmrConditions: initialNmrConditionsObj,
+        signals: parsedInitial.nmrData?.signals
+          ? parsedInitial.nmrData.signals.map((sig: Partial<NMRSignalData>) => ({ ...initialNMRSignalData, ...sig, id: sig.id || crypto.randomUUID() }))
+          : []
+      };
+
+      const sanitizedPho: SpectralRecord = {} as SpectralRecord;
+
+      SPECTRAL_FIELDS.forEach(field => {
+        const key = field.key;
+        const phoValue = parsedInitial.pho?.[key];
+
+        if (Array.isArray(phoValue)) {
+          sanitizedPho[key] = phoValue;
+        } else if (typeof phoValue === 'string' && phoValue) {
+          // Convert legacy single file to array
+          sanitizedPho[key] = [phoValue];
+        } else {
+          sanitizedPho[key] = [];
+        }
+      });
+
+      const dataToSet = {
+        ...initialCompoundData,
+        ...parsedInitial,
+        status: parsedInitial.status || '',
+        loaiHC: parsedInitial.loaiHC || '',
+        trangThai: parsedInitial.trangThai || '',
+        mau: parsedInitial.mau || '',
+        sttHC: typeof parsedInitial.sttHC === 'number' ? parsedInitial.sttHC : parseInt(String(parsedInitial.sttHC), 10) || 0,
+        cauHinhTuyetDoi: typeof parsedInitial.cauHinhTuyetDoi === 'boolean' ? parsedInitial.cauHinhTuyetDoi : false,
+        pho: sanitizedPho,
+        nmrData: nmrData
+      };
 
       setFormData(dataToSet);
 
@@ -293,33 +256,30 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
         setStructureImageFileName('');
       }
 
-      const iSpectralInputMethods = { ...initialSpectralMethodsState };
-      const iSpectralUrlInputs = { ...initialSpectralUrlsState };
-      const iSpectralFileNames = { ...initialSpectralFileNamesState };
+      // Initialize spectral input methods based on existing data
+      const iSpectralInputMethods: Record<keyof SpectralRecord, SpectralInputMethod> = { ...initialSpectralMethodsState };
+      const iSpectralUrlInputs: Record<keyof SpectralRecord, string[]> = { ...initialSpectralUrlsState };
 
-      SPECTRAL_FIELDS.forEach(sf => {
-        const key = sf.key;
-        const phoValue = (dataToSet.pho as SpectralRecord)[key];
+      SPECTRAL_FIELDS.forEach(field => {
+        const key = field.key;
+        const phoValue = dataToSet.pho[key];
 
-        if (phoValue) {
-          if (phoValue.startsWith('data:')) {
+        if (Array.isArray(phoValue) && phoValue.length > 0) {
+          const firstFile = phoValue[0];
+          if (firstFile.startsWith('data:')) {
             iSpectralInputMethods[key] = 'upload';
-            iSpectralFileNames[key] = t('compoundForm.uploadedFilePlaceholder');
-            iSpectralUrlInputs[key] = '';
-          } else if (phoValue.startsWith('http')) {
+            iSpectralUrlInputs[key] = [];
+          } else if (firstFile.startsWith('http')) {
             iSpectralInputMethods[key] = 'url';
-            iSpectralUrlInputs[key] = phoValue;
-            iSpectralFileNames[key] = '';
+            iSpectralUrlInputs[key] = [firstFile];
           } else {
             iSpectralInputMethods[key] = 'upload';
-            iSpectralUrlInputs[key] = '';
-            iSpectralFileNames[key] = '';
+            iSpectralUrlInputs[key] = [];
           }
         }
       });
       setSpectralInputMethods(iSpectralInputMethods);
       setSpectralUrlInputs(iSpectralUrlInputs);
-      setSpectralFileNames(iSpectralFileNames);
 
       setFormErrors({});
       setCurrentSaveError(null);
@@ -329,6 +289,31 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialData, t, loaiHcDropdownOptions.length, trangThaiDropdownOptions.length, mauDropdownOptions.length]);
 
+  // Initialize spectral files state based on formData
+  useEffect(() => {
+    if (initialData && formData.pho) {
+      const sanitizedSpectralFiles: Record<keyof SpectralRecord, FileInfo[]> = {} as Record<keyof SpectralRecord, FileInfo[]>;
+
+      SPECTRAL_FIELDS.forEach(field => {
+        const key = field.key;
+        const phoValue = formData.pho[key];
+
+        if (Array.isArray(phoValue) && phoValue.length > 0) {
+          sanitizedSpectralFiles[key] = phoValue.map(url => ({
+            id: crypto.randomUUID(),
+            name: url.split('/').pop() || 'Unknown file',
+            url,
+            size: 0, // We don't have size info for existing files
+            type: url.includes('.pdf') ? 'application/pdf' : 'image/jpeg'
+          }));
+        } else {
+          sanitizedSpectralFiles[key] = [];
+        }
+      });
+
+      setSpectralFiles(sanitizedSpectralFiles);
+    }
+  }, [initialData, formData.pho]);
 
   useEffect(() => {
     setCurrentSaveError(parentSaveError || null);
@@ -471,9 +456,8 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
 
   const handleSpectralInputMethodChange = (fieldKey: keyof SpectralRecord, method: SpectralInputMethod) => {
     setSpectralInputMethods(prev => ({ ...prev, [fieldKey]: method }));
-    setFormData(prev => ({ ...prev, pho: { ...prev.pho, [fieldKey]: '' } }));
-    setSpectralUrlInputs(prev => ({ ...prev, [fieldKey]: '' }));
-    setSpectralFileNames(prev => ({ ...prev, [fieldKey]: '' }));
+    setFormData(prev => ({ ...prev, pho: { ...prev.pho, [fieldKey]: [] } }));
+    setSpectralUrlInputs(prev => ({ ...prev, [fieldKey]: [] }));
     const fileInput = document.getElementById(`spectral-file-${fieldKey}`) as HTMLInputElement;
     if (fileInput) fileInput.value = '';
     setFormErrors(prev => {
@@ -483,77 +467,131 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
     });
   };
 
-  const handleSpectralFileChange = async (fieldKey: keyof SpectralRecord, e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      // Validate file type
+  const handleSpectralUrlInputChange = (fieldKey: keyof SpectralRecord, index: number, value: string) => {
+    setSpectralUrlInputs(prev => {
+      const newUrls = [...(prev[fieldKey] || [])];
+      newUrls[index] = value;
+      return { ...prev, [fieldKey]: newUrls };
+    });
+    setFormData(prev => ({ ...prev, pho: { ...prev.pho, [fieldKey]: spectralUrlInputs[fieldKey] || [] } }));
+    setFormErrors(prev => {
+      const newErrors = { ...prev };
+      if (newErrors.pho) {
+        delete newErrors.pho[fieldKey];
+      }
+      return newErrors;
+    });
+  };
+
+  const addSpectralUrl = (fieldKey: keyof SpectralRecord) => {
+    setSpectralUrlInputs(prev => {
+      const currentUrls = prev[fieldKey] || [];
+      return { ...prev, [fieldKey]: [...currentUrls, ''] };
+    });
+  };
+
+  const removeSpectralUrl = (fieldKey: keyof SpectralRecord, index: number) => {
+    setSpectralUrlInputs(prev => {
+      const currentUrls = prev[fieldKey] || [];
+      const newUrls = currentUrls.filter((_, i) => i !== index);
+      return { ...prev, [fieldKey]: newUrls };
+    });
+    setFormData(prev => ({ ...prev, pho: { ...prev.pho, [fieldKey]: spectralUrlInputs[fieldKey]?.filter((_, i) => i !== index) || [] } }));
+  };
+
+  const removeAllSpectralUrls = (fieldKey: keyof SpectralRecord) => {
+    setSpectralUrlInputs(prev => ({ ...prev, [fieldKey]: [] }));
+    setFormData(prev => ({ ...prev, pho: { ...prev.pho, [fieldKey]: [] } }));
+  };
+
+  // New handlers for multiple files
+  const handleSpectralMultipleFileChange = async (fieldKey: keyof SpectralRecord, files: File[]) => {
+    try {
+      // Validate files
       const allowedTypes = [
         'application/pdf',
-        'image/jpeg',
-        'image/jpg',
-        'image/png',
-        'image/gif',
-        'image/webp',
-        'image/svg+xml'
+        'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'
       ];
 
-      if (!allowedTypes.includes(file.type)) {
+      const invalidFiles = files.filter(file => !allowedTypes.includes(file.type));
+      if (invalidFiles.length > 0) {
         setFormErrors(prev => ({
-          ...(prev || {}),
+          ...prev,
           pho: {
-            ...(prev?.pho || {}),
-            [fieldKey]: 'Please upload only PDF or image files (JPG, PNG, GIF, WebP, SVG).'
+            ...(prev.pho || {}),
+            [fieldKey]: `Invalid file types: ${invalidFiles.map(f => f.name).join(', ')}`
           }
         }));
-        // Clear the file input
-        e.target.value = '';
         return;
       }
 
-      try {
-        const url = await uploadFile(file);
-        setFormData(prev => ({ ...prev, pho: { ...prev.pho, [fieldKey]: url } }));
-        setSpectralFileNames(prev => ({ ...prev, [fieldKey]: file.name }));
-        setFormErrors(prev => {
-          const newPhoErrors = { ...(prev.pho || {}) };
-          delete newPhoErrors[fieldKey];
-          return { ...prev, pho: newPhoErrors };
-        });
-      } catch (err) {
-        setFormErrors(prev => ({ ...(prev || {}), pho: { ...(prev?.pho || {}), [fieldKey]: 'File upload failed' } }));
-      }
-    }
-  };
+      // Upload files
+      const newFileInfos = await uploadMultipleFiles(files);
 
-  const handleSpectralUrlInputChange = (fieldKey: keyof SpectralRecord, e: React.ChangeEvent<HTMLInputElement>) => {
-    const url = e.target.value;
-    setSpectralUrlInputs(prev => ({ ...prev, [fieldKey]: url }));
-    if (spectralInputMethods[fieldKey] === 'url') {
-      setFormData(prev => ({ ...prev, pho: { ...prev.pho, [fieldKey]: url } }));
-      if (url && !url.startsWith('http')) {
-        setFormErrors(prev => ({...prev, pho: {...(prev.pho || {}), [fieldKey]: "Please enter a valid HTTP/S URL."}}));
-      } else {
-        setFormErrors(prev => {
-          const newPhoErrors = { ...(prev.pho || {}) };
-          delete newPhoErrors[fieldKey];
-          return { ...prev, pho: newPhoErrors };
-        });
-      }
-    }
-  };
+      // Add to existing files
+      setSpectralFiles(prev => ({
+        ...prev,
+        [fieldKey]: [...prev[fieldKey], ...newFileInfos]
+      }));
 
-  const removeSpectralData = (fieldKey: keyof SpectralRecord) => {
-    setFormData(prev => ({ ...prev, pho: { ...prev.pho, [fieldKey]: '' } }));
-    setSpectralUrlInputs(prev => ({ ...prev, [fieldKey]: '' }));
-    setSpectralFileNames(prev => ({ ...prev, [fieldKey]: '' }));
-    setSpectralInputMethods(prev => ({ ...prev, [fieldKey]: 'upload' }));
-    const fileInput = document.getElementById(`spectral-file-${fieldKey}`) as HTMLInputElement;
-    if (fileInput) fileInput.value = '';
-     setFormErrors(prev => {
+      // Update form data with URLs
+      setFormData(prev => ({
+        ...prev,
+        pho: {
+          ...prev.pho,
+          [fieldKey]: [...(prev.pho[fieldKey] || []), ...newFileInfos.map(f => f.url)]
+        }
+      }));
+
+      // Clear errors
+      setFormErrors(prev => {
         const newPhoErrors = { ...(prev.pho || {}) };
         delete newPhoErrors[fieldKey];
         return { ...prev, pho: newPhoErrors };
-    });
+      });
+
+    } catch (err) {
+      setFormErrors(prev => ({
+        ...prev,
+        pho: {
+          ...(prev.pho || {}),
+          [fieldKey]: 'File upload failed'
+        }
+      }));
+    }
+  };
+
+  const removeSpectralFile = (fieldKey: keyof SpectralRecord, fileId: string) => {
+    setSpectralFiles(prev => ({
+      ...prev,
+      [fieldKey]: prev[fieldKey].filter(file => file.id !== fileId)
+    }));
+
+    setFormData(prev => ({
+      ...prev,
+      pho: {
+        ...prev.pho,
+        [fieldKey]: (prev.pho[fieldKey] || []).filter((_, index) => {
+          const fileToRemove = spectralFiles[fieldKey].find(f => f.id === fileId);
+          return fileToRemove ? (prev.pho[fieldKey] || [])[index] !== fileToRemove.url : true;
+        })
+      }
+    }));
+  };
+
+  const removeAllSpectralFiles = (fieldKey: keyof SpectralRecord) => {
+    setSpectralFiles(prev => ({
+      ...prev,
+      [fieldKey]: []
+    }));
+
+    setFormData(prev => ({
+      ...prev,
+      pho: {
+        ...prev.pho,
+        [fieldKey]: []
+      }
+    }));
   };
 
   const handleNmrDataBlockFieldChange = (field: keyof Omit<NMRDataBlock, 'signals' | 'id' | 'nmrConditions'>, value: string) => {
@@ -565,12 +603,11 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
       ...prev,
       nmrData: {
         ...prev.nmrData,
-        nmrConditions: { // Update single object
+        nmrConditions: {
           ...prev.nmrData.nmrConditions,
-          [field]: value,
-          id: prev.nmrData.nmrConditions.id || crypto.randomUUID() // Ensure ID
-        },
-      },
+          [field]: value
+        }
+      }
     }));
   };
 
@@ -666,13 +703,24 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
         errors.hinhCauTruc = "Please enter a valid HTTP/S URL for the image.";
     }
 
+    // Validate spectral data
     const phoErrors: Partial<Record<keyof SpectralRecord, string>> = {};
-    SPECTRAL_FIELDS.forEach(sf => {
-      const key = sf.key;
-      const phoValue = formData.pho[key];
-      const label = t(`spectralFields.${key}`, sf.label);
-      if (spectralInputMethods[key] === 'url' && phoValue && !phoValue.startsWith('http')) {
-        phoErrors[key] = `For ${label}, please enter a valid HTTP/S URL.`;
+    SPECTRAL_FIELDS.forEach(field => {
+      const fieldKey = field.key;
+      const currentMethod = spectralInputMethods[fieldKey] || 'upload';
+      const fieldLabel = t(`spectralFields.${field.key}`, field.label);
+
+      if (currentMethod === 'url') {
+        const urls = spectralUrlInputs[fieldKey] || [];
+        const nonEmptyUrls = urls.filter(url => url.trim() !== '');
+
+        if (nonEmptyUrls.length > 0) {
+          // Check if all non-empty URLs are valid
+          const invalidUrls = nonEmptyUrls.filter(url => !url.startsWith('http'));
+          if (invalidUrls.length > 0) {
+            phoErrors[fieldKey] = `For ${fieldLabel}, please enter valid HTTP/S URLs.`;
+          }
+        }
       }
     });
     if (Object.keys(phoErrors).length > 0) {
@@ -717,6 +765,20 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
         trangThai: finalTrangThai,
         mau: finalMau,
         hinhCauTruc: imageInputMethod === 'url' ? imageUrlInput.trim() : formData.hinhCauTruc,
+        pho: SPECTRAL_FIELDS.reduce((acc, field) => {
+          const fieldKey = field.key;
+          const currentMethod = spectralInputMethods[fieldKey] || 'upload';
+
+          if (currentMethod === 'upload') {
+            // Use uploaded files
+            acc[fieldKey] = spectralFiles[fieldKey]?.map(file => file.url) || [];
+          } else {
+            // Use URL inputs (filter out empty URLs)
+            acc[fieldKey] = (spectralUrlInputs[fieldKey] || []).filter(url => url.trim() !== '');
+          }
+
+          return acc;
+        }, {} as SpectralRecord),
         nmrData: {
           ...formData.nmrData,
           id: formData.nmrData.id || `${formData.id}-nmr`,
@@ -1056,8 +1118,7 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
         <div className="space-y-6">
           {SPECTRAL_FIELDS.map(field => {
             const fieldKey = field.key;
-            const currentData = formData.pho[fieldKey];
-            const currentMethod = spectralInputMethods[fieldKey];
+            const currentMethod = spectralInputMethods[fieldKey] || 'upload';
             const fieldLabel = t(`spectralFields.${field.key}`, field.label); // Translate label
 
             return (
@@ -1090,84 +1151,80 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
                 </div>
 
                 {currentMethod === 'upload' && (
-                  <CustomFileInput
-                    id={`spectral-file-${fieldKey}`}
-                    accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,.svg,image/*,application/pdf"
-                    onChange={(e) => handleSpectralFileChange(fieldKey, e)}
-                    label={t('compoundForm.browse')}
-                    selectedFileName={spectralFileNames[fieldKey]}
-                    placeholder={t('compoundForm.noFileSelected')}
-                    wrapperClassName="mt-1"
-                  />
-                )}
-                {currentMethod === 'url' && (
-                  <Input
-                    type="url"
-                    value={spectralUrlInputs[fieldKey] || ''}
-                    onChange={(e) => handleSpectralUrlInputChange(fieldKey, e)}
-                    placeholder={`https://example.com/${fieldLabel.toLowerCase().replace(' ', '-')}.pdf`}
-                    className="mt-1 w-full"
-                    aria-describedby={`pho-error-${fieldKey}`}
-                  />
-                )}
-                {formErrors.pho?.[fieldKey] && <p id={`pho-error-${fieldKey}`} className="text-red-500 text-xs mt-1 mb-3">{formErrors.pho[fieldKey]}</p>}
+                  <div className="space-y-4">
+                    <MultiFileInput
+                      id={`spectral-file-${fieldKey}`}
+                      label={t('compoundForm.browse')}
+                      selectedFiles={spectralFiles[fieldKey] || []}
+                      onChange={(files) => handleSpectralMultipleFileChange(fieldKey, files)}
+                      onRemoveFile={(fileId) => removeSpectralFile(fieldKey, fileId)}
+                      onRemoveAll={() => removeAllSpectralFiles(fieldKey)}
+                      accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,.svg,image/*,application/pdf"
+                      maxFiles={10}
+                      wrapperClassName="mt-1"
+                    />
 
-
-                {currentData && (
-                  <div className="mt-3">
-                    {currentData.startsWith('data:image') && (
-                        <img src={getImageUrl(currentData)} alt={`${fieldLabel} preview`} className="mt-2 max-w-xs max-h-32 border rounded"/>
-                    )}
-                    {currentData.startsWith('data:application/pdf') && (
-                        <a href={getImageUrl(currentData)} download={`${spectralFileNames[fieldKey] || fieldLabel}.pdf`} className="text-indigo-600 hover:underline text-sm block mt-1">Download PDF</a>
-                    )}
-                    {(currentData.startsWith('http') || currentData.startsWith('/compound-uploads/')) && (
-                      <div>
-                        {(currentData.toLowerCase().includes('.jpg') ||
-                          currentData.toLowerCase().includes('.jpeg') ||
-                          currentData.toLowerCase().includes('.png') ||
-                          currentData.toLowerCase().includes('.gif') ||
-                          currentData.toLowerCase().includes('.webp') ||
-                          currentData.toLowerCase().includes('.svg')) && (
-                          <img
-                            src={getImageUrl(currentData)}
-                            alt={`${fieldLabel} preview`}
-                            className="mt-2 max-w-xs max-h-32 border rounded"
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              target.alt = "Image not found or invalid URL";
-                              target.src = '';
-                              target.style.display = 'none';
-                            }}
-                          />
-                        )}
-                        <div className="mt-1">
-                          {currentData.toLowerCase().includes('.pdf') ? (
-                            <a href={getImageUrl(currentData)} download={`${spectralFileNames[fieldKey] || fieldLabel}.pdf`} className="text-indigo-600 hover:underline text-sm block">
-                              Download PDF
-                            </a>
-                          ) : (
-                            <a href={getImageUrl(currentData)} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline text-sm block">
-                              View File
-                            </a>
-                          )}
-                          <a href={getImageUrl(currentData)} target="_blank" rel="noopener noreferrer" className="text-xs text-gray-500 hover:text-gray-700 underline block mt-1">
-                            {t('variousLabels.openInNewTab')}
-                          </a>
-                        </div>
-                      </div>
-                    )}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeSpectralData(fieldKey)}
-                      className="mt-2 text-red-600 hover:bg-red-50"
-                      leftIcon={<TrashIcon className="w-3 h-3"/>}
-                    >
-                      {t('buttons.remove')}
-                    </Button>
+                    <SpectralFilesPreview
+                      files={spectralFiles[fieldKey] || []}
+                      fieldLabel={fieldLabel}
+                      onRemoveFile={(fileId) => removeSpectralFile(fieldKey, fileId)}
+                      onRemoveAll={() => removeAllSpectralFiles(fieldKey)}
+                    />
                   </div>
                 )}
+                {currentMethod === 'url' && (
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      {(spectralUrlInputs[fieldKey] || []).map((url, index) => (
+                        <div key={index} className="flex items-center space-x-2">
+                          <Input
+                            type="url"
+                            value={url}
+                            onChange={(e) => handleSpectralUrlInputChange(fieldKey, index, e.target.value)}
+                            placeholder={`https://example.com/${fieldLabel.toLowerCase().replace(' ', '-')}-${index + 1}.pdf`}
+                            className="flex-1"
+                            aria-describedby={`pho-error-${fieldKey}`}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeSpectralUrl(fieldKey, index)}
+                            className="px-3 py-2 text-sm text-red-600 hover:text-red-800 hover:bg-red-50 rounded"
+                          >
+                            {t('fileUpload.remove')}
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      {(spectralUrlInputs[fieldKey] || []).length < 10 && (
+                        <button
+                          type="button"
+                          onClick={() => addSpectralUrl(fieldKey)}
+                          className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                        >
+                          {t('fileUpload.addUrl')}
+                        </button>
+                      )}
+                      {(spectralUrlInputs[fieldKey] || []).length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => removeAllSpectralUrls(fieldKey)}
+                          className="px-3 py-1 text-sm text-red-600 hover:text-red-800 hover:bg-red-50 rounded"
+                        >
+                          {t('fileUpload.removeAll')}
+                        </button>
+                      )}
+                    </div>
+
+                    {(spectralUrlInputs[fieldKey] || []).length === 0 && (
+                      <p className="text-sm text-gray-500 text-center py-4">
+                        {t('fileUpload.noUrlsAdded')}
+                      </p>
+                    )}
+                  </div>
+                )}
+                {formErrors.pho?.[fieldKey] && <p id={`pho-error-${fieldKey}`} className="text-red-500 text-xs mt-1 mb-3">{formErrors.pho[fieldKey]}</p>}
               </div>
             );
           })}

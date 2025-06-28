@@ -274,7 +274,8 @@ export const exportCompoundToXlsx = async (compound: CompoundData): Promise<void
   SPECTRAL_FIELDS_CONFIG.forEach((fieldConfig, index) => { // Use SPECTRAL_FIELDS_CONFIG
     if (index < 13) {
       const cell = mainInfoSheet.getCell(rowNum, index + 2);
-      cell.value = compound.pho[fieldConfig.key] ? yes : no;
+      const phoValue = compound.pho[fieldConfig.key];
+      cell.value = phoValue && Array.isArray(phoValue) && phoValue.length > 0 ? yes : no;
       applyCellStyle(cell, false, {horizontal: 'center'});
     }
   });
@@ -365,49 +366,66 @@ export const exportCompoundToXlsx = async (compound: CompoundData): Promise<void
   let imageCount = 0; const imagePixelHeight = 300; const imagePixelWidth = 400;
   for (const fieldConfig of SPECTRAL_FIELDS_CONFIG) { // Use SPECTRAL_FIELDS_CONFIG
     const spectrumData = compound.pho[fieldConfig.key];
-    if (spectrumData) {
+    if (spectrumData && Array.isArray(spectrumData) && spectrumData.length > 0) {
       const labelCell = spectraImagesSheet.getCell(spectraRowNum, 1);
       labelCell.value = t(fieldConfig.labelKey, fieldConfig.key) + ":"; // Translate label
       applyCellStyle(labelCell, true);
-      if (spectrumData.startsWith('data:image')) {
-        const imageBuffer = base64ToBuffer(spectrumData);
-        if (imageBuffer) {
-          const extension = getImageExtension(spectrumData);
-          const imageId = workbook.addImage({ buffer: imageBuffer, extension });
-          spectraImagesSheet.addImage(imageId, { tl: { col: 0.1, row: spectraRowNum -1 + 0.1 }, ext: { width: imagePixelWidth, height: imagePixelHeight } });
-          const rowsForImage = Math.ceil(imagePixelHeight / 20);
-          for(let i = 0; i < rowsForImage; i++) { spectraImagesSheet.getRow(spectraRowNum + i).height = Math.max(15, imagePixelHeight / rowsForImage); }
-          spectraRowNum += rowsForImage; imageCount++;
-        } else { spectraRowNum++; }
-      } else if (spectrumData.startsWith('http') || spectrumData.startsWith('/compound-uploads/')) {
-        // Use getImageUrl to build proper URL for S3 paths
-        const fullImageUrl = getImageUrl(spectrumData);
-        const imageBuffer = await urlToBuffer(fullImageUrl);
-        if (imageBuffer) {
-          const extension = getImageExtension(spectrumData);
-          const imageId = workbook.addImage({ buffer: imageBuffer, extension });
-          spectraImagesSheet.addImage(imageId, { tl: { col: 0.1, row: spectraRowNum -1 + 0.1 }, ext: { width: imagePixelWidth, height: imagePixelHeight } });
-          const rowsForImage = Math.ceil(imagePixelHeight / 20);
-          for(let i = 0; i < rowsForImage; i++) { spectraImagesSheet.getRow(spectraRowNum + i).height = Math.max(15, imagePixelHeight / rowsForImage); }
-          spectraRowNum += rowsForImage; imageCount++;
+      spectraRowNum++; // Add spacing between label and first image
+
+      // Handle multiple files for this spectral field
+      for (let i = 0; i < spectrumData.length; i++) {
+        const fileUrl = spectrumData[i];
+        const fileName = fileUrl.split('/').pop() || `File ${i + 1}`;
+
+        if (fileUrl.startsWith('data:image')) {
+          const imageBuffer = base64ToBuffer(fileUrl);
+          if (imageBuffer) {
+            const extension = getImageExtension(fileUrl);
+            const imageId = workbook.addImage({ buffer: imageBuffer, extension });
+            spectraImagesSheet.addImage(imageId, { tl: { col: 0.1, row: spectraRowNum -1 + 0.1 }, ext: { width: imagePixelWidth, height: imagePixelHeight } });
+            const rowsForImage = Math.ceil(imagePixelHeight / 20);
+            for(let j = 0; j < rowsForImage; j++) { spectraImagesSheet.getRow(spectraRowNum + j).height = Math.max(15, imagePixelHeight / rowsForImage); }
+            spectraRowNum += rowsForImage; imageCount++;
+          } else { spectraRowNum++; }
+        } else if (fileUrl.startsWith('http') || fileUrl.startsWith('/compound-uploads/')) {
+          // Use getImageUrl to build proper URL for S3 paths
+          const fullImageUrl = getImageUrl(fileUrl);
+          const imageBuffer = await urlToBuffer(fullImageUrl);
+          if (imageBuffer) {
+            const extension = getImageExtension(fileUrl);
+            const imageId = workbook.addImage({ buffer: imageBuffer, extension });
+            spectraImagesSheet.addImage(imageId, { tl: { col: 0.1, row: spectraRowNum -1 + 0.1 }, ext: { width: imagePixelWidth, height: imagePixelHeight } });
+            const rowsForImage = Math.ceil(imagePixelHeight / 20);
+            for(let j = 0; j < rowsForImage; j++) { spectraImagesSheet.getRow(spectraRowNum + j).height = Math.max(15, imagePixelHeight / rowsForImage); }
+            spectraRowNum += rowsForImage; imageCount++;
+          } else {
+            // Fallback to URL link if image fetch fails
+            const urlCell = spectraImagesSheet.getCell(spectraRowNum , 2)
+            urlCell.value = {text: `${t('variousLabels.spectraViewExternalUrl', {label: t(fieldConfig.labelKey, fieldConfig.key)})} - ${fileName}`, hyperlink: fullImageUrl}; // Use full URL
+            urlCell.font = {color: {argb: 'FF0000FF'}, underline: true, name: 'Arial', size: 10, family: 2};
+            applyCellStyle(urlCell, false, undefined, {bottom: {style: 'thin'}, right: {style: 'thin'}});
+            spectraRowNum++;
+          }
         } else {
-          // Fallback to URL link if image fetch fails
-          const urlCell = spectraImagesSheet.getCell(spectraRowNum , 2)
-          urlCell.value = {text: t('variousLabels.spectraViewExternalUrl', {label: t(fieldConfig.labelKey, fieldConfig.key)}), hyperlink: fullImageUrl}; // Use full URL
-          urlCell.font = {color: {argb: 'FF0000FF'}, underline: true, name: 'Arial', size: 10, family: 2};
-          applyCellStyle(urlCell, false, undefined, {bottom: {style: 'thin'}, right: {style: 'thin'}});
+          const dataCell = spectraImagesSheet.getCell(spectraRowNum, 2);
+          dataCell.value = `${t('variousLabels.spectraDataUnknownFormat', "Data present (unknown format)")} - ${fileName}`; // Translate
+          applyCellStyle(dataCell);
           spectraRowNum++;
         }
-      } else {
-        const dataCell = spectraImagesSheet.getCell(spectraRowNum, 2);
-        dataCell.value = t('variousLabels.spectraDataUnknownFormat', "Data present (unknown format)"); // Translate
-        applyCellStyle(dataCell);
-        spectraRowNum++;
+
+        // Add spacing between files if there are multiple files
+        if (i < spectrumData.length - 1) {
+          spectraRowNum++;
+        }
       }
       spectraRowNum++;
     }
   }
-  if (imageCount === 0 && !SPECTRAL_FIELDS_CONFIG.some(f => compound.pho[f.key]?.startsWith('http') || compound.pho[f.key]?.startsWith('data:image'))) { // Use SPECTRAL_FIELDS_CONFIG
+  if (imageCount === 0 && !SPECTRAL_FIELDS_CONFIG.some(f => {
+    const phoValue = compound.pho[f.key];
+    return phoValue && Array.isArray(phoValue) && phoValue.length > 0 &&
+           (phoValue[0]?.startsWith('http') || phoValue[0]?.startsWith('data:image'));
+  })) { // Use SPECTRAL_FIELDS_CONFIG
     spectraImagesSheet.getCell(spectraRowNum, 1).value = t('excelExport.spectraImagesSheet.noImagesOrUrls', "No spectra images uploaded or URLs provided.");
     applyCellStyle(spectraImagesSheet.getCell(spectraRowNum,1));
     spectraRowNum++;

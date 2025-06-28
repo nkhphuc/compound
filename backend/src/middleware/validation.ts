@@ -35,86 +35,86 @@ const nmrDataBlockSchema = Joi.object({
   tltkNMR: Joi.string().allow('').default('')
 });
 
-// Spectral Record validation (all fields are optional strings)
+// Spectral Record validation (all fields are optional arrays of strings)
 const spectralRecordSchema = Joi.object({
-  '1h': Joi.string().custom((value, helpers) => {
+  '1h': Joi.array().items(Joi.string().custom((value, helpers) => {
     if (!urlValidation(value)) {
       return helpers.error('any.invalid', { message: 'Please enter a valid HTTP/S URL or upload a file.' });
     }
     return value;
-  }).allow('').default(''),
-  '13c': Joi.string().custom((value, helpers) => {
+  })).default([]),
+  '13c': Joi.array().items(Joi.string().custom((value, helpers) => {
     if (!urlValidation(value)) {
       return helpers.error('any.invalid', { message: 'Please enter a valid HTTP/S URL or upload a file.' });
     }
     return value;
-  }).allow('').default(''),
-  dept: Joi.string().custom((value, helpers) => {
+  })).default([]),
+  dept: Joi.array().items(Joi.string().custom((value, helpers) => {
     if (!urlValidation(value)) {
       return helpers.error('any.invalid', { message: 'Please enter a valid HTTP/S URL or upload a file.' });
     }
     return value;
-  }).allow('').default(''),
-  hsqc: Joi.string().custom((value, helpers) => {
+  })).default([]),
+  hsqc: Joi.array().items(Joi.string().custom((value, helpers) => {
     if (!urlValidation(value)) {
       return helpers.error('any.invalid', { message: 'Please enter a valid HTTP/S URL or upload a file.' });
     }
     return value;
-  }).allow('').default(''),
-  hmbc: Joi.string().custom((value, helpers) => {
+  })).default([]),
+  hmbc: Joi.array().items(Joi.string().custom((value, helpers) => {
     if (!urlValidation(value)) {
       return helpers.error('any.invalid', { message: 'Please enter a valid HTTP/S URL or upload a file.' });
     }
     return value;
-  }).allow('').default(''),
-  cosy: Joi.string().custom((value, helpers) => {
+  })).default([]),
+  cosy: Joi.array().items(Joi.string().custom((value, helpers) => {
     if (!urlValidation(value)) {
       return helpers.error('any.invalid', { message: 'Please enter a valid HTTP/S URL or upload a file.' });
     }
     return value;
-  }).allow('').default(''),
-  noesy: Joi.string().custom((value, helpers) => {
+  })).default([]),
+  noesy: Joi.array().items(Joi.string().custom((value, helpers) => {
     if (!urlValidation(value)) {
       return helpers.error('any.invalid', { message: 'Please enter a valid HTTP/S URL or upload a file.' });
     }
     return value;
-  }).allow('').default(''),
-  roesy: Joi.string().custom((value, helpers) => {
+  })).default([]),
+  roesy: Joi.array().items(Joi.string().custom((value, helpers) => {
     if (!urlValidation(value)) {
       return helpers.error('any.invalid', { message: 'Please enter a valid HTTP/S URL or upload a file.' });
     }
     return value;
-  }).allow('').default(''),
-  hrms: Joi.string().custom((value, helpers) => {
+  })).default([]),
+  hrms: Joi.array().items(Joi.string().custom((value, helpers) => {
     if (!urlValidation(value)) {
       return helpers.error('any.invalid', { message: 'Please enter a valid HTTP/S URL or upload a file.' });
     }
     return value;
-  }).allow('').default(''),
-  lrms: Joi.string().custom((value, helpers) => {
+  })).default([]),
+  lrms: Joi.array().items(Joi.string().custom((value, helpers) => {
     if (!urlValidation(value)) {
       return helpers.error('any.invalid', { message: 'Please enter a valid HTTP/S URL or upload a file.' });
     }
     return value;
-  }).allow('').default(''),
-  ir: Joi.string().custom((value, helpers) => {
+  })).default([]),
+  ir: Joi.array().items(Joi.string().custom((value, helpers) => {
     if (!urlValidation(value)) {
       return helpers.error('any.invalid', { message: 'Please enter a valid HTTP/S URL or upload a file.' });
     }
     return value;
-  }).allow('').default(''),
-  uv_pho: Joi.string().custom((value, helpers) => {
+  })).default([]),
+  uv_pho: Joi.array().items(Joi.string().custom((value, helpers) => {
     if (!urlValidation(value)) {
       return helpers.error('any.invalid', { message: 'Please enter a valid HTTP/S URL or upload a file.' });
     }
     return value;
-  }).allow('').default(''),
-  cd: Joi.string().custom((value, helpers) => {
+  })).default([]),
+  cd: Joi.array().items(Joi.string().custom((value, helpers) => {
     if (!urlValidation(value)) {
       return helpers.error('any.invalid', { message: 'Please enter a valid HTTP/S URL or upload a file.' });
     }
     return value;
-  }).allow('').default('')
+  })).default([])
 }).default({});
 
 // URL validation helper
@@ -314,6 +314,60 @@ export const validateFileUpload = (req: Request, res: Response, next: NextFuncti
       error: 'File type not allowed. Please upload images, PDFs, or documents.'
     });
     return;
+  }
+
+  next();
+};
+
+// Multiple file upload validation
+export const validateMultipleFileUpload = (req: Request, res: Response, next: NextFunction): void => {
+  if (!req.files || Object.keys(req.files).length === 0) {
+    res.status(400).json({
+      success: false,
+      error: 'No files uploaded'
+    });
+    return;
+  }
+
+  let uploadedFiles = req.files.files as any[] | any;
+  if (!Array.isArray(uploadedFiles)) {
+    uploadedFiles = [uploadedFiles];
+  }
+
+  // File count validation (max 10 files per upload)
+  if (uploadedFiles.length > 10) {
+    res.status(400).json({
+      success: false,
+      error: 'Maximum 10 files allowed per upload'
+    });
+    return;
+  }
+
+  // Validate each file
+  for (const file of uploadedFiles) {
+    // File size validation (50MB limit per file)
+    const maxSize = 50 * 1024 * 1024;
+    if (file.size > maxSize) {
+      res.status(400).json({
+        success: false,
+        error: `File ${file.name} exceeds 50MB limit`
+      });
+      return;
+    }
+
+    // File type validation
+    const allowedMimeTypes = [
+      'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+      'application/pdf', 'text/plain'
+    ];
+
+    if (!allowedMimeTypes.includes(file.mimetype)) {
+      res.status(400).json({
+        success: false,
+        error: `File type not allowed for ${file.name}. Please upload images or PDFs.`
+      });
+      return;
+    }
   }
 
   next();

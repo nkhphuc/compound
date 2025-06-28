@@ -9,19 +9,19 @@ export interface UVSKLMData {
 }
 
 export interface SpectralRecord {
-  '1h'?: string; // Data URL or HTTP URL
-  '13c'?: string;
-  dept?: string;
-  hsqc?: string;
-  hmbc?: string;
-  cosy?: string;
-  noesy?: string;
-  roesy?: string;
-  hrms?: string;
-  lrms?: string;
-  ir?: string;
-  uv_pho?: string;
-  cd?: string;
+  '1h'?: string[]; // Array of file URLs
+  '13c'?: string[];
+  dept?: string[];
+  hsqc?: string[];
+  hmbc?: string[];
+  cosy?: string[];
+  noesy?: string[];
+  roesy?: string[];
+  hrms?: string[];
+  lrms?: string[];
+  ir?: string[];
+  uv_pho?: string[];
+  cd?: string[];
 }
 
 export interface NMRSignalData {
@@ -133,11 +133,11 @@ export const initialCompoundData: Omit<CompoundData, 'id' | 'nmrData'> & { nmrDa
   hinhCauTruc: '',
   cauHinhTuyetDoi: false,
   smiles: '',
-  pho: { // Initialize with empty strings
-    '1h': '', '13c': '', dept: '', hsqc: '',
-    hmbc: '', cosy: '', noesy: '',
-    roesy: '', hrms: '', lrms: '',
-    ir: '', uv_pho: '', cd: ''
+  pho: { // Initialize with empty arrays
+    '1h': [], '13c': [], dept: [], hsqc: [],
+    hmbc: [], cosy: [], noesy: [],
+    roesy: [], hrms: [], lrms: [],
+    ir: [], uv_pho: [], cd: []
   },
   dmNMRGeneral: '',
   cartCoor: '',

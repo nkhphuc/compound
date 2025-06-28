@@ -64,6 +64,14 @@ async function deleteFileFromS3(key: string): Promise<void> {
   }
 }
 
+// Helper function to handle both legacy single strings and new arrays
+function getFileUrls(value: string[] | string | undefined): string[] {
+  if (!value) return [];
+  if (Array.isArray(value)) return value;
+  if (typeof value === 'string') return [value];
+  return [];
+}
+
 export class CompoundService {
   async getCompounds(options: { page: number; limit: number; searchTerm?: string }) {
     const { page, limit, searchTerm = '' } = options;
@@ -259,28 +267,35 @@ export class CompoundService {
       }
 
       // --- S3 file cleanup logic ---
-      // Compare old and new pho fields (file URLs)
+      // Check pho field for file changes
       const oldPho = existingCompound.pho || {};
       const newPho = compoundData.pho || {};
 
-      console.log('S3 Cleanup - Old pho:', JSON.stringify(oldPho));
-      console.log('S3 Cleanup - New pho:', JSON.stringify(newPho));
-
-      // Find removed/changed files in pho field
       for (const key of Object.keys(oldPho)) {
         const oldValue = oldPho[key as keyof SpectralRecord];
         const newValue = newPho[key as keyof SpectralRecord];
 
         console.log(`S3 Cleanup - Checking field ${key}: old="${oldValue}", new="${newValue}"`);
 
-        if (oldValue && oldValue.startsWith('http') && (!newValue || newValue !== oldValue)) {
-          console.log(`S3 Cleanup - File changed/removed for ${key}: ${oldValue}`);
-          const s3Key = extractS3KeyFromUrl(oldValue);
-          if (s3Key) {
-            console.log(`S3 Cleanup - Deleting S3 key: ${s3Key}`);
-            await deleteFileFromS3(s3Key);
-          } else {
-            console.log(`S3 Cleanup - Could not extract S3 key from URL: ${oldValue}`);
+        // Get file URLs from both old and new values (handles both arrays and legacy strings)
+        const oldFileUrls = getFileUrls(oldValue as any);
+        const newFileUrls = getFileUrls(newValue as any);
+
+        // Check each file in the old array
+        for (const oldFile of oldFileUrls) {
+          if (oldFile && oldFile.startsWith('http')) {
+            // Check if this file still exists in the new array
+            const fileStillExists = newFileUrls.includes(oldFile);
+            if (!fileStillExists) {
+              console.log(`S3 Cleanup - File removed for ${key}: ${oldFile}`);
+              const s3Key = extractS3KeyFromUrl(oldFile);
+              if (s3Key) {
+                console.log(`S3 Cleanup - Deleting S3 key: ${s3Key}`);
+                await deleteFileFromS3(s3Key);
+              } else {
+                console.log(`S3 Cleanup - Could not extract S3 key from URL: ${oldFile}`);
+              }
+            }
           }
         }
       }
@@ -415,14 +430,20 @@ export class CompoundService {
       if (compound.pho) {
         for (const key of Object.keys(compound.pho)) {
           const value = compound.pho[key as keyof SpectralRecord];
-          if (value && value.startsWith('http')) {
-            console.log(`S3 Cleanup - Deleting file for ${key}: ${value}`);
-            const s3Key = extractS3KeyFromUrl(value);
-            if (s3Key) {
-              console.log(`S3 Cleanup - Deleting S3 key: ${s3Key}`);
-              await deleteFileFromS3(s3Key);
-            } else {
-              console.log(`S3 Cleanup - Could not extract S3 key from URL: ${value}`);
+
+          // Get file URLs (handles both arrays and legacy strings)
+          const fileUrls = getFileUrls(value as any);
+
+          for (const fileUrl of fileUrls) {
+            if (fileUrl && fileUrl.startsWith('http')) {
+              console.log(`S3 Cleanup - Deleting file for ${key}: ${fileUrl}`);
+              const s3Key = extractS3KeyFromUrl(fileUrl);
+              if (s3Key) {
+                console.log(`S3 Cleanup - Deleting S3 key: ${s3Key}`);
+                await deleteFileFromS3(s3Key);
+              } else {
+                console.log(`S3 Cleanup - Could not extract S3 key from URL: ${fileUrl}`);
+              }
             }
           }
         }

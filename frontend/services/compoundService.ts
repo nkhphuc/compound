@@ -20,7 +20,15 @@ const ensureCompoundDataIntegrity = (compound: Partial<CompoundData>): CompoundD
   SPECTRAL_FIELDS.forEach(field => {
       const key = field.key;
       const existingValue = compound.pho?.[key as keyof SpectralRecord];
-      validatedPho[key] = typeof existingValue === 'string' ? existingValue : '';
+      // Handle both legacy single string and new array format
+      if (Array.isArray(existingValue)) {
+        validatedPho[key] = existingValue;
+      } else if (typeof existingValue === 'string' && existingValue) {
+        // Convert legacy single file to array
+        validatedPho[key] = [existingValue];
+      } else {
+        validatedPho[key] = [];
+      }
   });
 
   let finalNmrConditions: NMRCondition;
@@ -222,6 +230,33 @@ export async function uploadFile(file: File): Promise<string> {
     return data.data?.url || data.data?.path;
   } catch (err) {
     console.error('[uploadFile] Upload error:', err);
+    throw err;
+  }
+}
+
+// Upload multiple files to the backend and return file info array
+export async function uploadMultipleFiles(files: File[]): Promise<Array<{id: string; name: string; url: string; size: number; type: string}>> {
+  const formData = new FormData();
+  files.forEach(file => formData.append('files', file));
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/uploads/multiple`, {
+      method: 'POST',
+      body: formData,
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error('File upload failed: ' + (data?.error || response.status));
+    }
+    return data.data.map((fileData: any) => ({
+      id: crypto.randomUUID(),
+      name: fileData.originalName,
+      url: fileData.url,
+      size: fileData.size,
+      type: fileData.mimetype,
+    }));
+  } catch (err) {
+    console.error('[uploadMultipleFiles] Upload error:', err);
     throw err;
   }
 }

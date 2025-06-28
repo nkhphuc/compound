@@ -110,7 +110,9 @@ const enTranslations = {
     spectraDownloadData: "Download {{label}} Data",
     spectraDataUnknownFormat: "Data present (unknown format)",
     notAvailable: "N/A",
-    openInNewTab: "Open in new tab"
+    openInNewTab: "Open in new tab",
+    multipleFiles: "{{count}} files",
+    noData: "No data"
   },
   spectralFields: {
     "1h": "1H NMR", "13c": "13C NMR", dept: "DEPT", hsqc: "HSQC",
@@ -203,6 +205,17 @@ const enTranslations = {
     previous: "Previous",
     next: "Next",
     showingResults: "Showing {{start}} to {{end}} of {{total}} results"
+  },
+  fileUpload: {
+    dragAndDrop: "Drag & drop files here or click to browse (max {{maxFiles}})",
+    maxFilesReached: "Maximum {{maxFiles}} files reached",
+    selectedFiles: "Selected Files ({{count}})",
+    removeAll: "Remove All",
+    remove: "Remove",
+    view: "View",
+    fieldFiles: "{{fieldLabel}} Files ({{count}})",
+    addUrl: "Add URL",
+    noUrlsAdded: "No URLs added yet"
   }
 };
 
@@ -307,7 +320,9 @@ const viTranslations = {
     spectraDownloadData: "Tải xuống Dữ liệu {{label}}",
     spectraDataUnknownFormat: "Có dữ liệu (định dạng không rõ)",
     notAvailable: "Không có",
-    openInNewTab: "Mở trong tab mới"
+    openInNewTab: "Mở trong tab mới",
+    multipleFiles: "{{count}} tệp",
+    noData: "Không có dữ liệu"
   },
   spectralFields: {
     "1h": "1H NMR", "13c": "13C NMR", dept: "DEPT", hsqc: "HSQC",
@@ -400,6 +415,17 @@ const viTranslations = {
     previous: "Trước",
     next: "Sau",
     showingResults: "Hiển thị từ {{start}} đến {{end}} trên tổng số {{total}} kết quả"
+  },
+  fileUpload: {
+    dragAndDrop: "Kéo và thả tệp vào đây hoặc nhấp để duyệt (tối đa {{maxFiles}})",
+    maxFilesReached: "Đã đạt tối đa {{maxFiles}} tệp",
+    selectedFiles: "Tệp đã chọn ({{count}})",
+    removeAll: "Xóa tất cả",
+    remove: "Xóa",
+    view: "Xem",
+    fieldFiles: "{{fieldLabel}} Tệp ({{count}})",
+    addUrl: "Thêm URL",
+    noUrlsAdded: "Chưa có URL nào được thêm"
   }
 };
 // --- END EMBEDDED TRANSLATIONS ---

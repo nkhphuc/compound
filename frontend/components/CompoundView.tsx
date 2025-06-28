@@ -42,40 +42,33 @@ const DataField: React.FC<{ label: string; value?: string | number | boolean | n
   );
 };
 
-const renderSpectrumLinkOrPreview = (data: string | undefined, label: string, t: (key: string, options?: any) => string): React.ReactNode => {
-  if (!data) return <span className="text-gray-500">{t('variousLabels.notAvailable')}</span>;
+const renderSpectrumLinkOrPreview = (data: string[] | undefined, label: string, t: (key: string, options?: any) => string): React.ReactNode => {
+  if (!data || !Array.isArray(data) || data.length === 0) {
+    return <span className="text-gray-500 italic">{t('variousLabels.noData')}</span>;
+  }
 
-  // Use getImageUrl for all data types to handle S3 paths properly
-  const imageUrl = getImageUrl(data);
+  // Handle multiple files
+  if (data.length === 1) {
+    // Single file - use existing logic
+    const spectrumData = data[0];
+    if (!spectrumData) return <span className="text-gray-500 italic">{t('variousLabels.noData')}</span>;
 
-  if (data.startsWith('data:image/')) {
-    return <img src={imageUrl} alt={`${label} Preview`} className="max-w-xs max-h-48 border rounded-md shadow" />;
-  } else if (data.startsWith('data:application/pdf')) {
-    return (
-      <a href={imageUrl} download={`${label.replace(/\s+/g, '_')}.pdf`} className="text-indigo-600 hover:text-indigo-800 underline">
-        {t('variousLabels.spectraDownloadPdf', { label })}
-      </a>
-    );
-  } else if (data.startsWith('data:')) {
-    return (
-      <a href={imageUrl} download={`${label.replace(/\s+/g, '_')}.dat`} className="text-indigo-600 hover:text-indigo-800 underline">
-        {t('variousLabels.spectraDownloadData', { label })}
-      </a>
-    );
-  } else if (data.startsWith('http') || data.startsWith('/compound-uploads/')) {
-    // Display HTTP URLs and S3 paths as images
+    const imageUrl = getImageUrl(spectrumData);
+    if (spectrumData.startsWith('data:image') ||
+        (spectrumData.toLowerCase().includes('.jpg') || spectrumData.toLowerCase().includes('.jpeg') ||
+         spectrumData.toLowerCase().includes('.png') || spectrumData.toLowerCase().includes('.gif') ||
+         spectrumData.toLowerCase().includes('.webp') || spectrumData.toLowerCase().includes('.svg'))) {
     return (
       <div>
         <img
           src={imageUrl}
-          alt={`${label} Spectrum`}
-          className="max-w-xs max-h-48 border rounded-md shadow"
+            alt={`${label} spectrum`}
+            className="max-w-xs max-h-32 border rounded shadow-sm"
           onError={(e) => {
             const target = e.target as HTMLImageElement;
             target.alt = "Image not found or invalid URL";
             target.src = '';
             target.style.display = 'none';
-            // Show fallback link if image fails to load
             const fallbackLink = document.createElement('a');
             fallbackLink.href = imageUrl;
             fallbackLink.target = '_blank';
@@ -89,10 +82,119 @@ const renderSpectrumLinkOrPreview = (data: string | undefined, label: string, t:
           <a href={imageUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-gray-500 hover:text-gray-700 underline">
             {t('variousLabels.openInNewTab')}
           </a>
+          </div>
+        </div>
+      );
+    } else if (spectrumData.startsWith('data:application/pdf') || spectrumData.toLowerCase().includes('.pdf')) {
+      return (
+        <div>
+          <a href={imageUrl} download={`${label}.pdf`} className="text-indigo-600 hover:text-indigo-800 underline">
+            {t('variousLabels.spectraDownloadPdf', { label })}
+          </a>
+          <div className="mt-1">
+            <a href={imageUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-gray-500 hover:text-gray-700 underline">
+              {t('variousLabels.openInNewTab')}
+            </a>
+          </div>
+        </div>
+      );
+    } else if (spectrumData.startsWith('http') || spectrumData.startsWith('/compound-uploads/')) {
+      return (
+        <div>
+          <a href={imageUrl} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:text-indigo-800 underline break-all">
+            {t('variousLabels.spectraViewExternalUrl', { label })}
+          </a>
+          <div className="mt-1">
+            <a href={imageUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-gray-500 hover:text-gray-700 underline">
+              {t('variousLabels.openInNewTab')}
+            </a>
+          </div>
+        </div>
+      );
+    }
+  } else {
+    // Multiple files - show count and handle each file individually
+    return (
+      <div className="space-y-3">
+        <div className="text-sm text-gray-600">
+          {t('variousLabels.multipleFiles', { count: data.length })}
+        </div>
+        <div className="space-y-3">
+          {data.map((fileUrl, index) => {
+            if (!fileUrl) return null;
+
+            const imageUrl = getImageUrl(fileUrl);
+            const fileName = fileUrl.split('/').pop() || `File ${index + 1}`;
+            const isImage = fileUrl.startsWith('data:image') ||
+                           (fileUrl.toLowerCase().includes('.jpg') || fileUrl.toLowerCase().includes('.jpeg') ||
+                            fileUrl.toLowerCase().includes('.png') || fileUrl.toLowerCase().includes('.gif') ||
+                            fileUrl.toLowerCase().includes('.webp') || fileUrl.toLowerCase().includes('.svg'));
+            const isPdf = fileUrl.startsWith('data:application/pdf') || fileUrl.toLowerCase().includes('.pdf');
+
+            return (
+              <div key={index} className="border rounded-lg p-3 bg-gray-50">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium text-gray-700">{fileName}</span>
+                  <span className="text-xs text-gray-400">({index + 1}/{data.length})</span>
+                </div>
+
+                {isImage ? (
+                  <div>
+                    <img
+                      src={imageUrl}
+                      alt={`${label} spectrum ${index + 1}`}
+                      className="max-w-xs max-h-32 border rounded shadow-sm"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.alt = "Image not found or invalid URL";
+                        target.src = '';
+                        target.style.display = 'none';
+                        const fallbackLink = document.createElement('a');
+                        fallbackLink.href = imageUrl;
+                        fallbackLink.target = '_blank';
+                        fallbackLink.rel = 'noopener noreferrer';
+                        fallbackLink.className = 'text-indigo-600 hover:text-indigo-800 underline break-all';
+                        fallbackLink.textContent = t('variousLabels.spectraViewExternalUrl', { label });
+                        target.parentNode?.appendChild(fallbackLink);
+                      }}
+                    />
+                    <div className="mt-1">
+                      <a href={imageUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-gray-500 hover:text-gray-700 underline">
+                        {t('variousLabels.openInNewTab')}
+                      </a>
+                    </div>
+                  </div>
+                ) : isPdf ? (
+                  <div>
+                    <a href={imageUrl} download={`${label}-${index + 1}.pdf`} className="text-indigo-600 hover:text-indigo-800 underline">
+                      {t('variousLabels.spectraDownloadPdf', { label })}
+                    </a>
+                    <div className="mt-1">
+                      <a href={imageUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-gray-500 hover:text-gray-700 underline">
+                        {t('variousLabels.openInNewTab')}
+                      </a>
+                    </div>
+                  </div>
+                ) : (
+                  <div>
+                    <a href={imageUrl} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:text-indigo-800 underline break-all">
+                      {t('variousLabels.spectraViewExternalUrl', { label })}
+                    </a>
+                    <div className="mt-1">
+                      <a href={imageUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-gray-500 hover:text-gray-700 underline">
+                        {t('variousLabels.openInNewTab')}
+                      </a>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
     );
   }
+
   return <span className="text-gray-500 italic">{t('variousLabels.spectraDataUnknownFormat')}</span>;
 };
 
