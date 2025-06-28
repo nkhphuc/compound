@@ -178,143 +178,154 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
   }, [t]);
 
   useEffect(() => {
-    const dataToSet = initialData
-      ? (() => {
-          const parsedInitial = JSON.parse(JSON.stringify(initialData));
+    const setupFormData = async () => {
+      const dataToSet = initialData
+        ? (() => {
+            const parsedInitial = JSON.parse(JSON.stringify(initialData));
 
-          let initialNmrConditionsObj: NMRCondition;
-          const rawNmrConditions = parsedInitial.nmrData?.nmrConditions;
-          if (Array.isArray(rawNmrConditions) && rawNmrConditions.length > 0) {
-            initialNmrConditionsObj = { ...initialNMRCondition, ...rawNmrConditions[0], id: rawNmrConditions[0].id || crypto.randomUUID() };
-          } else if (typeof rawNmrConditions === 'object' && rawNmrConditions !== null && !Array.isArray(rawNmrConditions)) {
-            initialNmrConditionsObj = { ...initialNMRCondition, ...rawNmrConditions, id: rawNmrConditions.id || crypto.randomUUID() };
-          } else {
-            initialNmrConditionsObj = { ...initialNMRCondition, id: crypto.randomUUID() };
-          }
+            let initialNmrConditionsObj: NMRCondition;
+            const rawNmrConditions = parsedInitial.nmrData?.nmrConditions;
+            if (Array.isArray(rawNmrConditions) && rawNmrConditions.length > 0) {
+              initialNmrConditionsObj = { ...initialNMRCondition, ...rawNmrConditions[0], id: rawNmrConditions[0].id || crypto.randomUUID() };
+            } else if (typeof rawNmrConditions === 'object' && rawNmrConditions !== null && !Array.isArray(rawNmrConditions)) {
+              initialNmrConditionsObj = { ...initialNMRCondition, ...rawNmrConditions, id: rawNmrConditions.id || crypto.randomUUID() };
+            } else {
+              initialNmrConditionsObj = { ...initialNMRCondition, id: crypto.randomUUID() };
+            }
 
-          const nmrData = {
-            ...(parsedInitial.nmrData || { ...initialNMRDataBlock, id: `${parsedInitial.id}-nmr` }),
-            nmrConditions: initialNmrConditionsObj,
-            signals: parsedInitial.nmrData?.signals
-              ? parsedInitial.nmrData.signals.map((sig: Partial<NMRSignalData>) => ({ ...initialNMRSignalData, ...sig, id: sig.id || crypto.randomUUID() }))
-              : []
-          };
+            const nmrData = {
+              ...(parsedInitial.nmrData || { ...initialNMRDataBlock, id: `${parsedInitial.id}-nmr` }),
+              nmrConditions: initialNmrConditionsObj,
+              signals: parsedInitial.nmrData?.signals
+                ? parsedInitial.nmrData.signals.map((sig: Partial<NMRSignalData>) => ({ ...initialNMRSignalData, ...sig, id: sig.id || crypto.randomUUID() }))
+                : []
+            };
 
-          const sanitizedPho: SpectralRecord = {} as SpectralRecord;
-          SPECTRAL_FIELDS.forEach(field => {
-            sanitizedPho[field.key] = typeof parsedInitial.pho?.[field.key] === 'string' ? parsedInitial.pho[field.key] : '';
-          });
+            const sanitizedPho: SpectralRecord = {} as SpectralRecord;
+            SPECTRAL_FIELDS.forEach(field => {
+              sanitizedPho[field.key] = typeof parsedInitial.pho?.[field.key] === 'string' ? parsedInitial.pho[field.key] : '';
+            });
 
-          return {
-            ...initialCompoundData,
-            ...parsedInitial,
-            status: parsedInitial.status || '',
-            loaiHC: parsedInitial.loaiHC || '',
-            trangThai: parsedInitial.trangThai || '',
-            mau: parsedInitial.mau || '',
-            sttHC: typeof parsedInitial.sttHC === 'number' ? parsedInitial.sttHC : parseInt(String(parsedInitial.sttHC), 10) || 0,
-            cauHinhTuyetDoi: typeof parsedInitial.cauHinhTuyetDoi === 'boolean' ? parsedInitial.cauHinhTuyetDoi : false,
-            pho: sanitizedPho,
-            nmrData: nmrData
-          };
-        })()
-      : (() => {
-          const defaultPho = SPECTRAL_FIELDS.reduce((acc, field) => {
-              acc[field.key] = '';
-              return acc;
-          }, {} as SpectralRecord);
-          return {
-            ...JSON.parse(JSON.stringify(initialCompoundData)),
-            id: '', // Don't generate ID for new compounds - let backend generate it
-            nmrData: { ...initialNMRDataBlock, id: '' }, // Don't generate NMR ID either
-            pho: defaultPho
-          };
-        })();
+            return {
+              ...initialCompoundData,
+              ...parsedInitial,
+              status: parsedInitial.status || '',
+              loaiHC: parsedInitial.loaiHC || '',
+              trangThai: parsedInitial.trangThai || '',
+              mau: parsedInitial.mau || '',
+              sttHC: typeof parsedInitial.sttHC === 'number' ? parsedInitial.sttHC : parseInt(String(parsedInitial.sttHC), 10) || 0,
+              cauHinhTuyetDoi: typeof parsedInitial.cauHinhTuyetDoi === 'boolean' ? parsedInitial.cauHinhTuyetDoi : false,
+              pho: sanitizedPho,
+              nmrData: nmrData
+            };
+          })()
+        : (() => {
+            const defaultPho = SPECTRAL_FIELDS.reduce((acc, field) => {
+                acc[field.key] = '';
+                return acc;
+            }, {} as SpectralRecord);
+            return {
+              ...JSON.parse(JSON.stringify(initialCompoundData)),
+              id: '', // Don't generate ID for new compounds - let backend generate it
+              nmrData: { ...initialNMRDataBlock, id: '' }, // Don't generate NMR ID either
+              pho: defaultPho
+            };
+          })();
 
-    setFormData(dataToSet);
-
-    // Initialize LoaiHC dropdown state
-    const initialType = dataToSet.loaiHC || '';
-    if (initialType === '') {
-      setSelectedLoaiHcInDropdown(''); setCustomLoaiHcInput(''); setShowCustomLoaiHcInput(false);
-    } else {
-      const isStandardLoaiHc = loaiHcDropdownOptions.some(opt => opt.value === initialType && opt.value !== LOAI_HC_OTHER_STRING);
-      if (isStandardLoaiHc) {
-        setSelectedLoaiHcInDropdown(initialType); setCustomLoaiHcInput(''); setShowCustomLoaiHcInput(false);
+      // For new compounds, the table number will be auto-generated by the backend
+      if (!initialData) {
+        // Table number will be auto-generated by backend when saving
       } else {
-        setSelectedLoaiHcInDropdown(LOAI_HC_OTHER_STRING); setCustomLoaiHcInput(initialType); setShowCustomLoaiHcInput(true);
+        // Editing existing compound - keep existing table number
       }
-    }
 
-    const initialTrangThai = dataToSet.trangThai || '';
-    if (initialTrangThai === '') {
-      setSelectedTrangThaiInDropdown(''); setCustomTrangThaiInput(''); setShowCustomTrangThaiInput(false);
-    } else {
-      const isStandardTrangThai = trangThaiDropdownOptions.some(opt => opt.value === initialTrangThai && opt.value !== LOAI_HC_OTHER_STRING);
-      if (isStandardTrangThai) {
-        setSelectedTrangThaiInDropdown(initialTrangThai); setCustomTrangThaiInput(''); setShowCustomTrangThaiInput(false);
+      setFormData(dataToSet);
+
+      // Initialize LoaiHC dropdown state
+      const initialType = dataToSet.loaiHC || '';
+      if (initialType === '') {
+        setSelectedLoaiHcInDropdown(''); setCustomLoaiHcInput(''); setShowCustomLoaiHcInput(false);
       } else {
-        setSelectedTrangThaiInDropdown(LOAI_HC_OTHER_STRING); setCustomTrangThaiInput(initialTrangThai); setShowCustomTrangThaiInput(true);
-      }
-    }
-
-    const initialMau = dataToSet.mau || '';
-    if (initialMau === '') {
-      setSelectedMauInDropdown(''); setCustomMauInput(''); setShowCustomMauInput(false);
-    } else {
-      const isStandardMau = mauDropdownOptions.some(opt => opt.value === initialMau && opt.value !== LOAI_HC_OTHER_STRING);
-      if (isStandardMau) {
-        setSelectedMauInDropdown(initialMau); setCustomMauInput(''); setShowCustomMauInput(false);
-      } else {
-        setSelectedMauInDropdown(LOAI_HC_OTHER_STRING); setCustomMauInput(initialMau); setShowCustomMauInput(true);
-      }
-    }
-
-    const initialImageSrc = dataToSet.hinhCauTruc || '';
-    if (initialImageSrc.startsWith('data:image')) {
-      setImageInputMethod('upload');
-      setImageUrlInput('');
-      setStructureImageFileName(t('compoundForm.uploadedFilePlaceholder'));
-    } else if (initialImageSrc.startsWith('http')) {
-      setImageInputMethod('url');
-      setImageUrlInput(initialImageSrc);
-      setStructureImageFileName('');
-    } else {
-      setImageInputMethod('upload');
-      setImageUrlInput('');
-      setStructureImageFileName('');
-    }
-
-    const iSpectralInputMethods = { ...initialSpectralMethodsState };
-    const iSpectralUrlInputs = { ...initialSpectralUrlsState };
-    const iSpectralFileNames = { ...initialSpectralFileNamesState };
-
-    SPECTRAL_FIELDS.forEach(sf => {
-      const key = sf.key;
-      const phoValue = (dataToSet.pho as SpectralRecord)[key];
-
-      if (phoValue) {
-        if (phoValue.startsWith('data:')) {
-          iSpectralInputMethods[key] = 'upload';
-          iSpectralFileNames[key] = t('compoundForm.uploadedFilePlaceholder');
-          iSpectralUrlInputs[key] = '';
-        } else if (phoValue.startsWith('http')) {
-          iSpectralInputMethods[key] = 'url';
-          iSpectralUrlInputs[key] = phoValue;
-          iSpectralFileNames[key] = '';
+        const isStandardLoaiHc = loaiHcDropdownOptions.some(opt => opt.value === initialType && opt.value !== LOAI_HC_OTHER_STRING);
+        if (isStandardLoaiHc) {
+          setSelectedLoaiHcInDropdown(initialType); setCustomLoaiHcInput(''); setShowCustomLoaiHcInput(false);
         } else {
-          iSpectralInputMethods[key] = 'upload';
-          iSpectralUrlInputs[key] = '';
-          iSpectralFileNames[key] = '';
+          setSelectedLoaiHcInDropdown(LOAI_HC_OTHER_STRING); setCustomLoaiHcInput(initialType); setShowCustomLoaiHcInput(true);
         }
       }
-    });
-    setSpectralInputMethods(iSpectralInputMethods);
-    setSpectralUrlInputs(iSpectralUrlInputs);
-    setSpectralFileNames(iSpectralFileNames);
 
-    setFormErrors({});
-    setCurrentSaveError(null);
+      const initialTrangThai = dataToSet.trangThai || '';
+      if (initialTrangThai === '') {
+        setSelectedTrangThaiInDropdown(''); setCustomTrangThaiInput(''); setShowCustomTrangThaiInput(false);
+      } else {
+        const isStandardTrangThai = trangThaiDropdownOptions.some(opt => opt.value === initialTrangThai && opt.value !== LOAI_HC_OTHER_STRING);
+        if (isStandardTrangThai) {
+          setSelectedTrangThaiInDropdown(initialTrangThai); setCustomTrangThaiInput(''); setShowCustomTrangThaiInput(false);
+        } else {
+          setSelectedTrangThaiInDropdown(LOAI_HC_OTHER_STRING); setCustomTrangThaiInput(initialTrangThai); setShowCustomTrangThaiInput(true);
+        }
+      }
+
+      const initialMau = dataToSet.mau || '';
+      if (initialMau === '') {
+        setSelectedMauInDropdown(''); setCustomMauInput(''); setShowCustomMauInput(false);
+      } else {
+        const isStandardMau = mauDropdownOptions.some(opt => opt.value === initialMau && opt.value !== LOAI_HC_OTHER_STRING);
+        if (isStandardMau) {
+          setSelectedMauInDropdown(initialMau); setCustomMauInput(''); setShowCustomMauInput(false);
+        } else {
+          setSelectedMauInDropdown(LOAI_HC_OTHER_STRING); setCustomMauInput(initialMau); setShowCustomMauInput(true);
+        }
+      }
+
+      const initialImageSrc = dataToSet.hinhCauTruc || '';
+      if (initialImageSrc.startsWith('data:image')) {
+        setImageInputMethod('upload');
+        setImageUrlInput('');
+        setStructureImageFileName(t('compoundForm.uploadedFilePlaceholder'));
+      } else if (initialImageSrc.startsWith('http')) {
+        setImageInputMethod('url');
+        setImageUrlInput(initialImageSrc);
+        setStructureImageFileName('');
+      } else {
+        setImageInputMethod('upload');
+        setImageUrlInput('');
+        setStructureImageFileName('');
+      }
+
+      const iSpectralInputMethods = { ...initialSpectralMethodsState };
+      const iSpectralUrlInputs = { ...initialSpectralUrlsState };
+      const iSpectralFileNames = { ...initialSpectralFileNamesState };
+
+      SPECTRAL_FIELDS.forEach(sf => {
+        const key = sf.key;
+        const phoValue = (dataToSet.pho as SpectralRecord)[key];
+
+        if (phoValue) {
+          if (phoValue.startsWith('data:')) {
+            iSpectralInputMethods[key] = 'upload';
+            iSpectralFileNames[key] = t('compoundForm.uploadedFilePlaceholder');
+            iSpectralUrlInputs[key] = '';
+          } else if (phoValue.startsWith('http')) {
+            iSpectralInputMethods[key] = 'url';
+            iSpectralUrlInputs[key] = phoValue;
+            iSpectralFileNames[key] = '';
+          } else {
+            iSpectralInputMethods[key] = 'upload';
+            iSpectralUrlInputs[key] = '';
+            iSpectralFileNames[key] = '';
+          }
+        }
+      });
+      setSpectralInputMethods(iSpectralInputMethods);
+      setSpectralUrlInputs(iSpectralUrlInputs);
+      setSpectralFileNames(iSpectralFileNames);
+
+      setFormErrors({});
+      setCurrentSaveError(null);
+    };
+
+    setupFormData();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialData, t, loaiHcDropdownOptions.length, trangThaiDropdownOptions.length, mauDropdownOptions.length]);
 

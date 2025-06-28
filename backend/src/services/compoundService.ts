@@ -197,14 +197,13 @@ export class CompoundService {
       // Insert NMR data block
       if (compoundData.nmrData) {
         const nmrQuery = `
-          INSERT INTO nmr_data_blocks (id, compound_id, stt_bang, dm_nmr, tan_so_13c, tan_so_1h, luu_y_nmr, tltk_nmr)
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+          INSERT INTO nmr_data_blocks (id, compound_id, dm_nmr, tan_so_13c, tan_so_1h, luu_y_nmr, tltk_nmr)
+          VALUES ($1, $2, $3, $4, $5, $6, $7)
         `;
 
         const nmrValues = [
           nmrDataBlockId,
           compoundId,
-          compoundData.nmrData.sttBang || '',
           compoundData.nmrData.nmrConditions?.dmNMR || '',
           compoundData.nmrData.nmrConditions?.tanSo13C || '',
           compoundData.nmrData.nmrConditions?.tanSo1H || '',
@@ -451,6 +450,11 @@ export class CompoundService {
     return parseInt(result.rows[0].next_stt_hc);
   }
 
+  async getNextSttBang(): Promise<number> {
+    const result = await pool.query('SELECT COALESCE(MAX(stt_bang), 0) + 1 as next_stt_bang FROM nmr_data_blocks');
+    return parseInt(result.rows[0].next_stt_bang);
+  }
+
   // Metadata methods for dropdown values
   async getUniqueLoaiHCValues(): Promise<string[]> {
     const result = await pool.query('SELECT DISTINCT loai_hc FROM compounds WHERE loai_hc IS NOT NULL AND loai_hc != \'\' ORDER BY loai_hc');
@@ -506,7 +510,7 @@ export class CompoundService {
           te: row.te,
           nmrData: {
             id: row.nmr_data_block_id || '',
-            sttBang: row.stt_bang || '',
+            sttBang: row.stt_bang ? row.stt_bang.toString() : '',
             nmrConditions: {
               id: uuidv4(),
               dmNMR: row.dm_nmr || '',

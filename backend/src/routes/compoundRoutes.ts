@@ -6,9 +6,7 @@ import {
   updateCompound,
   deleteCompound,
   getNextSttHC,
-  getUniqueLoaiHCValues,
-  getUniqueTrangThaiValues,
-  getUniqueMauValues
+  getNextSttBang,
 } from '../controllers/compoundController';
 import {
   validateCompound,
@@ -23,6 +21,9 @@ router.get('/', validateQueryParams, (req, res, next) => { getAllCompounds(req, 
 
 // GET /api/compounds/next-stt-hc - Get next available serial number
 router.get('/next-stt-hc', (req, res, next) => { getNextSttHC(req, res).catch(next); });
+
+// GET /api/compounds/next-stt-bang - Get next available table number
+router.get('/next-stt-bang', (req, res, next) => { getNextSttBang(req, res).catch(next); });
 
 // GET /api/compounds/:id - Get compound by ID
 router.get('/:id', validateId, (req, res, next) => { getCompoundById(req, res).catch(next); });

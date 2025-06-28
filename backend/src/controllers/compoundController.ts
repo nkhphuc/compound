@@ -134,6 +134,23 @@ export const getNextSttHC = async (req: Request, res: Response) => {
   }
 };
 
+export const getNextSttBang = async (req: Request, res: Response) => {
+  try {
+    const nextSttBang = await compoundService.getNextSttBang();
+
+    res.json({
+      success: true,
+      data: { nextSttBang }
+    });
+  } catch (error) {
+    console.error('Error getting next SttBang:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get next SttBang'
+    });
+  }
+};
+
 // Metadata endpoints for dropdown values
 export const getUniqueLoaiHCValues = async (req: Request, res: Response) => {
   try {

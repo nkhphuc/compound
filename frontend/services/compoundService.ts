@@ -131,16 +131,10 @@ export const getCompoundById = async (id: string): Promise<CompoundData | undefi
 
 export const saveCompound = async (compoundToSave: CompoundData): Promise<CompoundData> => {
   try {
-    let finalNmrSttBang = compoundToSave.nmrData.sttBang;
-    if (finalNmrSttBang === "") {
-        finalNmrSttBang = "1";
-    }
-
     const validatedDataToSave = ensureCompoundDataIntegrity({
         ...compoundToSave,
         nmrData: {
             ...compoundToSave.nmrData,
-            sttBang: finalNmrSttBang,
             id: compoundToSave.nmrData.id || `${compoundToSave.id}-nmr`,
         }
     });
@@ -167,6 +161,7 @@ export const saveCompound = async (compoundToSave: CompoundData): Promise<Compou
         nmrData: {
           ...validatedDataToSave.nmrData,
           id: undefined, // Remove NMR ID for creation
+          sttBang: undefined, // Remove sttBang for creation - let backend auto-generate
           signals: validatedDataToSave.nmrData.signals.map(signal => ({
             ...signal,
             id: undefined // Remove signal IDs for creation
@@ -272,6 +267,36 @@ export const getUniqueMauValues = async (): Promise<string[]> => {
     }
   } catch (error) {
     console.error('Error fetching unique mau values:', error);
+    throw error;
+  }
+};
+
+export const getNextSttHC = async (): Promise<number> => {
+  try {
+    const response = await apiRequest('/compounds/next-stt-hc');
+
+    if (response.success) {
+      return response.data.nextSttHC;
+    } else {
+      throw new Error(response.error || 'Failed to fetch next SttHC');
+    }
+  } catch (error) {
+    console.error('Error fetching next SttHC:', error);
+    throw error;
+  }
+};
+
+export const getNextSttBang = async (): Promise<number> => {
+  try {
+    const response = await apiRequest('/compounds/next-stt-bang');
+
+    if (response.success) {
+      return response.data.nextSttBang;
+    } else {
+      throw new Error(response.error || 'Failed to fetch next SttBang');
+    }
+  } catch (error) {
+    console.error('Error fetching next SttBang:', error);
     throw error;
   }
 };

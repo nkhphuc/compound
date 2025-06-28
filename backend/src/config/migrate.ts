@@ -43,7 +43,7 @@ const createTables = async () => {
       CREATE TABLE IF NOT EXISTS nmr_data_blocks (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         compound_id UUID NOT NULL REFERENCES compounds(id) ON DELETE CASCADE,
-        stt_bang VARCHAR(50),
+        stt_bang SERIAL NOT NULL UNIQUE,
         dm_nmr TEXT,
         tan_so_13c VARCHAR(50),
         tan_so_1h VARCHAR(50),
@@ -52,6 +52,39 @@ const createTables = async () => {
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       )
+    `);
+
+    // Migrate existing stt_bang data if needed
+    await client.query(`
+      DO $$
+      BEGIN
+        -- Check if stt_bang column exists and is VARCHAR
+        IF EXISTS (
+          SELECT 1 FROM information_schema.columns
+          WHERE table_name = 'nmr_data_blocks'
+          AND column_name = 'stt_bang'
+          AND data_type = 'character varying'
+        ) THEN
+          -- Create a temporary column
+          ALTER TABLE nmr_data_blocks ADD COLUMN stt_bang_new SERIAL;
+
+          -- Assign unique sequential numbers to existing records
+          UPDATE nmr_data_blocks
+          SET stt_bang_new = subquery.new_id
+          FROM (
+            SELECT id, ROW_NUMBER() OVER (ORDER BY created_at) as new_id
+            FROM nmr_data_blocks
+          ) as subquery
+          WHERE nmr_data_blocks.id = subquery.id;
+
+          -- Drop the old column and rename the new one
+          ALTER TABLE nmr_data_blocks DROP COLUMN stt_bang;
+          ALTER TABLE nmr_data_blocks RENAME COLUMN stt_bang_new TO stt_bang;
+
+          -- Add unique constraint
+          ALTER TABLE nmr_data_blocks ADD CONSTRAINT nmr_data_blocks_stt_bang_unique UNIQUE (stt_bang);
+        END IF;
+      END $$;
     `);
 
     // Create unique index to enforce one-to-one relationship
@@ -80,6 +113,7 @@ const createTables = async () => {
       CREATE INDEX IF NOT EXISTS idx_compounds_loai_hc ON compounds(loai_hc);
       CREATE INDEX IF NOT EXISTS idx_compounds_created_at ON compounds(created_at DESC);
       CREATE INDEX IF NOT EXISTS idx_nmr_data_blocks_compound_id ON nmr_data_blocks(compound_id);
+      CREATE INDEX IF NOT EXISTS idx_nmr_data_blocks_stt_bang ON nmr_data_blocks(stt_bang);
       CREATE INDEX IF NOT EXISTS idx_nmr_signals_nmr_data_block_id ON nmr_signals(nmr_data_block_id);
     `);
 
