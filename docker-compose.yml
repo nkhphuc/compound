@@ -29,6 +29,8 @@ services:
       - ./uploads:/data
     command: server /data --console-address ":9001"
     restart: unless-stopped
+    ports:
+      - "9001:9001"
     networks:
       - compound-network
 
