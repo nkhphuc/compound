@@ -23,6 +23,45 @@ function base64ToBuffer(base64String: string): ArrayBuffer | null {
   }
 }
 
+// Helper to fetch image from HTTP URL and convert to buffer for ExcelJS
+async function urlToBuffer(imageUrl: string): Promise<ArrayBuffer | null> {
+  try {
+    const response = await fetch(imageUrl);
+    if (!response.ok) {
+      console.error("Failed to fetch image:", response.status, response.statusText);
+      return null;
+    }
+    const blob = await response.blob();
+    return await blob.arrayBuffer();
+  } catch (e) {
+    console.error("Error fetching image from URL:", e);
+    return null;
+  }
+}
+
+// Helper to get image extension from URL or data URL
+function getImageExtension(imageUrl: string): 'png' | 'jpeg' | 'gif' {
+  if (imageUrl.startsWith('data:image/')) {
+    const match = imageUrl.match(/data:image\/([^;]+)/);
+    if (match) {
+      const ext = match[1].toLowerCase();
+      if (ext === 'jpg') return 'jpeg';
+      if (['png', 'jpeg', 'gif'].includes(ext)) return ext as 'png' | 'jpeg' | 'gif';
+    }
+    return 'png'; // default fallback
+  }
+
+  // For HTTP URLs, try to extract extension from URL
+  const urlMatch = imageUrl.match(/\.([^.]+)$/);
+  if (urlMatch) {
+    const ext = urlMatch[1].toLowerCase();
+    if (ext === 'jpg') return 'jpeg';
+    if (['png', 'jpeg', 'gif'].includes(ext)) return ext as 'png' | 'jpeg' | 'gif';
+  }
+
+  return 'png'; // default fallback
+}
+
 // Helper to create rich text for chemical formulas
 function formatFormulaRichText(formula?: string | null): ExcelJS.RichText[] {
   const t = i18n.t.bind(i18n); // Bind t function for use
@@ -186,10 +225,18 @@ export const exportCompoundToXlsx = async (compound: CompoundData): Promise<void
 
   const imageDisplayStartRow = rowNum;
   let imageRowsToSpan = 10;
-  if (compound.hinhCauTruc && compound.hinhCauTruc.startsWith('data:image')) {
-    const imageBuffer = base64ToBuffer(compound.hinhCauTruc);
+  if (compound.hinhCauTruc) {
+    let imageBuffer: ArrayBuffer | null = null;
+
+    if (compound.hinhCauTruc.startsWith('data:image')) {
+      imageBuffer = base64ToBuffer(compound.hinhCauTruc);
+    } else if (compound.hinhCauTruc.startsWith('http')) {
+      imageBuffer = await urlToBuffer(compound.hinhCauTruc);
+    }
+
     if (imageBuffer) {
-      const imageId = workbook.addImage({ buffer: imageBuffer, extension: compound.hinhCauTruc.substring(compound.hinhCauTruc.indexOf('/') + 1, compound.hinhCauTruc.indexOf(';')) as 'png' | 'jpeg' | 'gif' });
+      const extension = getImageExtension(compound.hinhCauTruc);
+      const imageId = workbook.addImage({ buffer: imageBuffer, extension });
       const imgTargetHeightPx = 180; const imgTargetWidthPx = 250;
       imageRowsToSpan = Math.ceil(imgTargetHeightPx / 18);
       mainInfoSheet.addImage(imageId, { tl: { col: 1.1, row: imageDisplayStartRow - 1 + 0.1 }, ext: { width: imgTargetWidthPx, height: imgTargetHeightPx } });
@@ -322,18 +369,30 @@ export const exportCompoundToXlsx = async (compound: CompoundData): Promise<void
       if (spectrumData.startsWith('data:image')) {
         const imageBuffer = base64ToBuffer(spectrumData);
         if (imageBuffer) {
-          const imageId = workbook.addImage({ buffer: imageBuffer, extension: spectrumData.substring(spectrumData.indexOf('/') + 1, spectrumData.indexOf(';')) as 'png' | 'jpeg' | 'gif' });
+          const extension = getImageExtension(spectrumData);
+          const imageId = workbook.addImage({ buffer: imageBuffer, extension });
           spectraImagesSheet.addImage(imageId, { tl: { col: 0.1, row: spectraRowNum -1 + 0.1 }, ext: { width: imagePixelWidth, height: imagePixelHeight } });
           const rowsForImage = Math.ceil(imagePixelHeight / 20);
           for(let i = 0; i < rowsForImage; i++) { spectraImagesSheet.getRow(spectraRowNum + i).height = Math.max(15, imagePixelHeight / rowsForImage); }
           spectraRowNum += rowsForImage; imageCount++;
         } else { spectraRowNum++; }
       } else if (spectrumData.startsWith('http')) {
-        const urlCell = spectraImagesSheet.getCell(spectraRowNum , 2)
-        urlCell.value = {text: t('variousLabels.spectraViewExternalUrl', {label: t(fieldConfig.labelKey, fieldConfig.key)}), hyperlink: spectrumData}; // Translate
-        urlCell.font = {color: {argb: 'FF0000FF'}, underline: true, name: 'Arial', size: 10, family: 2};
-        applyCellStyle(urlCell, false, undefined, {bottom: {style: 'thin'}, right: {style: 'thin'}});
-        spectraRowNum++;
+        const imageBuffer = await urlToBuffer(spectrumData);
+        if (imageBuffer) {
+          const extension = getImageExtension(spectrumData);
+          const imageId = workbook.addImage({ buffer: imageBuffer, extension });
+          spectraImagesSheet.addImage(imageId, { tl: { col: 0.1, row: spectraRowNum -1 + 0.1 }, ext: { width: imagePixelWidth, height: imagePixelHeight } });
+          const rowsForImage = Math.ceil(imagePixelHeight / 20);
+          for(let i = 0; i < rowsForImage; i++) { spectraImagesSheet.getRow(spectraRowNum + i).height = Math.max(15, imagePixelHeight / rowsForImage); }
+          spectraRowNum += rowsForImage; imageCount++;
+        } else {
+          // Fallback to URL link if image fetch fails
+          const urlCell = spectraImagesSheet.getCell(spectraRowNum , 2)
+          urlCell.value = {text: t('variousLabels.spectraViewExternalUrl', {label: t(fieldConfig.labelKey, fieldConfig.key)}), hyperlink: spectrumData}; // Translate
+          urlCell.font = {color: {argb: 'FF0000FF'}, underline: true, name: 'Arial', size: 10, family: 2};
+          applyCellStyle(urlCell, false, undefined, {bottom: {style: 'thin'}, right: {style: 'thin'}});
+          spectraRowNum++;
+        }
       } else {
         const dataCell = spectraImagesSheet.getCell(spectraRowNum, 2);
         dataCell.value = t('variousLabels.spectraDataUnknownFormat', "Data present (unknown format)"); // Translate
@@ -343,7 +402,7 @@ export const exportCompoundToXlsx = async (compound: CompoundData): Promise<void
       spectraRowNum++;
     }
   }
-  if (imageCount === 0 && !SPECTRAL_FIELDS_CONFIG.some(f => compound.pho[f.key]?.startsWith('http'))) { // Use SPECTRAL_FIELDS_CONFIG
+  if (imageCount === 0 && !SPECTRAL_FIELDS_CONFIG.some(f => compound.pho[f.key]?.startsWith('http') || compound.pho[f.key]?.startsWith('data:image'))) { // Use SPECTRAL_FIELDS_CONFIG
     spectraImagesSheet.getCell(spectraRowNum, 1).value = t('excelExport.spectraImagesSheet.noImagesOrUrls', "No spectra images uploaded or URLs provided.");
     applyCellStyle(spectraImagesSheet.getCell(spectraRowNum,1));
     spectraRowNum++;
