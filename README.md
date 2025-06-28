@@ -246,6 +246,10 @@ NODE_ENV=development
 DATABASE_URL=postgresql://postgres:your_password@localhost:5432/compound_chemistry
 CORS_ORIGIN=http://localhost:5173
 LOG_LEVEL=info
+S3_ENDPOINT=http://localhost:9000
+S3_ACCESS_KEY=minioadmin
+S3_SECRET_KEY=minioadmin
+S3_BUCKET=compound-uploads
 ```
 
 ### Frontend (.env)
@@ -253,10 +257,14 @@ LOG_LEVEL=info
 ```env
 VITE_API_BASE_URL=http://localhost:3002/api
 VITE_FILE_BASE_URL=http://localhost:3002
+VITE_S3_PUBLIC_ENDPOINT=http://localhost:9000
 VITE_APP_TITLE=Compound Chemistry Data Manager
 ```
 
-**Note:** Frontend environment variables must be prefixed with `VITE_` to be accessible in the browser.
+**Note:**
+
+- Frontend environment variables must be prefixed with `VITE_` to be accessible in the browser.
+- `VITE_S3_PUBLIC_ENDPOINT` is used to build full URLs for uploaded files. For LAN access, set this to your LAN IP (e.g., `http://192.168.1.100:9000`).
 
 ## 📝 Development
 
@@ -321,6 +329,9 @@ Docker Compose uses the following default environment variables:
 - `S3_ENDPOINT=http://minio:9000`
 - `S3_ACCESS_KEY=minioadmin`
 - `S3_SECRET_KEY=minioadmin`
+- `S3_BUCKET=compound-uploads`
+
+For the frontend, you can set `VITE_S3_PUBLIC_ENDPOINT` to configure the public URL for uploaded files. For LAN access, this should be set to your host machine's IP address (e.g., `http://192.168.1.100:9000`).
 
 You can override these by creating a `.env` file or modifying `docker-compose.yml`.
 

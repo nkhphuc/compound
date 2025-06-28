@@ -1046,9 +1046,9 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
                         <img src={getImageUrl(currentData)} alt={`${fieldLabel} preview`} className="mt-2 max-w-xs max-h-32 border rounded"/>
                     )}
                     {currentData.startsWith('data:application/pdf') && (
-                        <a href={currentData} download={`${spectralFileNames[fieldKey] || fieldLabel}.pdf`} className="text-indigo-600 hover:underline text-sm block mt-1">Download PDF</a>
+                        <a href={getImageUrl(currentData)} download={`${spectralFileNames[fieldKey] || fieldLabel}.pdf`} className="text-indigo-600 hover:underline text-sm block mt-1">Download PDF</a>
                     )}
-                    {currentData.startsWith('http') && (
+                    {(currentData.startsWith('http') || currentData.startsWith('/compound-uploads/')) && (
                       <div>
                         <img
                           src={getImageUrl(currentData)}
@@ -1061,7 +1061,7 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
                             target.style.display = 'none';
                             // Show fallback link if image fails to load
                             const fallbackLink = document.createElement('a');
-                            fallbackLink.href = currentData;
+                            fallbackLink.href = getImageUrl(currentData);
                             fallbackLink.target = '_blank';
                             fallbackLink.rel = 'noopener noreferrer';
                             fallbackLink.className = 'text-indigo-600 hover:underline text-sm block mt-1';
@@ -1070,7 +1070,7 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
                           }}
                         />
                         <div className="mt-1">
-                          <a href={currentData} target="_blank" rel="noopener noreferrer" className="text-xs text-gray-500 hover:text-gray-700 underline">
+                          <a href={getImageUrl(currentData)} target="_blank" rel="noopener noreferrer" className="text-xs text-gray-500 hover:text-gray-700 underline">
                             {t('variousLabels.openInNewTab')}
                           </a>
                         </div>

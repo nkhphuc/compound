@@ -5,7 +5,6 @@ const S3_ENDPOINT = process.env.S3_ENDPOINT || 'http://localhost:9000';
 const S3_ACCESS_KEY = process.env.S3_ACCESS_KEY || 'minioadmin';
 const S3_SECRET_KEY = process.env.S3_SECRET_KEY || 'minioadmin';
 const S3_BUCKET = process.env.S3_BUCKET || 'compound-uploads';
-const S3_PUBLIC_ENDPOINT = process.env.S3_PUBLIC_ENDPOINT || 'http://localhost:9000';
 
 // Shared S3 client instance
 export const s3Client = new S3Client({
@@ -32,7 +31,6 @@ export const s3Client = new S3Client({
 // Export configuration constants
 export const S3_CONFIG = {
   ENDPOINT: S3_ENDPOINT,
-  PUBLIC_ENDPOINT: S3_PUBLIC_ENDPOINT,
   ACCESS_KEY: S3_ACCESS_KEY,
   SECRET_KEY: S3_SECRET_KEY,
   BUCKET: S3_BUCKET,

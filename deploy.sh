@@ -2,7 +2,7 @@
 
 echo "🚀 Deploying Compound Chemistry Data Manager..."
 
-# Auto-detect LAN IP for S3_PUBLIC_ENDPOINT
+# Auto-detect LAN IP for display purposes
 echo "🔍 Detecting LAN IP address..."
 if [[ "$OSTYPE" == "darwin"* ]]; then
     # macOS
@@ -22,9 +22,9 @@ else
     echo "✅ Detected LAN IP: $LAN_IP"
 fi
 
-# Set environment variable for S3_PUBLIC_ENDPOINT
-export S3_PUBLIC_ENDPOINT="http://$LAN_IP:9000"
-echo "🔗 S3_PUBLIC_ENDPOINT set to: $S3_PUBLIC_ENDPOINT"
+# Set environment variable for VITE_S3_PUBLIC_ENDPOINT
+export VITE_S3_PUBLIC_ENDPOINT="http://$LAN_IP:9000"
+echo "🔗 VITE_S3_PUBLIC_ENDPOINT set to: $VITE_S3_PUBLIC_ENDPOINT"
 
 # Create necessary directories
 echo "📁 Creating necessary directories..."

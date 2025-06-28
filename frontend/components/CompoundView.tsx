@@ -45,26 +45,29 @@ const DataField: React.FC<{ label: string; value?: string | number | boolean | n
 const renderSpectrumLinkOrPreview = (data: string | undefined, label: string, t: (key: string, options?: any) => string): React.ReactNode => {
   if (!data) return <span className="text-gray-500">{t('variousLabels.notAvailable')}</span>;
 
+  // Use getImageUrl for all data types to handle S3 paths properly
+  const imageUrl = getImageUrl(data);
+
   if (data.startsWith('data:image/')) {
-    return <img src={getImageUrl(data)} alt={`${label} Preview`} className="max-w-xs max-h-48 border rounded-md shadow" />;
+    return <img src={imageUrl} alt={`${label} Preview`} className="max-w-xs max-h-48 border rounded-md shadow" />;
   } else if (data.startsWith('data:application/pdf')) {
     return (
-      <a href={data} download={`${label.replace(/\s+/g, '_')}.pdf`} className="text-indigo-600 hover:text-indigo-800 underline">
+      <a href={imageUrl} download={`${label.replace(/\s+/g, '_')}.pdf`} className="text-indigo-600 hover:text-indigo-800 underline">
         {t('variousLabels.spectraDownloadPdf', { label })}
       </a>
     );
   } else if (data.startsWith('data:')) {
     return (
-      <a href={data} download={`${label.replace(/\s+/g, '_')}.dat`} className="text-indigo-600 hover:text-indigo-800 underline">
+      <a href={imageUrl} download={`${label.replace(/\s+/g, '_')}.dat`} className="text-indigo-600 hover:text-indigo-800 underline">
         {t('variousLabels.spectraDownloadData', { label })}
       </a>
     );
-  } else if (data.startsWith('http')) {
-    // Display HTTP URLs as images (for MinIO files)
+  } else if (data.startsWith('http') || data.startsWith('/compound-uploads/')) {
+    // Display HTTP URLs and S3 paths as images
     return (
       <div>
         <img
-          src={getImageUrl(data)}
+          src={imageUrl}
           alt={`${label} Spectrum`}
           className="max-w-xs max-h-48 border rounded-md shadow"
           onError={(e) => {
@@ -74,7 +77,7 @@ const renderSpectrumLinkOrPreview = (data: string | undefined, label: string, t:
             target.style.display = 'none';
             // Show fallback link if image fails to load
             const fallbackLink = document.createElement('a');
-            fallbackLink.href = data;
+            fallbackLink.href = imageUrl;
             fallbackLink.target = '_blank';
             fallbackLink.rel = 'noopener noreferrer';
             fallbackLink.className = 'text-indigo-600 hover:text-indigo-800 underline break-all';
@@ -83,7 +86,7 @@ const renderSpectrumLinkOrPreview = (data: string | undefined, label: string, t:
           }}
         />
         <div className="mt-1">
-          <a href={data} target="_blank" rel="noopener noreferrer" className="text-xs text-gray-500 hover:text-gray-700 underline">
+          <a href={imageUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-gray-500 hover:text-gray-700 underline">
             {t('variousLabels.openInNewTab')}
           </a>
         </div>

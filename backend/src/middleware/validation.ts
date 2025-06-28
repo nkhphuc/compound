@@ -37,25 +37,91 @@ const nmrDataBlockSchema = Joi.object({
 
 // Spectral Record validation (all fields are optional strings)
 const spectralRecordSchema = Joi.object({
-  '1h': Joi.string().allow('').default(''),
-  '13c': Joi.string().allow('').default(''),
-  dept: Joi.string().allow('').default(''),
-  hsqc: Joi.string().allow('').default(''),
-  hmbc: Joi.string().allow('').default(''),
-  cosy: Joi.string().allow('').default(''),
-  noesy: Joi.string().allow('').default(''),
-  roesy: Joi.string().allow('').default(''),
-  hrms: Joi.string().allow('').default(''),
-  lrms: Joi.string().allow('').default(''),
-  ir: Joi.string().allow('').default(''),
-  uv_pho: Joi.string().allow('').default(''),
-  cd: Joi.string().allow('').default('')
+  '1h': Joi.string().custom((value, helpers) => {
+    if (!urlValidation(value)) {
+      return helpers.error('any.invalid', { message: 'Please enter a valid HTTP/S URL or upload a file.' });
+    }
+    return value;
+  }).allow('').default(''),
+  '13c': Joi.string().custom((value, helpers) => {
+    if (!urlValidation(value)) {
+      return helpers.error('any.invalid', { message: 'Please enter a valid HTTP/S URL or upload a file.' });
+    }
+    return value;
+  }).allow('').default(''),
+  dept: Joi.string().custom((value, helpers) => {
+    if (!urlValidation(value)) {
+      return helpers.error('any.invalid', { message: 'Please enter a valid HTTP/S URL or upload a file.' });
+    }
+    return value;
+  }).allow('').default(''),
+  hsqc: Joi.string().custom((value, helpers) => {
+    if (!urlValidation(value)) {
+      return helpers.error('any.invalid', { message: 'Please enter a valid HTTP/S URL or upload a file.' });
+    }
+    return value;
+  }).allow('').default(''),
+  hmbc: Joi.string().custom((value, helpers) => {
+    if (!urlValidation(value)) {
+      return helpers.error('any.invalid', { message: 'Please enter a valid HTTP/S URL or upload a file.' });
+    }
+    return value;
+  }).allow('').default(''),
+  cosy: Joi.string().custom((value, helpers) => {
+    if (!urlValidation(value)) {
+      return helpers.error('any.invalid', { message: 'Please enter a valid HTTP/S URL or upload a file.' });
+    }
+    return value;
+  }).allow('').default(''),
+  noesy: Joi.string().custom((value, helpers) => {
+    if (!urlValidation(value)) {
+      return helpers.error('any.invalid', { message: 'Please enter a valid HTTP/S URL or upload a file.' });
+    }
+    return value;
+  }).allow('').default(''),
+  roesy: Joi.string().custom((value, helpers) => {
+    if (!urlValidation(value)) {
+      return helpers.error('any.invalid', { message: 'Please enter a valid HTTP/S URL or upload a file.' });
+    }
+    return value;
+  }).allow('').default(''),
+  hrms: Joi.string().custom((value, helpers) => {
+    if (!urlValidation(value)) {
+      return helpers.error('any.invalid', { message: 'Please enter a valid HTTP/S URL or upload a file.' });
+    }
+    return value;
+  }).allow('').default(''),
+  lrms: Joi.string().custom((value, helpers) => {
+    if (!urlValidation(value)) {
+      return helpers.error('any.invalid', { message: 'Please enter a valid HTTP/S URL or upload a file.' });
+    }
+    return value;
+  }).allow('').default(''),
+  ir: Joi.string().custom((value, helpers) => {
+    if (!urlValidation(value)) {
+      return helpers.error('any.invalid', { message: 'Please enter a valid HTTP/S URL or upload a file.' });
+    }
+    return value;
+  }).allow('').default(''),
+  uv_pho: Joi.string().custom((value, helpers) => {
+    if (!urlValidation(value)) {
+      return helpers.error('any.invalid', { message: 'Please enter a valid HTTP/S URL or upload a file.' });
+    }
+    return value;
+  }).allow('').default(''),
+  cd: Joi.string().custom((value, helpers) => {
+    if (!urlValidation(value)) {
+      return helpers.error('any.invalid', { message: 'Please enter a valid HTTP/S URL or upload a file.' });
+    }
+    return value;
+  }).allow('').default('')
 }).default({});
 
 // URL validation helper
 const urlValidation = (value: string) => {
   if (!value || value === '') return true; // Empty is allowed
-  return value.startsWith('http');
+  // Allow HTTP URLs or S3 file paths
+  return value.startsWith('http') || value.startsWith('/compound-uploads/');
 };
 
 // Main compound validation schema - mirrors frontend validation exactly
@@ -114,7 +180,7 @@ export const compoundValidationSchema = Joi.object({
   // URL validation for structure image (mirror frontend validation)
   hinhCauTruc: Joi.string().custom((value, helpers) => {
     if (!urlValidation(value)) {
-      return helpers.error('any.invalid', { message: 'Please enter a valid HTTP/S URL for the image.' });
+      return helpers.error('any.invalid', { message: 'Please enter a valid HTTP/S URL or upload a file for the image.' });
     }
     return value;
   }).allow('').default(''),

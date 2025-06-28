@@ -5,21 +5,29 @@ import { v4 as uuidv4 } from 'uuid';
 import { DeleteObjectCommand, HeadBucketCommand } from '@aws-sdk/client-s3';
 import { s3Client, S3_CONFIG } from '../config/s3';
 
-// Helper: extract S3 key from a public file URL
+// Helper: extract S3 key from a file path
 function extractS3KeyFromUrl(url: string): string | null {
-  // Example: http://localhost:9000/compound-uploads/filename.ext
+  // Handle both legacy full URLs and new path-only format
   try {
-    const base = S3_CONFIG.PUBLIC_ENDPOINT.replace(/\/$/, '');
-    if (url.startsWith(base)) {
-      // Remove base and leading slash, then extract just the filename
-      const fullPath = url.substring(base.length + 1);
-      // Remove bucket name from path: compound-uploads/filename.ext -> filename.ext
-      const parts = fullPath.split('/');
-      if (parts.length >= 2) {
-        return parts.slice(1).join('/'); // Return everything after the bucket name
+    // If it's already just a path (starts with /compound-uploads/), extract the key
+    if (url.startsWith('/compound-uploads/')) {
+      const parts = url.split('/');
+      if (parts.length >= 3) {
+        return parts.slice(2).join('/'); // Return everything after /compound-uploads/
       }
-      return fullPath;
+      return null;
     }
+
+    // Legacy support: if it's a full URL, try to extract the key
+    // This handles any existing data that might have full URLs
+    if (url.startsWith('http')) {
+      const urlObj = new URL(url);
+      const pathParts = urlObj.pathname.split('/');
+      if (pathParts.length >= 3 && pathParts[1] === S3_CONFIG.BUCKET) {
+        return pathParts.slice(2).join('/'); // Return everything after the bucket name
+      }
+    }
+
     return null;
   } catch {
     return null;

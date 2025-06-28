@@ -1,7 +1,6 @@
 // S3/MinIO Upload Controller (AWS SDK v3)
 // Required env vars:
 // S3_ENDPOINT=http://localhost:9000
-// S3_PUBLIC_ENDPOINT=http://localhost:9000 (for public URLs)
 // S3_ACCESS_KEY=minioadmin
 // S3_SECRET_KEY=minioadmin
 // S3_BUCKET=compound-uploads
@@ -43,12 +42,14 @@ export const uploadFile = async (req: Request, res: Response): Promise<void> => 
       ACL: 'public-read' as const,
     };
     await s3Client.send(new PutObjectCommand(putParams));
-    // Public URL for MinIO (use public endpoint for browser-accessible URLs)
-    const fileUrl = `${S3_CONFIG.PUBLIC_ENDPOINT.replace(/\/$/, '')}/${S3_CONFIG.BUCKET}/${fileName}`;
+
+    // Save only the file path, not the full URL
+    const filePath = `/${S3_CONFIG.BUCKET}/${fileName}`;
+
     res.json({
       success: true,
       data: {
-        url: fileUrl,
+        url: filePath,
         filename: fileName,
         originalName: uploadedFile.name,
         size: uploadedFile.size,

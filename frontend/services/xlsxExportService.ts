@@ -3,6 +3,7 @@ import { CompoundData, CompoundStatus } from '../types';
 // Removed SPECTRAL_FIELDS import, will use SPECTRAL_FIELDS_CONFIG from constants and i18n
 import { SPECTRAL_FIELDS_CONFIG } from '../constants';
 import i18n from 'i18next'; // Import i18n instance
+import { getImageUrl } from './urlService'; // Import the URL helper
 
 // Helper to convert base64 data URL to buffer for ExcelJS
 function base64ToBuffer(base64String: string): ArrayBuffer | null {
@@ -230,8 +231,10 @@ export const exportCompoundToXlsx = async (compound: CompoundData): Promise<void
 
     if (compound.hinhCauTruc.startsWith('data:image')) {
       imageBuffer = base64ToBuffer(compound.hinhCauTruc);
-    } else if (compound.hinhCauTruc.startsWith('http')) {
-      imageBuffer = await urlToBuffer(compound.hinhCauTruc);
+    } else if (compound.hinhCauTruc.startsWith('http') || compound.hinhCauTruc.startsWith('/compound-uploads/')) {
+      // Use getImageUrl to build proper URL for S3 paths
+      const fullImageUrl = getImageUrl(compound.hinhCauTruc);
+      imageBuffer = await urlToBuffer(fullImageUrl);
     }
 
     if (imageBuffer) {
@@ -376,8 +379,10 @@ export const exportCompoundToXlsx = async (compound: CompoundData): Promise<void
           for(let i = 0; i < rowsForImage; i++) { spectraImagesSheet.getRow(spectraRowNum + i).height = Math.max(15, imagePixelHeight / rowsForImage); }
           spectraRowNum += rowsForImage; imageCount++;
         } else { spectraRowNum++; }
-      } else if (spectrumData.startsWith('http')) {
-        const imageBuffer = await urlToBuffer(spectrumData);
+      } else if (spectrumData.startsWith('http') || spectrumData.startsWith('/compound-uploads/')) {
+        // Use getImageUrl to build proper URL for S3 paths
+        const fullImageUrl = getImageUrl(spectrumData);
+        const imageBuffer = await urlToBuffer(fullImageUrl);
         if (imageBuffer) {
           const extension = getImageExtension(spectrumData);
           const imageId = workbook.addImage({ buffer: imageBuffer, extension });
@@ -388,7 +393,7 @@ export const exportCompoundToXlsx = async (compound: CompoundData): Promise<void
         } else {
           // Fallback to URL link if image fetch fails
           const urlCell = spectraImagesSheet.getCell(spectraRowNum , 2)
-          urlCell.value = {text: t('variousLabels.spectraViewExternalUrl', {label: t(fieldConfig.labelKey, fieldConfig.key)}), hyperlink: spectrumData}; // Translate
+          urlCell.value = {text: t('variousLabels.spectraViewExternalUrl', {label: t(fieldConfig.labelKey, fieldConfig.key)}), hyperlink: fullImageUrl}; // Use full URL
           urlCell.font = {color: {argb: 'FF0000FF'}, underline: true, name: 'Arial', size: 10, family: 2};
           applyCellStyle(urlCell, false, undefined, {bottom: {style: 'thin'}, right: {style: 'thin'}});
           spectraRowNum++;
