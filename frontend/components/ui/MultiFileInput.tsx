@@ -14,8 +14,8 @@ interface MultiFileInputProps {
   label: string;
   selectedFiles: FileInfo[];
   onChange: (files: File[]) => void;
-  onRemoveFile: (fileId: string) => void;
-  onRemoveAll: () => void;
+  onRemoveFile: (fileId: string) => Promise<void>;
+  onRemoveAll: () => Promise<void>;
   accept?: string;
   maxFiles?: number;
   disabled?: boolean;

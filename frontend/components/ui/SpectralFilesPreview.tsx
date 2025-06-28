@@ -14,8 +14,8 @@ interface FileInfo {
 interface SpectralFilesPreviewProps {
   files: FileInfo[];
   fieldLabel: string;
-  onRemoveFile: (fileId: string) => void;
-  onRemoveAll: () => void;
+  onRemoveFile: (fileId: string) => Promise<void>;
+  onRemoveAll: () => Promise<void>;
 }
 
 export const SpectralFilesPreview: React.FC<SpectralFilesPreviewProps> = ({
@@ -36,7 +36,7 @@ export const SpectralFilesPreview: React.FC<SpectralFilesPreviewProps> = ({
         </h5>
         <button
           type="button"
-          onClick={onRemoveAll}
+          onClick={async () => await onRemoveAll()}
           className="text-sm text-red-600 hover:text-red-800 hover:bg-red-50 px-2 py-1 rounded"
         >
           {t('fileUpload.removeAll')}
@@ -86,7 +86,7 @@ export const SpectralFilesPreview: React.FC<SpectralFilesPreviewProps> = ({
                 </a>
                 <button
                   type="button"
-                  onClick={() => onRemoveFile(file.id)}
+                  onClick={async () => await onRemoveFile(file.id)}
                   className="text-xs text-red-600 hover:text-red-800 flex items-center"
                 >
                   <TrashIcon className="w-3 h-3 mr-1" />

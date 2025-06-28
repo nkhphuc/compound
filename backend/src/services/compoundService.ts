@@ -283,7 +283,7 @@ export class CompoundService {
 
         // Check each file in the old array
         for (const oldFile of oldFileUrls) {
-          if (oldFile && oldFile.startsWith('http')) {
+          if (oldFile && (oldFile.startsWith('http') || oldFile.startsWith('/compound-uploads/'))) {
             // Check if this file still exists in the new array
             const fileStillExists = newFileUrls.includes(oldFile);
             if (!fileStillExists) {
@@ -306,7 +306,7 @@ export class CompoundService {
 
       console.log(`S3 Cleanup - Checking Structure Image: old="${oldStructureImage}", new="${newStructureImage}"`);
 
-      if (oldStructureImage && oldStructureImage.startsWith('http') && (!newStructureImage || newStructureImage !== oldStructureImage)) {
+      if (oldStructureImage && (oldStructureImage.startsWith('http') || oldStructureImage.startsWith('/compound-uploads/')) && (!newStructureImage || newStructureImage !== oldStructureImage)) {
         console.log(`S3 Cleanup - Structure Image changed/removed: ${oldStructureImage}`);
         const s3Key = extractS3KeyFromUrl(oldStructureImage);
         if (s3Key) {
@@ -435,7 +435,7 @@ export class CompoundService {
           const fileUrls = getFileUrls(value as any);
 
           for (const fileUrl of fileUrls) {
-            if (fileUrl && fileUrl.startsWith('http')) {
+            if (fileUrl && (fileUrl.startsWith('http') || fileUrl.startsWith('/compound-uploads/'))) {
               console.log(`S3 Cleanup - Deleting file for ${key}: ${fileUrl}`);
               const s3Key = extractS3KeyFromUrl(fileUrl);
               if (s3Key) {
@@ -450,7 +450,7 @@ export class CompoundService {
       }
 
       // Delete Structure Image file
-      if (compound.hinhCauTruc && compound.hinhCauTruc.startsWith('http')) {
+      if (compound.hinhCauTruc && (compound.hinhCauTruc.startsWith('http') || compound.hinhCauTruc.startsWith('/compound-uploads/'))) {
         console.log(`S3 Cleanup - Deleting Structure Image: ${compound.hinhCauTruc}`);
         const s3Key = extractS3KeyFromUrl(compound.hinhCauTruc);
         if (s3Key) {

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { uploadFile, uploadMultipleFiles } from '../controllers/uploadController';
+import { uploadFile, uploadMultipleFiles, deleteFile } from '../controllers/uploadController';
 import { validateFileUpload, validateMultipleFileUpload } from '../middleware/validation';
 
 const router: Router = Router();
@@ -9,5 +9,8 @@ router.post('/', validateFileUpload, (req, res, next) => { uploadFile(req, res).
 
 // POST /api/uploads/multiple - Upload multiple files
 router.post('/multiple', validateMultipleFileUpload, (req, res, next) => { uploadMultipleFiles(req, res).catch(next); });
+
+// DELETE /api/uploads - Delete a file
+router.delete('/', (req, res, next) => { deleteFile(req, res).catch(next); });
 
 export { router as uploadRoutes };

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation, Trans } from 'react-i18next';
 import { CompoundData, initialCompoundData, UVSKLMData, SpectralRecord, NMRDataBlock, NMRSignalData, CompoundStatus, initialNMRDataBlock, initialNMRSignalData, NMRCondition, initialNMRCondition } from '../types';
 import { COMPOUND_STATUS_OPTIONS_KEYS, SPECTRAL_FIELDS, DEFAULT_LOAI_HC_OPTIONS, LOAI_HC_OTHER_STRING, DEFAULT_TRANG_THAI_OPTIONS, DEFAULT_MAU_OPTIONS, LOAI_HC_OTHER_STRING_KEY } from '../constants';
-import { getUniqueLoaiHCValues, getUniqueTrangThaiValues, getUniqueMauValues, uploadFile, uploadMultipleFiles } from '../services/compoundService';
+import { getUniqueLoaiHCValues, getUniqueTrangThaiValues, getUniqueMauValues, uploadFile, uploadMultipleFiles, deleteFile } from '../services/compoundService';
 import { getImageUrl } from '../services/urlService';
 import { Input } from './ui/Input';
 import { Button } from './ui/Button';
@@ -446,7 +446,18 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
     }
   };
 
-  const removeStructureImage = () => {
+  const removeStructureImage = async () => {
+    // Delete file from S3/MinIO bucket if it exists and is a URL
+    if (formData.hinhCauTruc && formData.hinhCauTruc.startsWith('http')) {
+      try {
+        await deleteFile(formData.hinhCauTruc);
+      } catch (error) {
+        console.error('Failed to delete structure image from bucket:', error);
+        // Continue with UI removal even if bucket deletion fails
+      }
+    }
+
+    // Clear frontend state
     setFormData(prev => ({ ...prev, hinhCauTruc: '' }));
     setImageUrlInput('');
     setStructureImageFileName('');
@@ -561,7 +572,21 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
     }
   };
 
-  const removeSpectralFile = (fieldKey: keyof SpectralRecord, fileId: string) => {
+  const removeSpectralFile = async (fieldKey: keyof SpectralRecord, fileId: string) => {
+    // Find the file to get its URL before removing from state
+    const fileToRemove = spectralFiles[fieldKey].find(f => f.id === fileId);
+
+    if (fileToRemove) {
+      try {
+        // Delete file from S3/MinIO bucket
+        await deleteFile(fileToRemove.url);
+      } catch (error) {
+        console.error('Failed to delete file from bucket:', error);
+        // Continue with UI removal even if bucket deletion fails
+      }
+    }
+
+    // Remove from frontend state
     setSpectralFiles(prev => ({
       ...prev,
       [fieldKey]: prev[fieldKey].filter(file => file.id !== fileId)
@@ -579,7 +604,23 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
     }));
   };
 
-  const removeAllSpectralFiles = (fieldKey: keyof SpectralRecord) => {
+  const removeAllSpectralFiles = async (fieldKey: keyof SpectralRecord) => {
+    // Get all files to delete from bucket
+    const filesToDelete = spectralFiles[fieldKey] || [];
+
+    // Delete all files from S3/MinIO bucket
+    const deletePromises = filesToDelete.map(async (file) => {
+      try {
+        await deleteFile(file.url);
+      } catch (error) {
+        console.error('Failed to delete file from bucket:', file.url, error);
+        // Continue with other deletions even if some fail
+      }
+    });
+
+    await Promise.all(deletePromises);
+
+    // Remove from frontend state
     setSpectralFiles(prev => ({
       ...prev,
       [fieldKey]: []
@@ -1085,7 +1126,7 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
                     <Button
                         variant="ghost"
                         size="sm"
-                        onClick={removeStructureImage}
+                        onClick={async () => await removeStructureImage()}
                         className="mt-2 text-red-600 hover:bg-red-50"
                         leftIcon={<TrashIcon className="w-4 h-4"/>}
                     >
@@ -1157,8 +1198,8 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
                       label={t('compoundForm.browse')}
                       selectedFiles={spectralFiles[fieldKey] || []}
                       onChange={(files) => handleSpectralMultipleFileChange(fieldKey, files)}
-                      onRemoveFile={(fileId) => removeSpectralFile(fieldKey, fileId)}
-                      onRemoveAll={() => removeAllSpectralFiles(fieldKey)}
+                      onRemoveFile={async (fileId) => await removeSpectralFile(fieldKey, fileId)}
+                      onRemoveAll={async () => await removeAllSpectralFiles(fieldKey)}
                       accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,.svg,image/*,application/pdf"
                       maxFiles={10}
                       wrapperClassName="mt-1"
@@ -1167,8 +1208,8 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
                     <SpectralFilesPreview
                       files={spectralFiles[fieldKey] || []}
                       fieldLabel={fieldLabel}
-                      onRemoveFile={(fileId) => removeSpectralFile(fieldKey, fileId)}
-                      onRemoveAll={() => removeAllSpectralFiles(fieldKey)}
+                      onRemoveFile={async (fileId) => await removeSpectralFile(fieldKey, fileId)}
+                      onRemoveAll={async () => await removeAllSpectralFiles(fieldKey)}
                     />
                   </div>
                 )}

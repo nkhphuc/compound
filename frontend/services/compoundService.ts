@@ -336,3 +336,24 @@ export const getNextSttBang = async (): Promise<number> => {
     throw error;
   }
 };
+
+// Delete a file from the backend
+export async function deleteFile(fileUrl: string): Promise<void> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/uploads`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ fileUrl }),
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error('File deletion failed: ' + (data?.error || response.status));
+    }
+  } catch (err) {
+    console.error('[deleteFile] Deletion error:', err);
+    throw err;
+  }
+}
