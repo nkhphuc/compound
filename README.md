@@ -305,6 +305,7 @@ docker-compose up -d --build
 ```
 
 **Services included:**
+
 - **PostgreSQL**: Database server
 - **MinIO**: Object storage for file uploads
 - **Backend**: Express.js API server
@@ -315,6 +316,7 @@ The backend container automatically runs database migrations on startup using th
 
 **Environment Variables:**
 Docker Compose uses the following default environment variables:
+
 - `DATABASE_URL=postgresql://postgres:your_password@postgres:5432/compound_chemistry`
 - `S3_ENDPOINT=http://minio:9000`
 - `S3_ACCESS_KEY=minioadmin`
