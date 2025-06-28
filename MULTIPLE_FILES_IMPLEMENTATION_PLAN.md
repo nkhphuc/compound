@@ -481,11 +481,81 @@ export const SpectralFilesPreview: React.FC<SpectralFilesPreviewProps> = ({
 };
 ```
 
-### 3. Update Compound Form
+### 3. URL Generation and Display Handling
+
+**Important**: Even with arrays, each file URL still needs proper processing for display. The current system uses `getImageUrl()` helper function to handle different URL formats:
+
+**File: `frontend/services/urlService.ts`**
+
+```typescript
+// This existing helper function handles URL generation for all file types
+export function getImageUrl(url: string): string {
+  if (!url) return '';
+
+  // Handle data URLs (base64 encoded images)
+  if (url.startsWith('data:')) {
+    return url;
+  }
+
+  // Handle relative URLs (S3/MinIO paths)
+  if (url.startsWith('/compound-uploads/')) {
+    return `${API_BASE_URL}${url}`;
+  }
+
+  // Handle absolute URLs
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url;
+  }
+
+  // Default fallback - assume it's a relative path
+  return `${API_BASE_URL}/${url}`;
+}
+```
+
+**Usage in Multiple File Components:**
+
+1. **In SpectralFilesPreview.tsx** (lines 45, 65):
+
+   ```typescript
+   // For image preview
+   src={getImageUrl(file.url)}
+
+   // For download/view links
+   href={getImageUrl(file.url)}
+   ```
+
+2. **In Excel Export** (lines 750, 765):
+
+   ```typescript
+   const fullImageUrl = getImageUrl(fileUrl);
+   ```
+
+3. **In Compound View Page** (when displaying existing files):
+
+   ```typescript
+   // Each file in the array needs URL processing
+   {spectralFiles[fieldKey].map((file, index) => (
+     <img
+       key={index}
+       src={getImageUrl(file)}
+       alt={`${fieldLabel} ${index + 1}`}
+     />
+   ))}
+   ```
+
+**Key Points:**
+
+- ✅ **Each file URL is processed individually** using `getImageUrl()`
+- ✅ **Supports multiple URL formats**: data URLs, relative paths, absolute URLs
+- ✅ **Consistent across all components**: preview, download, Excel export
+- ✅ **Handles S3/MinIO paths**: converts `/compound-uploads/filename` to full URLs
+- ✅ **Error handling**: fallback for invalid URLs
+
+### 4. Update Compound Form
 
 **File: `frontend/components/CompoundForm.tsx`**
 
-#### 3.1 Update State Management
+#### 4.1 Update State Management
 
 ```typescript
 // Update state types
@@ -504,7 +574,7 @@ const [spectralInputMethods, setSpectralInputMethods] = useState<Record<keyof Sp
 );
 ```
 
-#### 3.2 Update File Upload Handler
+#### 4.2 Update File Upload Handler
 
 ```typescript
 const handleSpectralMultipleFileChange = async (fieldKey: keyof SpectralRecord, files: File[]) => {
@@ -584,7 +654,7 @@ const handleSpectralMultipleFileChange = async (fieldKey: keyof SpectralRecord, 
 };
 ```
 
-#### 3.3 Update File Removal Handlers
+#### 4.3 Update File Removal Handlers
 
 ```typescript
 const removeSpectralFile = (fieldKey: keyof SpectralRecord, fileId: string) => {
@@ -621,7 +691,7 @@ const removeAllSpectralFiles = (fieldKey: keyof SpectralRecord) => {
 };
 ```
 
-#### 3.4 Update Form Initialization
+#### 4.4 Update Form Initialization
 
 ```typescript
 // In setupFormData function, update pho initialization
@@ -658,7 +728,7 @@ SPECTRAL_FIELDS.forEach(field => {
 });
 ```
 
-#### 3.5 Update Form Rendering
+#### 4.5 Update Form Rendering
 
 ```typescript
 // Replace the existing spectral field rendering with:
@@ -686,7 +756,7 @@ SPECTRAL_FIELDS.forEach(field => {
 )}
 ```
 
-### 4. Update Services
+### 5. Update Services
 
 **File: `frontend/services/compoundService.ts`**
 
