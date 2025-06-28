@@ -138,9 +138,6 @@ compound/
 
    # Edit backend/.env with your database URL
    DATABASE_URL=postgresql://postgres:your_password@localhost:5432/compound_chemistry
-
-   # Copy frontend environment file
-   cp frontend/env.example frontend/.env
    ```
 
 4. **Run database migrations**:
@@ -336,10 +333,6 @@ S3_SECRET_KEY=minioadmin
 S3_BUCKET=compound-uploads
 ```
 
-**Note:**
-
-- Frontend environment variables must be prefixed with `VITE_` to be accessible in the browser.
-
 ## 📝 Development
 
 ### Adding New Features
@@ -439,7 +432,3 @@ chmod +x deploy.sh
 3. Make your changes
 4. Run tests and linting
 5. Submit a pull request
-
-## 📄 License
-
-This project is licensed under the MIT License.
