@@ -545,6 +545,26 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
     setFormData(prev => ({ ...prev, nmrData: { ...prev.nmrData, signals: [...prev.nmrData.signals, { ...initialNMRSignalData, id: crypto.randomUUID() }] } }));
   };
 
+  const addNmrSignalsBulk = (signals: NMRSignalData[]) => {
+    setFormData(prev => ({
+      ...prev,
+      nmrData: {
+        ...prev.nmrData,
+        signals: [...prev.nmrData.signals, ...signals]
+      }
+    }));
+  };
+
+  const replaceNmrSignals = (signals: NMRSignalData[]) => {
+    setFormData(prev => ({
+      ...prev,
+      nmrData: {
+        ...prev.nmrData,
+        signals: signals
+      }
+    }));
+  };
+
   const removeNmrSignal = (signalIndex: number) => {
     setFormData(prev => {
       const newSignals = prev.nmrData.signals.filter((_, index) => index !== signalIndex);
@@ -1141,9 +1161,10 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
           nmrDataBlock={formData.nmrData}
           onFieldChange={handleNmrDataBlockFieldChange}
           onConditionChange={handleNmrConditionChange}
-          // onAddCondition and onRemoveCondition removed
           onSignalChange={handleNmrSignalChange}
           onAddSignal={addNmrSignal}
+          onAddSignalsBulk={addNmrSignalsBulk}
+          onReplaceSignals={replaceNmrSignals}
           onRemoveSignal={removeNmrSignal}
         />
       </SectionCard>

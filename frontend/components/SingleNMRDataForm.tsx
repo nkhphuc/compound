@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslation, Trans } from 'react-i18next';
 import { NMRDataBlock, NMRSignalData, NMRCondition, initialNMRCondition } from '../types';
 import { Input } from './ui/Input';
 import { Textarea } from './ui/Textarea';
 import { Button } from './ui/Button';
 import { NMRSignalForm } from './NMRSignalForm';
+import { NMRSignalCSVInput } from './NMRSignalCSVInput';
 import { PlusIcon } from './icons/PlusIcon';
 // TrashIcon is no longer needed for conditions
 
@@ -17,7 +18,9 @@ interface SingleNMRDataFormProps {
 
   onSignalChange: (signalIndex: number, field: keyof Omit<NMRSignalData, 'id'>, value: string) => void;
   onAddSignal: () => void;
+  onAddSignalsBulk: (signals: NMRSignalData[]) => void;
   onRemoveSignal: (signalIndex: number) => void;
+  onReplaceSignals: (signals: NMRSignalData[]) => void;
 }
 
 export const SingleNMRDataForm: React.FC<SingleNMRDataFormProps> = ({
@@ -26,9 +29,12 @@ export const SingleNMRDataForm: React.FC<SingleNMRDataFormProps> = ({
   onConditionChange,
   onSignalChange,
   onAddSignal,
+  onAddSignalsBulk,
   onRemoveSignal,
+  onReplaceSignals,
 }) => {
   const { t } = useTranslation();
+  const [showCSVInput, setShowCSVInput] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -38,6 +44,18 @@ export const SingleNMRDataForm: React.FC<SingleNMRDataFormProps> = ({
   const handleConditionFieldChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     onConditionChange(name as keyof Omit<NMRCondition, 'id'>, value);
+  };
+
+  const handleAddSignalsFromCSV = (signals: NMRSignalData[]) => {
+    // Use the bulk add function to add all signals at once
+    onAddSignalsBulk(signals);
+    setShowCSVInput(false);
+  };
+
+  const handleReplaceSignalsFromCSV = (signals: NMRSignalData[]) => {
+    // Replace all existing signals with the new ones
+    onReplaceSignals(signals);
+    setShowCSVInput(false);
   };
 
   const sttBangDisplayValue = nmrDataBlock.sttBang === "" ? "" : nmrDataBlock.sttBang;
@@ -59,19 +77,49 @@ export const SingleNMRDataForm: React.FC<SingleNMRDataFormProps> = ({
       />
 
       <div className="mt-4 pt-3 border-t border-indigo-200">
-        <h5 className="text-md font-medium text-gray-700 mb-2">{t('nmrForm.spectralDataTable')}</h5>
-        {nmrDataBlock.signals.map((signal, signalIndex) => (
-          <NMRSignalForm
-            key={signal.id}
-            signal={signal}
-            index={signalIndex}
-            onSignalChange={(idx, field, val) => onSignalChange(idx, field as keyof Omit<NMRSignalData, 'id'>, val)}
-            onRemoveSignal={onRemoveSignal}
+        <div className="flex justify-between items-center mb-2">
+          <h5 className="text-md font-medium text-gray-700">{t('nmrForm.spectralDataTable')}</h5>
+          <div className="flex space-x-2">
+            <Button
+              variant={showCSVInput ? "ghost" : "secondary"}
+              size="sm"
+              onClick={() => setShowCSVInput(false)}
+            >
+              {t('nmrForm.inputMethod.rowByRow', 'Row by Row')}
+            </Button>
+            <Button
+              variant={showCSVInput ? "secondary" : "ghost"}
+              size="sm"
+              onClick={() => setShowCSVInput(true)}
+            >
+              {t('nmrForm.inputMethod.csvBulk', 'CSV Bulk')}
+            </Button>
+          </div>
+        </div>
+
+        {showCSVInput ? (
+          <NMRSignalCSVInput
+            onAddSignals={handleAddSignalsFromCSV}
+            onReplaceSignals={handleReplaceSignalsFromCSV}
+            onCancel={() => setShowCSVInput(false)}
+            existingSignalsCount={nmrDataBlock.signals.length}
           />
-        ))}
-        <Button variant="secondary" size="sm" onClick={onAddSignal} leftIcon={<PlusIcon className="w-4 h-4"/>}>
-          {t('nmrForm.addSignal')}
-        </Button>
+        ) : (
+          <>
+            {nmrDataBlock.signals.map((signal, signalIndex) => (
+              <NMRSignalForm
+                key={signal.id}
+                signal={signal}
+                index={signalIndex}
+                onSignalChange={(idx, field, val) => onSignalChange(idx, field as keyof Omit<NMRSignalData, 'id'>, val)}
+                onRemoveSignal={onRemoveSignal}
+              />
+            ))}
+            <Button variant="secondary" size="sm" onClick={onAddSignal} leftIcon={<PlusIcon className="w-4 h-4"/>}>
+              {t('nmrForm.addSignal')}
+            </Button>
+          </>
+        )}
       </div>
 
       <div className="mt-6 pt-3 border-t border-indigo-200">

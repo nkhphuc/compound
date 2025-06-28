@@ -29,7 +29,8 @@ const enTranslations = {
     exportToXlsx: "Export to XLSX",
     exporting: "Exporting...",
     backToList: "Back to List",
-    removeImage: "Remove Image"
+    removeImage: "Remove Image",
+    addSignals: "Add Signals"
   },
   status: {
     NEW: "New", // Key for CompoundStatus.NEW which is 'Mới'
@@ -173,7 +174,21 @@ const enTranslations = {
     deltaCPlaceholder: "e.g., 34.1",
     deltaH: "δH (ppm, J Hz)",
     deltaHPlaceholder: "e.g., 1.83 m; 2.03 dd (2.4; 5.4)",
-    removeSignalTooltip: "Remove Signal"
+    removeSignalTooltip: "Remove Signal",
+    inputMethod: {
+      rowByRow: "Row by Row",
+      csvBulk: "CSV Bulk"
+    },
+    csvInput: {
+      title: "Bulk Input (CSV)",
+      description: "Enter data in CSV format: Position, δC (ppm), δH (ppm, J Hz)",
+      placeholder: "1,34.1,1.83 m\n2,45.2,2.15 s\n3,67.8,3.45 t (7.2)",
+      pasteExample: "Paste Example",
+      preview: "Preview",
+      signals: "signals",
+      addSignals: "Add Signals",
+      replaceSignals: "Replace All Signals"
+    }
   },
   nmrView: {
     title: "Table {{tableId}}: ¹H and ¹³C NMR Data of compound {{compoundSttHC}}",
@@ -211,7 +226,8 @@ const viTranslations = {
     exportToXlsx: "Xuất ra XLSX",
     exporting: "Đang xuất...",
     backToList: "Quay lại Danh sách",
-    removeImage: "Xóa Ảnh"
+    removeImage: "Xóa Ảnh",
+    addSignals: "Thêm tín hiệu"
   },
   status: {
     NEW: "Mới", // Key for CompoundStatus.NEW
@@ -355,7 +371,21 @@ const viTranslations = {
     deltaCPlaceholder: "Ví dụ: 34.1",
     deltaH: "δH (ppm, J Hz)",
     deltaHPlaceholder: "Ví dụ: 1.83 m; 2.03 dd (2.4; 5.4)",
-    removeSignalTooltip: "Xóa tín hiệu"
+    removeSignalTooltip: "Xóa tín hiệu",
+    inputMethod: {
+      rowByRow: "Từng dòng",
+      csvBulk: "CSV hàng loạt"
+    },
+    csvInput: {
+      title: "Nhập hàng loạt (CSV)",
+      description: "Nhập dữ liệu theo định dạng CSV: Vị trí, δC (ppm), δH (ppm, J Hz)",
+      placeholder: "1,34.1,1.83 m\n2,45.2,2.15 s\n3,67.8,3.45 t (7.2)",
+      pasteExample: "Dán ví dụ",
+      preview: "Xem trước",
+      signals: "tín hiệu",
+      addSignals: "Thêm tín hiệu",
+      replaceSignals: "Thay thế tất cả tín hiệu"
+    }
   },
   nmrView: {
     title: "Bảng {{tableId}}: Dữ kiện phổ ¹H và ¹³C NMR của hợp chất {{compoundSttHC}}",
