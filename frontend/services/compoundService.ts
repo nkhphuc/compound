@@ -1,7 +1,8 @@
 import { CompoundData, initialCompoundData, NMRDataBlock, initialNMRDataBlock, initialNMRCondition, initialNMRSignalData, CompoundStatus, UVSKLMData, SpectralRecord, NMRCondition } from '../types';
 import { SPECTRAL_FIELDS } from '../constants'; // Import SPECTRAL_FIELDS
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3002/api';
+// Use relative URL for API since nginx handles the routing
+const API_BASE_URL = '/api';
 
 // Helper to ensure data integrity for loaded compounds
 const ensureCompoundDataIntegrity = (compound: Partial<CompoundData>): CompoundData => {

@@ -22,16 +22,6 @@ else
     echo "✅ Detected LAN IP: $LAN_IP"
 fi
 
-# Set environment variables for mobile access
-export VITE_API_BASE_URL="http://$LAN_IP:3002/api"
-export VITE_S3_PUBLIC_ENDPOINT="http://$LAN_IP:9000"
-export CORS_ORIGIN="*"
-
-echo "🔗 Environment variables set:"
-echo "   VITE_API_BASE_URL: $VITE_API_BASE_URL"
-echo "   VITE_S3_PUBLIC_ENDPOINT: $VITE_S3_PUBLIC_ENDPOINT"
-echo "   CORS_ORIGIN: $CORS_ORIGIN"
-
 # Create necessary directories
 echo "📁 Creating necessary directories..."
 mkdir -p db/data
@@ -47,7 +37,7 @@ docker-compose down && docker-compose up --build -d
 
 # Wait for services to be ready
 echo "⏳ Waiting for services to be ready..."
-sleep 10
+sleep 15
 
 # Check service status
 echo "📊 Checking service status..."
@@ -57,8 +47,8 @@ echo "✅ Deployment complete!"
 echo ""
 echo "🌐 Application URLs:"
 echo "   Frontend: http://$LAN_IP"
-echo "   Backend API: http://$LAN_IP:3002"
-echo "   MinIO Console: http://$LAN_IP:9001"
+echo "   Backend API: http://$LAN_IP/api"
+echo "   S3/MinIO: http://$LAN_IP/s3"
 echo "   Health Check: http://$LAN_IP/health"
 echo ""
 echo "📱 Mobile Access:"
@@ -70,8 +60,18 @@ echo "🔧 Useful commands:"
 echo "   View logs: docker-compose logs -f"
 echo "   Stop services: docker-compose down"
 echo "   Restart services: docker-compose restart"
+echo "   View nginx logs: docker-compose logs nginx"
+echo "   View frontend logs: docker-compose logs frontend"
+echo "   View backend logs: docker-compose logs backend"
 echo ""
 echo "🛠️  Troubleshooting:"
 echo "   If mobile access doesn't work, check your firewall settings:"
 echo "   - macOS: System Preferences > Security & Privacy > Firewall"
 echo "   - Linux: sudo ufw status"
+echo ""
+echo "📋 Architecture:"
+echo "   All services are now routed through nginx on port 80:"
+echo "   - Frontend: / (static files)"
+echo "   - Backend API: /api/*"
+echo "   - S3/MinIO: /s3/*"
+echo "   - Health Check: /health"

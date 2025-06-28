@@ -25,10 +25,6 @@ A React-based frontend application for managing chemical compound data with Type
    # Copy environment example
    cp env.example .env
 
-   # Edit .env if you need to change API URL
-   VITE_API_BASE_URL=http://localhost:3002/api
-   ```
-
 3. **Start development server**:
 
    ```bash
@@ -40,14 +36,6 @@ A React-based frontend application for managing chemical compound data with Type
 ## 🔧 Environment Variables
 
 All environment variables must be prefixed with `VITE_` to be accessible in the browser.
-
-```env
-# API Configuration
-VITE_API_BASE_URL=http://localhost:3002/api
-
-# Application Configuration
-VITE_APP_TITLE=Compound Chemistry Data Manager
-```
 
 ## 📦 Available Scripts
 
@@ -73,7 +61,7 @@ frontend/
 
 ## 🔌 API Integration
 
-The frontend communicates with the backend API through the `compoundService.ts` file. All API calls are configured via the `VITE_API_BASE_URL` environment variable.
+The frontend communicates with the backend API through the `compoundService.ts` file.
 
 ### Key Features
 
@@ -122,10 +110,6 @@ pnpm build
 # Preview the build
 pnpm preview
 ```
-
-### Environment Configuration
-
-For production deployment, make sure to set the correct `VITE_API_BASE_URL` environment variable to point to your production backend API.
 
 ## 🤝 Contributing
 

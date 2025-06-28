@@ -1,5 +1,6 @@
 // Helper to get the full image/file URL for uploaded files
-const S3_PUBLIC_ENDPOINT = import.meta.env.VITE_S3_PUBLIC_ENDPOINT || 'http://localhost:9000';
+// Use relative URL for S3 since nginx handles the routing
+const S3_PUBLIC_ENDPOINT = '/s3';
 
 export function getImageUrl(url: string) {
   if (!url) return url;
