@@ -259,7 +259,7 @@ export class CompoundService {
       console.log('S3 Cleanup - Old pho:', JSON.stringify(oldPho));
       console.log('S3 Cleanup - New pho:', JSON.stringify(newPho));
 
-      // Find removed/changed files
+      // Find removed/changed files in pho field
       for (const key of Object.keys(oldPho)) {
         const oldValue = oldPho[key as keyof SpectralRecord];
         const newValue = newPho[key as keyof SpectralRecord];
@@ -275,6 +275,23 @@ export class CompoundService {
           } else {
             console.log(`S3 Cleanup - Could not extract S3 key from URL: ${oldValue}`);
           }
+        }
+      }
+
+      // Check Structure Image field (hinhCauTruc)
+      const oldStructureImage = existingCompound.hinhCauTruc;
+      const newStructureImage = compoundData.hinhCauTruc;
+
+      console.log(`S3 Cleanup - Checking Structure Image: old="${oldStructureImage}", new="${newStructureImage}"`);
+
+      if (oldStructureImage && oldStructureImage.startsWith('http') && (!newStructureImage || newStructureImage !== oldStructureImage)) {
+        console.log(`S3 Cleanup - Structure Image changed/removed: ${oldStructureImage}`);
+        const s3Key = extractS3KeyFromUrl(oldStructureImage);
+        if (s3Key) {
+          console.log(`S3 Cleanup - Deleting S3 key: ${s3Key}`);
+          await deleteFileFromS3(s3Key);
+        } else {
+          console.log(`S3 Cleanup - Could not extract S3 key from URL: ${oldStructureImage}`);
         }
       }
       // --- end S3 file cleanup logic ---
@@ -384,20 +401,35 @@ export class CompoundService {
     // --- S3 file cleanup logic ---
     // Fetch compound to get file URLs
     const compound = await this.getCompoundById(id);
-    if (compound && compound.pho) {
+    if (compound) {
       console.log('S3 Cleanup - Deleting compound files:', JSON.stringify(compound.pho));
 
-      for (const key of Object.keys(compound.pho)) {
-        const value = compound.pho[key as keyof SpectralRecord];
-        if (value && value.startsWith('http')) {
-          console.log(`S3 Cleanup - Deleting file for ${key}: ${value}`);
-          const s3Key = extractS3KeyFromUrl(value);
-          if (s3Key) {
-            console.log(`S3 Cleanup - Deleting S3 key: ${s3Key}`);
-            await deleteFileFromS3(s3Key);
-          } else {
-            console.log(`S3 Cleanup - Could not extract S3 key from URL: ${value}`);
+      // Delete files from pho field
+      if (compound.pho) {
+        for (const key of Object.keys(compound.pho)) {
+          const value = compound.pho[key as keyof SpectralRecord];
+          if (value && value.startsWith('http')) {
+            console.log(`S3 Cleanup - Deleting file for ${key}: ${value}`);
+            const s3Key = extractS3KeyFromUrl(value);
+            if (s3Key) {
+              console.log(`S3 Cleanup - Deleting S3 key: ${s3Key}`);
+              await deleteFileFromS3(s3Key);
+            } else {
+              console.log(`S3 Cleanup - Could not extract S3 key from URL: ${value}`);
+            }
           }
+        }
+      }
+
+      // Delete Structure Image file
+      if (compound.hinhCauTruc && compound.hinhCauTruc.startsWith('http')) {
+        console.log(`S3 Cleanup - Deleting Structure Image: ${compound.hinhCauTruc}`);
+        const s3Key = extractS3KeyFromUrl(compound.hinhCauTruc);
+        if (s3Key) {
+          console.log(`S3 Cleanup - Deleting S3 key: ${s3Key}`);
+          await deleteFileFromS3(s3Key);
+        } else {
+          console.log(`S3 Cleanup - Could not extract S3 key from URL: ${compound.hinhCauTruc}`);
         }
       }
     }
