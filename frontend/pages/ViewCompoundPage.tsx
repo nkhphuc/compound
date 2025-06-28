@@ -124,25 +124,44 @@ export const ViewCompoundPage: React.FC = () => {
         </div>
       )}
 
-      <div className="flex flex-col sm:flex-row justify-between items-center mb-6 pb-4 border-b border-gray-300">
+      <div className="flex flex-col gap-4 mb-6 pb-4 border-b border-gray-300">
         <h1 className="text-2xl md:text-3xl font-bold text-gray-800 break-all">{compound.tenHC}</h1>
-        <div className="flex flex-wrap items-center gap-2 mt-4 sm:mt-0">
-          <Button variant="ghost" onClick={handleBackToList} className="text-indigo-600 hover:bg-indigo-50" size="sm">
+
+        {/* Main action buttons */}
+        <div className="flex flex-wrap gap-3">
+          <Button
+            onClick={handleBackToList}
+            className="!bg-indigo-500 !hover:bg-indigo-600 !text-white !border-indigo-500"
+            size="sm"
+          >
             {t('buttons.backToList')}
           </Button>
           <Link to={`/edit/${compound.id}`}>
-            <Button variant="secondary" size="sm">{t('buttons.edit')}</Button>
+            <Button
+              className="!bg-blue-500 !hover:bg-blue-600 !text-white !border-blue-500"
+              size="sm"
+            >
+              {t('buttons.edit')}
+            </Button>
           </Link>
           <Button
-            variant="ghost"
             onClick={handleExportToXlsx}
             disabled={isExporting}
-            className="text-green-600 hover:bg-green-50"
+            className="!bg-green-500 !hover:bg-green-600 !text-white !border-green-500 disabled:!opacity-50"
             size="sm"
           >
             {isExporting ? t('buttons.exporting') : t('buttons.exportToXlsx')}
           </Button>
-          <Button variant="danger" size="sm" onClick={openDeleteConfirmModal} leftIcon={<TrashIcon className="w-4 h-4"/>}>
+        </div>
+
+        {/* Delete button - positioned far away */}
+        <div className="flex justify-start sm:justify-end pt-2 border-t border-gray-200">
+          <Button
+            size="sm"
+            onClick={openDeleteConfirmModal}
+            leftIcon={<TrashIcon className="w-4 h-4"/>}
+            className="!bg-red-500 !hover:bg-red-600 !text-white !border-red-500"
+          >
             {t('buttons.delete')}
           </Button>
         </div>

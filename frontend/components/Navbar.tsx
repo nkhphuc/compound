@@ -34,6 +34,23 @@ const LanguageSwitcher: React.FC = () => {
   );
 };
 
+// Favicon Component
+const Favicon: React.FC = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" className="w-8 h-8">
+    {/* Background circle */}
+    <circle cx="16" cy="16" r="15" fill="#4338ca" stroke="#312e81" strokeWidth="2"/>
+
+    {/* Chemistry flask */}
+    <path d="M12 8h8v2h-8z" fill="white"/>
+    <path d="M10 10h12v2h-12z" fill="white"/>
+    <path d="M8 12h16l-2 12h-12z" fill="white"/>
+
+    {/* Bubbles */}
+    <circle cx="14" cy="18" r="1.5" fill="#4338ca"/>
+    <circle cx="18" cy="20" r="1" fill="#4338ca"/>
+    <circle cx="16" cy="22" r="1.2" fill="#4338ca"/>
+  </svg>
+);
 
 export const Navbar: React.FC = () => {
   const { t } = useTranslation();
@@ -43,8 +60,15 @@ export const Navbar: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center">
-            <Link to="/" className="text-2xl font-bold text-white hover:opacity-90 transition-opacity">
-              {t('navbar.title')}
+            <Link to="/" className="flex items-center hover:opacity-90 transition-opacity">
+              {/* Favicon - visible on small screens */}
+              <div className="sm:hidden">
+                <Favicon />
+              </div>
+              {/* Title - hidden on small screens, visible on sm and up */}
+              <span className="hidden sm:block text-2xl font-bold text-white">
+                {t('navbar.title')}
+              </span>
             </Link>
           </div>
           <div className="flex items-center space-x-4">
