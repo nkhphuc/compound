@@ -9,11 +9,14 @@ A monorepo containing a full-stack application for managing chemical compound da
 compound/
 ├── frontend/          # React + TypeScript + Vite
 ├── backend/           # Express.js + TypeScript + PostgreSQL
-├── shared/            # Shared types and utilities
 ├── db/                # PostgreSQL data directory
+├── uploads/           # File uploads directory
 ├── docker-compose.yml # Docker configuration
 ├── package.json       # Root package.json for monorepo
-└── pnpm-workspace.yaml
+├── pnpm-workspace.yaml
+├── minio-cors.xml     # MinIO CORS configuration
+├── minio-init.sh      # MinIO initialization script
+└── deploy.sh          # Deployment script
 ```
 
 ## 🚀 Quick Start
@@ -22,7 +25,8 @@ compound/
 
 - **Node.js**: 22.6.0+ (managed via asdf)
 - **pnpm**: 10.12.1+
-- **PostgreSQL**: 12+ (for backend database)
+- **PostgreSQL**: 16+ (for backend database)
+- **Docker & Docker Compose**: For containerized deployment
 
 ### Setup
 
@@ -36,16 +40,11 @@ compound/
 
 2. **Set up PostgreSQL**:
 
-   **Option A: Using Docker (Recommended)**
+   **Option A: Using Docker Compose (Recommended)**
 
    ```bash
-   # Pull and run PostgreSQL container
-   docker run --name compound-postgres \
-     -e POSTGRES_DB=compound_chemistry \
-     -e POSTGRES_USER=postgres \
-     -e POSTGRES_PASSWORD=your_password \
-     -p 5432:5432 \
-     -d postgres:15
+   # Start PostgreSQL only
+   docker-compose up -d postgres
 
    # Check if container is running
    docker ps
@@ -54,14 +53,22 @@ compound/
    docker logs compound-postgres
    ```
 
-   **Option B: Using Docker Compose (Even better)**
+   **Option B: Using Docker directly**
 
    ```bash
-   # Start PostgreSQL (uses existing docker-compose.yml)
-   docker-compose up -d postgres
+   # Pull and run PostgreSQL container
+   docker run --name compound-postgres \
+     -e POSTGRES_DB=compound_chemistry \
+     -e POSTGRES_USER=postgres \
+     -e POSTGRES_PASSWORD=your_password \
+     -p 5432:5432 \
+     -d postgres:16
 
-   # Stop when done
-   docker-compose down
+   # Check if container is running
+   docker ps
+
+   # View logs if needed
+   docker logs compound-postgres
    ```
 
    **Option C: Using createdb (if PostgreSQL is in your PATH)**
@@ -131,12 +138,13 @@ compound/
    # Edit backend/.env with your database URL
    DATABASE_URL=postgresql://postgres:your_password@localhost:5432/compound_chemistry
 
-   # Copy frontend environment file (optional - has defaults)
+   # Copy frontend environment file
    cp frontend/env.example frontend/.env
 
    # Edit frontend/.env if you need to change API URL or file URL
    VITE_API_BASE_URL=http://localhost:3002/api
    VITE_FILE_BASE_URL=http://localhost:3002
+   VITE_S3_PUBLIC_ENDPOINT=http://localhost:9000
    ```
 
 4. **Run database migrations**:
@@ -171,6 +179,8 @@ compound/
 - `pnpm dev:frontend` - Start only frontend
 - `pnpm dev:backend` - Start only backend
 - `pnpm build` - Build all packages
+- `pnpm build:frontend` - Build only frontend
+- `pnpm build:backend` - Build only backend
 - `pnpm test` - Run tests across all packages
 - `pnpm lint` - Run linting across all packages
 - `pnpm type-check` - Run TypeScript type checking
@@ -179,6 +189,7 @@ compound/
 
 - `pnpm --filter backend dev` - Start backend development server
 - `pnpm --filter backend build` - Build backend
+- `pnpm --filter backend start` - Start production backend server
 - `pnpm --filter backend db:migrate` - Run database migrations
 - `pnpm --filter backend db:seed` - Seed database with sample data
 
@@ -186,14 +197,16 @@ compound/
 
 - `pnpm --filter frontend dev` - Start frontend development server
 - `pnpm --filter frontend build` - Build frontend for production
+- `pnpm --filter frontend preview` - Preview production build
 
 ## 🗄️ Database Schema
 
 The application uses PostgreSQL with the following main tables:
 
-- **compounds**: Main compound data
+- **compounds**: Main compound data (ID, name, formula, etc.)
 - **nmr_data**: NMR spectroscopy data
 - **nmr_signals**: Individual NMR signals
+- **nmr_conditions**: NMR measurement conditions
 
 ## 🔧 API Endpoints
 
@@ -206,6 +219,11 @@ The application uses PostgreSQL with the following main tables:
 - `DELETE /api/compounds/:id` - Delete compound
 - `GET /api/compounds/next-stt-hc` - Get next available serial number
 
+### File Upload
+
+- `POST /api/upload` - Upload files to S3/MinIO storage
+- `GET /api/metadata` - Get file metadata
+
 ### Health Check
 
 - `GET /health` - Server health status
@@ -214,39 +232,56 @@ The application uses PostgreSQL with the following main tables:
 
 ### Frontend
 
-- **React 19** - UI framework
-- **TypeScript** - Type safety
-- **Vite** - Build tool and dev server
-- **React Router** - Client-side routing
-- **i18next** - Internationalization
-- **Tailwind CSS** - Styling
+- **React 19.1.0** - UI framework
+- **TypeScript 5.7.2** - Type safety
+- **Vite 6.2.0** - Build tool and dev server
+- **React Router 7.6.2** - Client-side routing
+- **i18next 23.10.0** - Internationalization
+- **Tailwind CSS 4.1.11** - Styling
+- **Heroicons 2.2.0** - Icons
+- **ExcelJS 4.3.0** - Excel export functionality
+- **docx 9.5.1** - Word document export
 
 ### Backend
 
-- **Express.js** - Web framework
-- **TypeScript** - Type safety
-- **PostgreSQL** - Database
-- **pg** - PostgreSQL client
-- **Helmet** - Security headers
-- **CORS** - Cross-origin resource sharing
-- **Morgan** - HTTP request logging
+- **Express.js 4.21.2** - Web framework
+- **TypeScript 5.7.2** - Type safety
+- **PostgreSQL 16** - Database
+- **pg 8.13.1** - PostgreSQL client
+- **Helmet 8.0.0** - Security headers
+- **CORS 2.8.5** - Cross-origin resource sharing
+- **Morgan 1.10.0** - HTTP request logging
+- **Joi 17.13.3** - Data validation
+- **express-fileupload 1.5.1** - File upload handling
+- **AWS SDK 3.837.0** - S3/MinIO integration
+- **UUID 11.0.2** - Unique identifier generation
 
-### Shared
+### Development Tools
 
-- **TypeScript** - Shared type definitions
-- **CommonJS** - Module system for compatibility
+- **tsx 4.19.2** - TypeScript execution
+- **ESLint 9.17.0** - Code linting
+- **pnpm 10.12.1** - Package manager
 
 ## 🔒 Environment Variables
 
 ### Backend (.env)
 
 ```env
+# Server Configuration
 PORT=3002
 NODE_ENV=development
+
+# Database Configuration
 DATABASE_URL=postgresql://postgres:your_password@localhost:5432/compound_chemistry
+
+# CORS Configuration
 CORS_ORIGIN=http://localhost:5173
+
+# Logging
 LOG_LEVEL=info
-S3_ENDPOINT=http://localhost:9000
+
+# S3/MinIO Configuration
+S3_ENDPOINT=http://minio:9000
 S3_ACCESS_KEY=minioadmin
 S3_SECRET_KEY=minioadmin
 S3_BUCKET=compound-uploads
@@ -255,10 +290,17 @@ S3_BUCKET=compound-uploads
 ### Frontend (.env)
 
 ```env
+# API Configuration
 VITE_API_BASE_URL=http://localhost:3002/api
-VITE_FILE_BASE_URL=http://localhost:3002
-VITE_S3_PUBLIC_ENDPOINT=http://localhost:9000
+
+# Development Configuration
 VITE_APP_TITLE=Compound Chemistry Data Manager
+
+# File Configuration
+VITE_FILE_BASE_URL=http://localhost:3002
+
+# S3/MinIO Public Endpoint for file URLs
+VITE_S3_PUBLIC_ENDPOINT=http://localhost:9000
 ```
 
 **Note:**
@@ -270,11 +312,10 @@ VITE_APP_TITLE=Compound Chemistry Data Manager
 
 ### Adding New Features
 
-1. Update shared types in `shared/src/types.ts`
-2. Build shared package: `pnpm --filter @compound/shared build`
-3. Implement backend API endpoints
-4. Update frontend to use new API
-5. Test thoroughly
+1. Update types in respective frontend/backend directories
+2. Implement backend API endpoints
+3. Update frontend to use new API
+4. Test thoroughly
 
 ### Database Changes
 
@@ -314,7 +355,7 @@ docker-compose up -d --build
 
 **Services included:**
 
-- **PostgreSQL**: Database server
+- **PostgreSQL 16**: Database server
 - **MinIO**: Object storage for file uploads
 - **Backend**: Express.js API server
 - **Frontend**: React application served via Nginx
@@ -346,6 +387,18 @@ docker-compose build frontend
 
 # Build all services
 docker-compose build
+```
+
+### Deployment Script
+
+Use the provided `deploy.sh` script for automated deployment:
+
+```bash
+# Make script executable
+chmod +x deploy.sh
+
+# Run deployment
+./deploy.sh
 ```
 
 ## 🤝 Contributing
