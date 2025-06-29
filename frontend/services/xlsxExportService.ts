@@ -142,11 +142,14 @@ export const exportCompoundToXlsx = async (compound: CompoundData): Promise<void
   workbook.modified = new Date();
 
   const mainInfoSheet = workbook.addWorksheet(t('excelExport.sheetNames.mainInfo', 'Main Info'));
-  mainInfoSheet.properties.defaultRowHeight = 18;
+  mainInfoSheet.properties.defaultRowHeight = 20;
   mainInfoSheet.columns = [
-    { width: 5 }, { width: 20 }, { width: 12 }, { width: 10 }, { width: 10 }, { width: 10 }, { width: 10 },
+    { width: 25 }, { width: 20 }, { width: 20 }, { width: 10 }, { width: 10 }, { width: 10 }, { width: 10 },
     { width: 12 }, { width: 10 }, { width: 10 }, { width: 10 }, { width: 10 }, { width: 10 }, { width: 10 }
   ];
+
+  mainInfoSheet.getRow(1).height = 15; // Set top row height
+  for (let col = 3; col <= 14; col++) { mainInfoSheet.getColumn(col).width = 8; } // Set C to N to width 8
 
   let rowNum = 1;
   const notAvailable = t('excelExport.common.notAvailable', 'N/A');
@@ -240,11 +243,11 @@ export const exportCompoundToXlsx = async (compound: CompoundData): Promise<void
     if (imageBuffer) {
       const extension = getImageExtension(compound.hinhCauTruc);
       const imageId = workbook.addImage({ buffer: imageBuffer, extension });
-      const imgTargetHeightPx = 180; const imgTargetWidthPx = 250;
-      imageRowsToSpan = Math.ceil(imgTargetHeightPx / 18);
+      const imgTargetHeightPx = 220; const imgTargetWidthPx = 250; // 220px = 10 rows × 15pt × 1.33
+      imageRowsToSpan = 10; // Fixed to exactly 10 rows (B13 to B22)
       mainInfoSheet.addImage(imageId, { tl: { col: 1.1, row: imageDisplayStartRow - 1 + 0.1 }, ext: { width: imgTargetWidthPx, height: imgTargetHeightPx } });
       for(let i = 0; i < imageRowsToSpan; i++) {
-        mainInfoSheet.getRow(imageDisplayStartRow + i).height = imgTargetHeightPx / imageRowsToSpan;
+        mainInfoSheet.getRow(imageDisplayStartRow + i).height = 15; // 15 points per row
         for(let j=2; j<=14; j++) { applyCellStyle(mainInfoSheet.getCell(imageDisplayStartRow + i, j), false, undefined, { top: i === 0 ? {style: 'thin'} : undefined, bottom: i === imageRowsToSpan -1 ? {style:'thin'} : undefined, left: j === 2 ? {style:'thin'} : undefined, right: j === 14 ? {style: 'thin'} : undefined }); }
       }
     }
@@ -255,6 +258,7 @@ export const exportCompoundToXlsx = async (compound: CompoundData): Promise<void
   mainInfoSheet.getCell(rowNum, 3).value = compound.cauHinhTuyetDoi ? yes : no; mainInfoSheet.mergeCells(rowNum,3,rowNum,14); applyCellStyle(mainInfoSheet.getCell(rowNum, 3), false, {horizontal: 'center'});
   mainInfoSheet.mergeCells(cauTrucStartRow, 1, rowNum, 1);
   applyCellStyle(mainInfoSheet.getCell(cauTrucStartRow, 1), true, {vertical: 'middle', horizontal: 'left'});
+  mainInfoSheet.getRow(cauTrucStartRow).height = 15; // Structure label row
   rowNum++;
 
   mainInfoSheet.getCell(rowNum, 1).value = t('excelExport.mainInfo.smiles', 'SMILES:'); applyCellStyle(mainInfoSheet.getCell(rowNum, 1), true);
@@ -308,12 +312,12 @@ export const exportCompoundToXlsx = async (compound: CompoundData): Promise<void
   nmrTableSheet.mergeCells(nmrTableRowNum, 1, nmrTableRowNum, 3);
   applyCellStyle(nmrTitleCell, true, {horizontal: 'center', vertical: 'middle'});
   nmrTitleCell.font = { name: 'Arial', size: 11, bold: true, family: 2 };
-  nmrTableSheet.getRow(nmrTableRowNum).height = 25;
+  nmrTableSheet.getRow(nmrTableRowNum).height = 20;
   nmrTableRowNum++;
   nmrTableSheet.getCell(nmrTableRowNum, 1).value = t('excelExport.nmrDataTableSheet.position', 'Vị trí'); applyCellStyle(nmrTableSheet.getCell(nmrTableRowNum, 1), true, {horizontal: 'center', vertical: 'middle'});
   nmrTableSheet.getCell(nmrTableRowNum, 2).value = t('excelExport.nmrDataTableSheet.deltaC', 'δC (ppm)'); applyCellStyle(nmrTableSheet.getCell(nmrTableRowNum, 2), true, {horizontal: 'center', vertical: 'middle'});
   nmrTableSheet.getCell(nmrTableRowNum, 3).value = t('excelExport.nmrDataTableSheet.deltaH', 'δH (ppm, J Hz)'); applyCellStyle(nmrTableSheet.getCell(nmrTableRowNum, 3), true, {horizontal: 'center', vertical: 'middle'});
-  nmrTableSheet.getRow(nmrTableRowNum).height = 22;
+  nmrTableSheet.getRow(nmrTableRowNum).height = 20;
   nmrTableRowNum++;
   compound.nmrData.signals.forEach(signal => {
     nmrTableSheet.getCell(nmrTableRowNum, 1).value = signal.viTri || no; applyCellStyle(nmrTableSheet.getCell(nmrTableRowNum, 1));
@@ -333,7 +337,7 @@ export const exportCompoundToXlsx = async (compound: CompoundData): Promise<void
   nmrDetailsSheet.getCell(nmrDetailsRowNum, 2).value = t('excelExport.nmrDetailsSheet.headerA', 'a'); applyCellStyle(nmrDetailsSheet.getCell(nmrDetailsRowNum, 2), true, {horizontal: 'center', vertical: 'middle'});
   nmrDetailsSheet.getCell(nmrDetailsRowNum, 3).value = t('excelExport.nmrDetailsSheet.headerB', 'b'); applyCellStyle(nmrDetailsSheet.getCell(nmrDetailsRowNum, 3), true, {horizontal: 'center', vertical: 'middle'});
   nmrDetailsSheet.getCell(nmrDetailsRowNum, 4).value = t('excelExport.nmrDetailsSheet.headerC', 'c'); applyCellStyle(nmrDetailsSheet.getCell(nmrDetailsRowNum, 4), true, {horizontal: 'center', vertical: 'middle'});
-  nmrDetailsSheet.getRow(nmrDetailsRowNum).height = 22;
+  nmrDetailsSheet.getRow(nmrDetailsRowNum).height = 20;
   nmrDetailsRowNum++;
   const condition = compound.nmrData.nmrConditions;
   nmrDetailsSheet.getCell(nmrDetailsRowNum, 2).value = {richText: formatFormulaRichText(condition.dmNMR)}; applyCellStyle(nmrDetailsSheet.getCell(nmrDetailsRowNum, 2));
@@ -345,14 +349,14 @@ export const exportCompoundToXlsx = async (compound: CompoundData): Promise<void
   notesCell.value = compound.nmrData.luuYNMR && compound.nmrData.luuYNMR.trim() !== "" ? compound.nmrData.luuYNMR : no;
   nmrDetailsSheet.mergeCells(nmrDetailsRowNum, 2, nmrDetailsRowNum, 4);
   applyCellStyle(notesCell);
-  nmrDetailsSheet.getRow(nmrDetailsRowNum).height = (compound.nmrData.luuYNMR && compound.nmrData.luuYNMR.trim() !== "") ? Math.max(20, Math.ceil(compound.nmrData.luuYNMR.length / 50) * 15) : 20;
+  nmrDetailsSheet.getRow(nmrDetailsRowNum).height = 20;
   nmrDetailsRowNum++;
   nmrDetailsSheet.getCell(nmrDetailsRowNum, 1).value = t('excelExport.nmrDetailsSheet.referencesLabel', 'TLTK'); applyCellStyle(nmrDetailsSheet.getCell(nmrDetailsRowNum, 1), true);
   const tltkCell = nmrDetailsSheet.getCell(nmrDetailsRowNum, 2);
   tltkCell.value = compound.nmrData.tltkNMR || no;
   nmrDetailsSheet.mergeCells(nmrDetailsRowNum, 2, nmrDetailsRowNum, 4);
   applyCellStyle(tltkCell);
-  nmrDetailsSheet.getRow(nmrDetailsRowNum).height = (compound.nmrData.tltkNMR && compound.nmrData.tltkNMR.trim() !== "") ? Math.max(20, Math.ceil(compound.nmrData.tltkNMR.length / 70) * 15) : 20;
+  nmrDetailsSheet.getRow(nmrDetailsRowNum).height = 20;
   nmrDetailsRowNum++;
 
   const spectraImagesSheet = workbook.addWorksheet(t('excelExport.sheetNames.spectraImages', 'Spectra Images'));
@@ -360,8 +364,8 @@ export const exportCompoundToXlsx = async (compound: CompoundData): Promise<void
   let spectraRowNum = 1;
   spectraImagesSheet.getCell(spectraRowNum, 1).value = t('excelExport.spectraImagesSheet.title', 'Ảnh của các phổ đã tích ở trang 1');
   applyCellStyle(spectraImagesSheet.getCell(spectraRowNum,1), true, {horizontal: 'center', vertical: 'middle'});
-  spectraImagesSheet.mergeCells(spectraRowNum,1,spectraRowNum,5);
-  spectraImagesSheet.getRow(spectraRowNum).height = 25;
+  spectraImagesSheet.mergeCells(spectraRowNum,1,spectraRowNum,6);
+  spectraImagesSheet.getRow(spectraRowNum).height = 20;
   spectraRowNum+=2;
   let imageCount = 0; const imagePixelHeight = 300; const imagePixelWidth = 400;
   for (const fieldConfig of SPECTRAL_FIELDS_CONFIG) { // Use SPECTRAL_FIELDS_CONFIG
@@ -383,8 +387,8 @@ export const exportCompoundToXlsx = async (compound: CompoundData): Promise<void
             const extension = getImageExtension(fileUrl);
             const imageId = workbook.addImage({ buffer: imageBuffer, extension });
             spectraImagesSheet.addImage(imageId, { tl: { col: 0.1, row: spectraRowNum -1 + 0.1 }, ext: { width: imagePixelWidth, height: imagePixelHeight } });
-            const rowsForImage = Math.ceil(imagePixelHeight / 20);
-            for(let j = 0; j < rowsForImage; j++) { spectraImagesSheet.getRow(spectraRowNum + j).height = Math.max(15, imagePixelHeight / rowsForImage); }
+            const rowsForImage = Math.ceil(imagePixelHeight / 20); // Use 20px row height
+            for(let j = 0; j < rowsForImage; j++) { spectraImagesSheet.getRow(spectraRowNum + j).height = 20; } // Standardized height
             spectraRowNum += rowsForImage; imageCount++;
           } else { spectraRowNum++; }
         } else if (fileUrl.startsWith('http') || fileUrl.startsWith('/compound-uploads/')) {
@@ -395,8 +399,8 @@ export const exportCompoundToXlsx = async (compound: CompoundData): Promise<void
             const extension = getImageExtension(fileUrl);
             const imageId = workbook.addImage({ buffer: imageBuffer, extension });
             spectraImagesSheet.addImage(imageId, { tl: { col: 0.1, row: spectraRowNum -1 + 0.1 }, ext: { width: imagePixelWidth, height: imagePixelHeight } });
-            const rowsForImage = Math.ceil(imagePixelHeight / 20);
-            for(let j = 0; j < rowsForImage; j++) { spectraImagesSheet.getRow(spectraRowNum + j).height = Math.max(15, imagePixelHeight / rowsForImage); }
+            const rowsForImage = Math.ceil(imagePixelHeight / 20); // Use 20px row height
+            for(let j = 0; j < rowsForImage; j++) { spectraImagesSheet.getRow(spectraRowNum + j).height = 20; } // Standardized height
             spectraRowNum += rowsForImage; imageCount++;
           } else {
             // Fallback to URL link if image fetch fails
@@ -430,6 +434,19 @@ export const exportCompoundToXlsx = async (compound: CompoundData): Promise<void
     applyCellStyle(spectraImagesSheet.getCell(spectraRowNum,1));
     spectraRowNum++;
   }
+
+  // After all content and images are added to mainInfoSheet
+  for (let i = 1; i <= mainInfoSheet.rowCount; i++) {
+    mainInfoSheet.getRow(i).height = 15;
+  }
+  // Apply to all other sheets
+  [nmrTableSheet, nmrDetailsSheet, spectraImagesSheet].forEach(sheet => {
+    for (let i = 1; i <= sheet.rowCount; i++) {
+      sheet.getRow(i).height = 15;
+    }
+  });
+
+  mainInfoSheet.getColumn(3).width = 48; // Double column C width
 
   workbook.xlsx.writeBuffer().then((buffer) => {
     const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
