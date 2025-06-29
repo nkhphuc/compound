@@ -132,7 +132,7 @@ const applyCellStyle = (cell: ExcelJS.Cell, bold?: boolean, alignment?: Partial<
   };
 };
 
-export const exportCompoundToXlsx = async (compound: CompoundData): Promise<void> => {
+export const exportCompoundToXlsx = async (compound: CompoundData, options?: { returnBuffer?: boolean }): Promise<void | ArrayBuffer> => {
   const t = i18n.t.bind(i18n); // Get the t function from i18n instance
 
   const workbook = new ExcelJS.Workbook();
@@ -465,18 +465,17 @@ export const exportCompoundToXlsx = async (compound: CompoundData): Promise<void
     };
   });
 
-  workbook.xlsx.writeBuffer().then((buffer) => {
-    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${compound.sttHC || 'ID'}_${(compound.tenHC || t('excelExport.mainInfo.untitledCompound', 'compound')).replace(/[\s\/\\?%*:|"<>]/g, '_')}.xlsx`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  }).catch(err => {
-      console.error("Error writing XLSX buffer:", err);
-      alert("Error generating XLSX file. See console for details.");
-  });
+  const buffer = await workbook.xlsx.writeBuffer();
+  if (options?.returnBuffer) {
+    return buffer;
+  }
+  const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${compound.sttHC || 'ID'}_${(compound.tenHC || t('excelExport.mainInfo.untitledCompound', 'compound')).replace(/[ -\/:*?"<>|]/g, '_')}.xlsx`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 };

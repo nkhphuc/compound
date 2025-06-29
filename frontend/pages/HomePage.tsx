@@ -5,6 +5,8 @@ import { CompoundListItem } from '../components/CompoundListItem';
 import { ConfirmModal } from '../components/ui/ConfirmModal';
 import { Pagination } from '../components/ui/Pagination';
 import { useTranslation } from 'react-i18next';
+import JSZip from 'jszip';
+import { exportCompoundToXlsx } from '../services/xlsxExportService';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -24,6 +26,9 @@ export const HomePage: React.FC = () => {
 
   const searchInputRef = useRef<HTMLInputElement>(null);
   const wasFocusedRef = useRef(false);
+
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [isExporting, setIsExporting] = useState(false);
 
   const fetchCompounds = useCallback(async () => {
     try {
@@ -111,6 +116,40 @@ export const HomePage: React.FC = () => {
   const startItem = totalItems > 0 ? (currentPage - 1) * ITEMS_PER_PAGE + 1 : 0;
   const endItem = Math.min(currentPage * ITEMS_PER_PAGE, totalItems);
 
+  const handleSelectChange = (id: string, checked: boolean) => {
+    setSelectedIds(prev => checked ? [...prev, id] : prev.filter(x => x !== id));
+  };
+
+  const handleBulkExport = async () => {
+    setIsExporting(true);
+    try {
+      const zip = new JSZip();
+      // Fetch full data for each selected compound
+      for (const id of selectedIds) {
+        const compound = compounds.find(c => c.id === id);
+        if (!compound) continue;
+        // Generate Excel file as Blob
+        const buffer = await exportCompoundToXlsx(compound, { returnBuffer: true });
+        if (buffer) {
+          zip.file(`${compound.sttHC || compound.id}.xlsx`, buffer);
+        }
+      }
+      const zipBlob = await zip.generateAsync({ type: 'blob' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(zipBlob);
+      a.download = 'compounds_bulk_export.zip';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(a.href);
+    } catch (err) {
+      alert('Bulk export failed. See console for details.');
+      console.error(err);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   if (loading && compounds.length === 0) {
     return (
       <div className="container mx-auto p-4 md:p-6 lg:p-8">
@@ -145,6 +184,31 @@ export const HomePage: React.FC = () => {
         </div>
       )}
 
+      {selectedIds.length > 0 && (
+        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+          <div>
+            <span className="font-semibold">Selected ({selectedIds.length}):</span>
+            <span className="ml-2 text-sm text-gray-700">{compounds.filter(c => selectedIds.includes(c.id)).map(c => c.tenHC).join(', ')}</span>
+          </div>
+          <div className="flex gap-2">
+            <button
+              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded disabled:opacity-50"
+              onClick={handleBulkExport}
+              disabled={isExporting}
+            >
+              {isExporting ? 'Exporting...' : 'Bulk Excel Export'}
+            </button>
+            <button
+              className="bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded"
+              onClick={() => setSelectedIds([])}
+              disabled={isExporting}
+            >
+              Clear All Selected
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Always render the content area to maintain consistent DOM structure */}
       <div className="min-h-[400px]">
         {compounds.length > 0 ? (
@@ -154,7 +218,13 @@ export const HomePage: React.FC = () => {
             </p>
             <div className="space-y-4">
               {compounds.map(compound => (
-                <CompoundListItem key={compound.id} compound={compound} onDelete={openDeleteConfirmModal} />
+                <CompoundListItem
+                  key={compound.id}
+                  compound={compound}
+                  onDelete={openDeleteConfirmModal}
+                  selected={selectedIds.includes(compound.id)}
+                  onSelectChange={handleSelectChange}
+                />
               ))}
             </div>
             <div className="mt-8">
