@@ -144,12 +144,11 @@ export const exportCompoundToXlsx = async (compound: CompoundData): Promise<void
   const mainInfoSheet = workbook.addWorksheet(t('excelExport.sheetNames.mainInfo', 'Main Info'));
   mainInfoSheet.properties.defaultRowHeight = 20;
   mainInfoSheet.columns = [
-    { width: 25 }, { width: 20 }, { width: 20 }, { width: 10 }, { width: 10 }, { width: 10 }, { width: 10 },
-    { width: 12 }, { width: 10 }, { width: 10 }, { width: 10 }, { width: 10 }, { width: 10 }, { width: 10 }
+    { width: 25 }, { width: 20 }, { width: 12 }, { width: 8 }, { width: 8 }, { width: 8 }, { width: 8 },
+    { width: 8 }, { width: 8 }, { width: 8 }, { width: 8 }, { width: 8 }, { width: 8 }, { width: 8 }
   ];
 
   mainInfoSheet.getRow(1).height = 15; // Set top row height
-  for (let col = 3; col <= 14; col++) { mainInfoSheet.getColumn(col).width = 8; } // Set C to N to width 8
 
   let rowNum = 1;
   const notAvailable = t('excelExport.common.notAvailable', 'N/A');
@@ -243,7 +242,8 @@ export const exportCompoundToXlsx = async (compound: CompoundData): Promise<void
     if (imageBuffer) {
       const extension = getImageExtension(compound.hinhCauTruc);
       const imageId = workbook.addImage({ buffer: imageBuffer, extension });
-      const imgTargetHeightPx = 220; const imgTargetWidthPx = 250; // 220px = 10 rows × 15pt × 1.33
+      const imgTargetHeightPx = 250; // Increased image height
+      const imgTargetWidthPx = 250; // 250px = 10 rows × 15pt × 1.33
       imageRowsToSpan = 10; // Fixed to exactly 10 rows (B13 to B22)
       mainInfoSheet.addImage(imageId, { tl: { col: 1.1, row: imageDisplayStartRow - 1 + 0.1 }, ext: { width: imgTargetWidthPx, height: imgTargetHeightPx } });
       for(let i = 0; i < imageRowsToSpan; i++) {
@@ -446,7 +446,24 @@ export const exportCompoundToXlsx = async (compound: CompoundData): Promise<void
     }
   });
 
-  mainInfoSheet.getColumn(3).width = 48; // Double column C width
+  // Set page setup for all sheets
+  [mainInfoSheet, nmrTableSheet, nmrDetailsSheet, spectraImagesSheet].forEach(sheet => {
+    sheet.pageSetup = {
+      paperSize: 9, // A4
+      orientation: 'portrait',
+      fitToPage: true,
+      fitToWidth: 1,
+      fitToHeight: 0,
+      margins: {
+        left: 0.787,
+        right: 0.787,
+        top: 0.787,
+        bottom: 0.787,
+        header: 0.0,
+        footer: 0.0
+      }
+    };
+  });
 
   workbook.xlsx.writeBuffer().then((buffer) => {
     const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
