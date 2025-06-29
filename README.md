@@ -164,118 +164,16 @@ compound/
    pnpm dev:backend   # Backend on http://localhost:3002
    ```
 
-## �� Available Scripts
+## ✨ Features
 
-### Root Level
-
-- `pnpm dev` - Start both frontend and backend in development mode
-- `pnpm dev:frontend` - Start only frontend
-- `pnpm dev:backend` - Start only backend
-- `pnpm build` - Build all packages
-- `pnpm build:frontend` - Build only frontend
-- `pnpm build:backend` - Build only backend
-- `pnpm test` - Run tests across all packages
-- `pnpm lint` - Run linting across all packages
-- `pnpm type-check` - Run TypeScript type checking
-
-### Backend
-
-- `pnpm --filter backend dev` - Start backend development server
-- `pnpm --filter backend build` - Build backend
-- `pnpm --filter backend start` - Start production backend server
-- `pnpm --filter backend db:migrate` - Run database migrations
-- `pnpm --filter backend db:seed` - Seed database with sample data
-
-### Frontend
-
-- `pnpm --filter frontend dev` - Start frontend development server
-- `pnpm --filter frontend build` - Build frontend for production
-- `pnpm --filter frontend preview` - Preview production build
-
-## 🗄️ Database Schema
-
-The application uses PostgreSQL with the following main tables:
-
-### compounds
-
-Main compound data table with fields:
-
-- `id` (UUID, Primary Key)
-- `stt_hc` (SERIAL, Unique) - Compound serial number
-- `ten_hc` (VARCHAR) - Compound name
-- `ten_hc_khac` (VARCHAR) - Alternative names
-- `loai_hc` (VARCHAR) - Compound type
-- `status` (VARCHAR) - Status
-- `ten_latin` (VARCHAR) - Latin name
-- `ten_ta` (VARCHAR) - English name
-- `ten_tv` (VARCHAR) - Vietnamese name
-- `bpnc` (TEXT) - Boiling point
-- `trang_thai` (VARCHAR) - Physical state
-- `mau` (VARCHAR) - Color
-- `uv_sklm` (JSONB) - UV spectroscopy data
-- `diem_nong_chay` (VARCHAR) - Melting point
-- `alpha_d` (VARCHAR) - Optical rotation
-- `dung_moi_hoa_tan_tcvl` (TEXT) - Solvent solubility
-- `ctpt` (TEXT) - Chemical formula
-- `klpt` (VARCHAR) - Molecular weight
-- `hinh_cau_truc` (TEXT) - Structural formula
-- `cau_hinh_tuyet_doi` (BOOLEAN) - Absolute configuration
-- `smiles` (TEXT) - SMILES notation
-- `pho` (JSONB) - Spectroscopy data
-- `dm_nmr_general` (TEXT) - NMR solvent
-- `cart_coor` (TEXT) - Cartesian coordinates
-- `img_freq` (VARCHAR) - Image frequency
-- `te` (VARCHAR) - Temperature
-
-### nmr_data_blocks
-
-NMR data blocks table:
-
-- `id` (UUID, Primary Key)
-- `compound_id` (UUID, Foreign Key) - Reference to compounds
-- `stt_bang` (SERIAL, Unique) - Table number
-- `dm_nmr` (TEXT) - NMR solvent
-- `tan_so_13c` (VARCHAR) - 13C frequency
-- `tan_so_1h` (VARCHAR) - 1H frequency
-- `luu_y_nmr` (TEXT) - NMR notes
-- `tltk_nmr` (TEXT) - NMR references
-
-### nmr_signals
-
-Individual NMR signals table:
-
-- `id` (UUID, Primary Key)
-- `nmr_data_block_id` (UUID, Foreign Key) - Reference to nmr_data_blocks
-- `vi_tri` (VARCHAR) - Signal position
-- `scab` (TEXT) - Signal assignment
-- `shac_j_hz` (TEXT) - Chemical shift and coupling
-- `sort_order` (SERIAL) - Display order
-
-## 🔧 API Endpoints
-
-### Compounds
-
-- `GET /api/compounds` - Get all compounds (with pagination and search)
-- `GET /api/compounds/:id` - Get compound by ID
-- `POST /api/compounds` - Create new compound
-- `PUT /api/compounds/:id` - Update compound
-- `DELETE /api/compounds/:id` - Delete compound
-- `GET /api/compounds/next-stt-hc` - Get next available serial number
-- `GET /api/compounds/next-stt-bang` - Get next available table number
-
-### File Upload
-
-- `POST /api/uploads` - Upload files to S3/MinIO storage
-
-### Metadata
-
-- `GET /api/meta/loai-hc` - Get all unique compound types
-- `GET /api/meta/trang-thai` - Get all unique physical states
-- `GET /api/meta/mau` - Get all unique colors
-
-### Health Check
-
-- `GET /health` - Server health status
+- Manage chemical compound data with rich metadata
+- **Multi-file upload** for spectral data and structure images (upload multiple files per field)
+- **Bulk Excel export**: Select multiple compounds from the main index page and export all as a ZIP of Excel files
+- Advanced search and filtering
+- Excel export for individual compounds
+- File upload to S3/MinIO
+- Responsive UI with i18n (English/Vietnamese)
+- ...and more!
 
 ## 🛠️ Technology Stack
 
@@ -432,3 +330,17 @@ chmod +x deploy.sh
 3. Make your changes
 4. Run tests and linting
 5. Submit a pull request
+
+## 📝 Usage Notes
+
+### Multi-file Upload
+
+- You can upload multiple files for each spectral field and for the structure image.
+- The UI supports drag-and-drop and preview for all uploaded files.
+- Uploaded files are stored in S3/MinIO and can be removed individually.
+
+### Bulk Excel Export
+
+- On the main index page, select compounds using the checkboxes.
+- Click the "Bulk Excel Export" button to download a ZIP file containing Excel files for all selected compounds.
+- You can clear all selections with the "Clear All Selected" button.
