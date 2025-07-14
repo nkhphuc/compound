@@ -36,3 +36,5 @@ export const AddCompoundPage: React.FC = () => {
     </div>
   );
 };
+
+export default AddCompoundPage;

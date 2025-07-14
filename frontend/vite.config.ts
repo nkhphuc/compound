@@ -18,6 +18,23 @@ export default defineConfig(({ mode }) => {
         alias: {
           '@': path.resolve(__dirname, '.'),
         }
-      }
+      },
+      build: {
+        rollupOptions: {
+          output: {
+            manualChunks(id) {
+              if (id.includes('node_modules')) {
+                if (id.includes('exceljs')) return 'vendor-exceljs';
+                if (id.includes('docx')) return 'vendor-docx';
+                if (id.includes('jszip')) return 'vendor-jszip';
+                if (id.includes('react-dom')) return 'vendor-react-dom';
+                if (id.includes('react-router-dom')) return 'vendor-react-router-dom';
+                if (id.includes('react')) return 'vendor-react';
+                return 'vendor';
+              }
+            },
+          },
+        },
+      },
     };
 });

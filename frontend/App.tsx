@@ -1,11 +1,12 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { useTranslation } from 'react-i18next';
 import { MemoryRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Navbar } from './components/Navbar';
-import { AddCompoundPage } from './pages/AddCompoundPage';
-import { EditCompoundPage } from './pages/EditCompoundPage';
-import { HomePage } from './pages/HomePage';
-import { ViewCompoundPage } from './pages/ViewCompoundPage';
+
+const HomePage = lazy(() => import('./pages/HomePage'));
+const AddCompoundPage = lazy(() => import('./pages/AddCompoundPage'));
+const EditCompoundPage = lazy(() => import('./pages/EditCompoundPage'));
+const ViewCompoundPage = lazy(() => import('./pages/ViewCompoundPage'));
 
 const App: React.FC = () => {
   const { t } = useTranslation();
@@ -14,13 +15,15 @@ const App: React.FC = () => {
       <div className="min-h-screen flex flex-col bg-slate-100">
         <Navbar />
         <main className="flex-grow">
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/new" element={<AddCompoundPage />} />
-            <Route path="/edit/:id" element={<EditCompoundPage />} />
-            <Route path="/view/:id" element={<ViewCompoundPage />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
+          <Suspense fallback={<div className="text-center mt-10 text-lg">Loading...</div>}>
+            <Routes>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/new" element={<AddCompoundPage />} />
+              <Route path="/edit/:id" element={<EditCompoundPage />} />
+              <Route path="/view/:id" element={<ViewCompoundPage />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </Suspense>
         </main>
         <footer className="bg-gray-800 text-white text-center p-4 text-sm">
             <div>© {new Date().getFullYear()} {t('appName')}.</div>

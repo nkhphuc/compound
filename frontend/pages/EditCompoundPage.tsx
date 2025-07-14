@@ -90,3 +90,5 @@ export const EditCompoundPage: React.FC = () => {
     </div>
   );
 };
+
+export default EditCompoundPage;

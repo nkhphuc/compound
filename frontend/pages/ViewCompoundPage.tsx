@@ -188,3 +188,5 @@ export const ViewCompoundPage: React.FC = () => {
     </div>
   );
 };
+
+export default ViewCompoundPage;
