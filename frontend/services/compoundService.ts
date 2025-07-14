@@ -1,5 +1,5 @@
-import { CompoundData, initialCompoundData, NMRDataBlock, initialNMRDataBlock, initialNMRCondition, initialNMRSignalData, CompoundStatus, UVSKLMData, SpectralRecord, NMRCondition } from '../types';
 import { SPECTRAL_FIELDS } from '../constants'; // Import SPECTRAL_FIELDS
+import { CompoundData, initialCompoundData, NMRDataBlock, initialNMRDataBlock, initialNMRCondition, initialNMRSignalData, CompoundStatus, UVSKLMData, SpectralRecord, NMRCondition } from '../types';
 
 // Use relative URL for API since nginx handles the routing
 const API_BASE_URL = '/api';
@@ -248,7 +248,7 @@ export async function uploadMultipleFiles(files: File[]): Promise<Array<{id: str
     if (!response.ok) {
       throw new Error('File upload failed: ' + (data?.error || response.status));
     }
-    return data.data.map((fileData: any) => ({
+    return data.data.map((fileData: { originalName: string; url: string; size: number; mimetype: string }) => ({
       id: crypto.randomUUID(),
       name: fileData.originalName,
       url: fileData.url,

@@ -11,11 +11,8 @@ interface FileInfo {
 
 interface MultiFileInputProps {
   id: string;
-  label: string;
   selectedFiles: FileInfo[];
   onChange: (files: File[]) => void;
-  onRemoveFile: (fileId: string) => Promise<void>;
-  onRemoveAll: () => Promise<void>;
   accept?: string;
   maxFiles?: number;
   disabled?: boolean;
@@ -24,11 +21,8 @@ interface MultiFileInputProps {
 
 export const MultiFileInput: React.FC<MultiFileInputProps> = ({
   id,
-  label,
   selectedFiles,
   onChange,
-  onRemoveFile,
-  onRemoveAll,
   accept,
   maxFiles = 10,
   disabled = false,

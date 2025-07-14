@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useParams, useNavigate } from 'react-router-dom';
 import { CompoundForm } from '../components/CompoundForm';
-import { CompoundData } from '../types';
 import { getCompoundById, saveCompound } from '../services/compoundService';
+import { CompoundData } from '../types';
 
 export const EditCompoundPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();

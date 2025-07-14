@@ -1,9 +1,9 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { NMRSignalData } from '../types';
-import { Input } from './ui/Input';
-import { Button } from './ui/Button';
 import { TrashIcon } from './icons/TrashIcon';
+import { Button } from './ui/Button';
+import { Input } from './ui/Input';
 
 interface NMRSignalFormProps {
   signal: NMRSignalData;

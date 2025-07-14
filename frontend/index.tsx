@@ -1,11 +1,11 @@
 import './utils/cryptoPolyfill';
+import i18n from 'i18next';
+import LanguageDetector from 'i18next-browser-languagedetector';
 import React, { Suspense } from 'react';
 import ReactDOM from 'react-dom/client';
-import App from './App';
-import i18n from 'i18next';
 import { initReactI18next, I18nextProvider } from 'react-i18next';
-import LanguageDetector from 'i18next-browser-languagedetector';
-// @ts-ignore
+import App from './App';
+// @ts-expect-error: CSS import for Vite/CRA compatibility
 import './index.css';
 
 // --- BEGIN EMBEDDED TRANSLATIONS ---
@@ -77,6 +77,12 @@ const enTranslations = {
     noCompoundsFound: "No compounds found",
     noCompoundsFoundWithSearch: "Try adjusting your search term.",
     noCompoundsFoundGeneral: "Use the 'Add New Compound' button in the navigation bar to get started."
+  },
+  bulkActions: {
+    selected: "Selected ({{count}}):",
+    exporting: "Exporting...",
+    bulkExport: "Bulk Excel Export",
+    clearAll: "Clear All Selected"
   },
   compoundListItem: {
     sttHcPrefix: "SttHC: ",
@@ -287,6 +293,12 @@ const viTranslations = {
     noCompoundsFound: "Không tìm thấy hợp chất nào",
     noCompoundsFoundWithSearch: "Thử điều chỉnh từ khóa tìm kiếm của bạn.",
     noCompoundsFoundGeneral: "Sử dụng nút 'Thêm Hợp chất Mới' trên thanh điều hướng để bắt đầu."
+  },
+  bulkActions: {
+    selected: "Đã chọn ({{count}}):",
+    exporting: "Đang xuất...",
+    bulkExport: "Xuất Excel hàng loạt",
+    clearAll: "Bỏ chọn tất cả"
   },
   compoundListItem: {
     sttHcPrefix: "SttHC: ",

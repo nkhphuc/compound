@@ -1,6 +1,6 @@
 import React from 'react';
-import { Button } from './Button';
 import { useTranslation } from 'react-i18next';
+import { Button } from './Button';
 
 interface ConfirmModalProps {
   isOpen: boolean;

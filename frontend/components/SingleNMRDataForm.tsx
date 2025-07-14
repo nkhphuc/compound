@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { useTranslation, Trans } from 'react-i18next';
 import { NMRDataBlock, NMRSignalData, NMRCondition, initialNMRCondition } from '../types';
+import { NMRSignalCSVInput } from './NMRSignalCSVInput';
+import { NMRSignalForm } from './NMRSignalForm';
+import { PlusIcon } from './icons/PlusIcon';
+import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { Textarea } from './ui/Textarea';
-import { Button } from './ui/Button';
-import { NMRSignalForm } from './NMRSignalForm';
-import { NMRSignalCSVInput } from './NMRSignalCSVInput';
-import { PlusIcon } from './icons/PlusIcon';
 // TrashIcon is no longer needed for conditions
 
 interface SingleNMRDataFormProps {

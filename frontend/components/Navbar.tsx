@@ -36,7 +36,7 @@ const LanguageSwitcher: React.FC = () => {
 
 // Favicon Component
 const Favicon: React.FC = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" className="w-8 h-8">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" className="w-8 h-8 border-2 border-white/80 bg-indigo-700 rounded-full shadow">
     {/* Background circle */}
     <circle cx="16" cy="16" r="15" fill="#4338ca" stroke="#312e81" strokeWidth="2"/>
 
@@ -61,10 +61,9 @@ export const Navbar: React.FC = () => {
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center">
             <Link to="/" className="flex items-center hover:opacity-90 transition-opacity">
-              {/* Favicon - visible on small screens */}
-              <div className="sm:hidden">
+              <span className="mr-2 inline-flex items-center">
                 <Favicon />
-              </div>
+              </span>
               {/* Title - hidden on small screens, visible on sm and up */}
               <span className="hidden sm:block text-2xl font-bold text-white">
                 {t('navbar.title')}

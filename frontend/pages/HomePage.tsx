@@ -1,12 +1,12 @@
+import JSZip from 'jszip';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { CompoundData } from '../types';
-import { getCompounds, deleteCompound } from '../services/compoundService';
+import { useTranslation } from 'react-i18next';
 import { CompoundListItem } from '../components/CompoundListItem';
 import { ConfirmModal } from '../components/ui/ConfirmModal';
 import { Pagination } from '../components/ui/Pagination';
-import { useTranslation } from 'react-i18next';
-import JSZip from 'jszip';
+import { getCompounds, deleteCompound } from '../services/compoundService';
 import { exportCompoundToXlsx } from '../services/xlsxExportService';
+import { CompoundData } from '../types';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -187,7 +187,7 @@ export const HomePage: React.FC = () => {
       {selectedIds.length > 0 && (
         <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded flex flex-col md:flex-row md:items-center md:justify-between gap-2">
           <div>
-            <span className="font-semibold">Selected ({selectedIds.length}):</span>
+            <span className="font-semibold">{t('bulkActions.selected', { count: selectedIds.length })}</span>
             <span className="ml-2 text-sm text-gray-700">{compounds.filter(c => selectedIds.includes(c.id)).map(c => c.tenHC).join(', ')}</span>
           </div>
           <div className="flex gap-2">
@@ -196,14 +196,14 @@ export const HomePage: React.FC = () => {
               onClick={handleBulkExport}
               disabled={isExporting}
             >
-              {isExporting ? 'Exporting...' : 'Bulk Excel Export'}
+              {isExporting ? t('bulkActions.exporting') : t('bulkActions.bulkExport')}
             </button>
             <button
               className="bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded"
               onClick={() => setSelectedIds([])}
               disabled={isExporting}
             >
-              Clear All Selected
+              {t('bulkActions.clearAll')}
             </button>
           </div>
         </div>

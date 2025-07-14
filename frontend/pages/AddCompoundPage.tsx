@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { CompoundForm } from '../components/CompoundForm';
-import { CompoundData } from '../types';
 import { saveCompound } from '../services/compoundService';
+import { CompoundData } from '../types';
 
 export const AddCompoundPage: React.FC = () => {
   const navigate = useNavigate();

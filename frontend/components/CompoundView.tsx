@@ -1,10 +1,10 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { CompoundData, SpectralRecord } from '../types';
 import { SPECTRAL_FIELDS_CONFIG } from '../constants';
+import { getImageUrl } from '../services/urlService';
+import { CompoundData, SpectralRecord } from '../types';
 import { SectionCard } from './SectionCard';
 import { ChemicalFormulaDisplay } from './ui/ChemicalFormulaDisplay';
-import { getImageUrl } from '../services/urlService';
 // NMRTableView is not directly used here anymore, it's in ViewCompoundPage
 
 interface CompoundViewProps {
@@ -42,7 +42,7 @@ const DataField: React.FC<{ label: string; value?: string | number | boolean | n
   );
 };
 
-const renderSpectrumLinkOrPreview = (data: string[] | undefined, label: string, t: (key: string, options?: any) => string): React.ReactNode => {
+const renderSpectrumLinkOrPreview = (data: string[] | undefined, label: string, t: (key: string, options?: Record<string, unknown>) => string): React.ReactNode => {
   if (!data || !Array.isArray(data) || data.length === 0) {
     return <span className="text-gray-500 italic">{t('variousLabels.noData')}</span>;
   }

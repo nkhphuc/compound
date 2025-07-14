@@ -7,7 +7,7 @@ declare global {
   }
 }
 
-function generateUUID(): string {
+function generateUUID(): `${string}-${string}-${string}-${string}-${string}` {
   // Only call native crypto.randomUUID if it exists and is not this polyfill
   if (
     typeof crypto !== 'undefined' &&
@@ -15,7 +15,7 @@ function generateUUID(): string {
     crypto.randomUUID !== generateUUID
   ) {
     try {
-      return crypto.randomUUID();
+      return crypto.randomUUID() as `${string}-${string}-${string}-${string}-${string}`;
     } catch (error) {
       // Fallback to manual generation if crypto.randomUUID fails
       console.warn('crypto.randomUUID failed, using fallback:', error);
@@ -37,7 +37,7 @@ function generateUUID(): string {
     array[8] = (array[8] & 0x3f) | 0x80; // Variant 1
 
     const hex = Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
-    return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20, 32)}`;
+    return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20, 32)}` as `${string}-${string}-${string}-${string}-${string}`;
 }
 
 // Export the polyfill function
@@ -45,5 +45,5 @@ export const randomUUID = generateUUID;
 
 // Also add it to the global crypto object if it doesn't exist
 if (typeof crypto !== 'undefined' && !crypto.randomUUID) {
-  (crypto as any).randomUUID = generateUUID;
+  (crypto as Crypto & { randomUUID?: () => string }).randomUUID = generateUUID;
 }

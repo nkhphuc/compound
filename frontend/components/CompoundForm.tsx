@@ -1,20 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useTranslation, Trans } from 'react-i18next';
-import { CompoundData, initialCompoundData, UVSKLMData, SpectralRecord, NMRDataBlock, NMRSignalData, CompoundStatus, initialNMRDataBlock, initialNMRSignalData, NMRCondition, initialNMRCondition } from '../types';
+import { useNavigate } from 'react-router-dom';
 import { COMPOUND_STATUS_OPTIONS_KEYS, SPECTRAL_FIELDS, DEFAULT_LOAI_HC_OPTIONS, LOAI_HC_OTHER_STRING, DEFAULT_TRANG_THAI_OPTIONS, DEFAULT_MAU_OPTIONS, LOAI_HC_OTHER_STRING_KEY } from '../constants';
 import { getUniqueLoaiHCValues, getUniqueTrangThaiValues, getUniqueMauValues, uploadFile, uploadMultipleFiles, deleteFile } from '../services/compoundService';
 import { getImageUrl } from '../services/urlService';
-import { Input } from './ui/Input';
-import { Button } from './ui/Button';
-import { Select } from './ui/Select';
+import { CompoundData, initialCompoundData, UVSKLMData, SpectralRecord, NMRDataBlock, NMRSignalData, CompoundStatus, initialNMRDataBlock, initialNMRSignalData, NMRCondition, initialNMRCondition } from '../types';
 import { SectionCard } from './SectionCard';
 import { SingleNMRDataForm } from './SingleNMRDataForm';
 import { TrashIcon } from './icons/TrashIcon';
+import { Button } from './ui/Button';
 import { CustomFileInput } from './ui/CustomFileInput';
+import { Input } from './ui/Input';
 import { MultiFileInput } from './ui/MultiFileInput';
-import { SpectralFilesPreview } from './ui/SpectralFilesPreview';
 import { Notification } from './ui/Notification';
+import { Select } from './ui/Select';
+import { SpectralFilesPreview } from './ui/SpectralFilesPreview';
 
 interface CompoundFormProps {
   initialData?: CompoundData;
@@ -440,7 +440,7 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
         setFormData(prev => ({ ...prev, hinhCauTruc: url }));
         setStructureImageFileName(file.name);
         setFormErrors(prev => ({ ...prev, hinhCauTruc: undefined }));
-      } catch (err) {
+      } catch {
         setFormErrors(prev => ({ ...prev, hinhCauTruc: 'File upload failed' }));
       }
     }
@@ -561,7 +561,7 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
         return { ...prev, pho: newPhoErrors };
       });
 
-    } catch (err) {
+    } catch {
       setFormErrors(prev => ({
         ...prev,
         pho: {
@@ -712,8 +712,6 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
     }
     if (finalLoaiHc === '') {
         errors.loaiHC = t('compoundForm.loaiHC') + " is required.";
-    } else if (selectedLoaiHcInDropdown === LOAI_HC_OTHER_STRING && finalLoaiHc === '') {
-        errors.loaiHC = "Please enter a custom " + t('compoundForm.loaiHC').toLowerCase() + " if '" + t(LOAI_HC_OTHER_STRING_KEY) + "' is selected.";
     }
 
     let finalTrangThai = selectedTrangThaiInDropdown;
@@ -724,8 +722,6 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
     }
     if (finalTrangThai === '') {
         errors.trangThai = t('compoundForm.physicalProperties.title') + " - " + t('excelExport.mainInfo.state').replace(':','') + " is required.";
-    } else if (selectedTrangThaiInDropdown === LOAI_HC_OTHER_STRING && finalTrangThai === '') {
-        errors.trangThai = "Please enter a custom state/phase if '" + t(LOAI_HC_OTHER_STRING_KEY) + "' is selected.";
     }
 
     let finalMau = selectedMauInDropdown;
@@ -736,8 +732,6 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
     }
     if (finalMau === '') {
         errors.mau = t('compoundForm.physicalProperties.title') + " - " + t('excelExport.mainInfo.color').replace(':','') + " is required.";
-    } else if (selectedMauInDropdown === LOAI_HC_OTHER_STRING && finalMau === '') {
-        errors.mau = "Please enter a custom color if '" + t(LOAI_HC_OTHER_STRING_KEY) + "' is selected.";
     }
 
     if (imageInputMethod === 'url' && formData.hinhCauTruc && !formData.hinhCauTruc.startsWith('http')) {
@@ -1195,11 +1189,8 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
                   <div className="space-y-4">
                     <MultiFileInput
                       id={`spectral-file-${fieldKey}`}
-                      label={t('compoundForm.browse')}
                       selectedFiles={spectralFiles[fieldKey] || []}
                       onChange={(files) => handleSpectralMultipleFileChange(fieldKey, files)}
-                      onRemoveFile={async (fileId) => await removeSpectralFile(fieldKey, fileId)}
-                      onRemoveAll={async () => await removeAllSpectralFiles(fieldKey)}
                       accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,.svg,image/*,application/pdf"
                       maxFiles={10}
                       wrapperClassName="mt-1"

@@ -1,9 +1,9 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import { CompoundData } from '../types';
-import { Button } from './ui/Button';
 import { TrashIcon } from './icons/TrashIcon';
+import { Button } from './ui/Button';
 
 interface CompoundListItemProps {
   compound: CompoundData;

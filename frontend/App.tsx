@@ -1,11 +1,11 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { MemoryRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Navbar } from './components/Navbar';
-import { HomePage } from './pages/HomePage';
 import { AddCompoundPage } from './pages/AddCompoundPage';
 import { EditCompoundPage } from './pages/EditCompoundPage';
+import { HomePage } from './pages/HomePage';
 import { ViewCompoundPage } from './pages/ViewCompoundPage';
-import { useTranslation } from 'react-i18next';
 
 const App: React.FC = () => {
   const { t } = useTranslation();

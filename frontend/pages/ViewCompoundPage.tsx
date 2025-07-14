@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { getCompoundById, deleteCompound } from '../services/compoundService';
-import { CompoundData } from '../types';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { CompoundView } from '../components/CompoundView';
 import { NMRTableView } from '../components/NMRTableView';
-import { Button } from '../components/ui/Button';
 import { TrashIcon } from '../components/icons/TrashIcon';
+import { Button } from '../components/ui/Button';
 import { ConfirmModal } from '../components/ui/ConfirmModal';
+import { getCompoundById, deleteCompound } from '../services/compoundService';
 import { exportCompoundToXlsx } from '../services/xlsxExportService';
+import { CompoundData } from '../types';
 
 export const ViewCompoundPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();

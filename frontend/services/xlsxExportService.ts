@@ -1,8 +1,8 @@
 import ExcelJS from 'exceljs';
+import i18n from 'i18next'; // Import i18n instance
+import { SPECTRAL_FIELDS_CONFIG } from '../constants';
 import { CompoundData, CompoundStatus } from '../types';
 // Removed SPECTRAL_FIELDS import, will use SPECTRAL_FIELDS_CONFIG from constants and i18n
-import { SPECTRAL_FIELDS_CONFIG } from '../constants';
-import i18n from 'i18next'; // Import i18n instance
 import { getImageUrl } from './urlService'; // Import the URL helper
 
 // Helper to convert base64 data URL to buffer for ExcelJS
@@ -473,7 +473,7 @@ export const exportCompoundToXlsx = async (compound: CompoundData, options?: { r
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `${compound.sttHC || 'ID'}_${(compound.tenHC || t('excelExport.mainInfo.untitledCompound', 'compound')).replace(/[ -\/:*?"<>|]/g, '_')}.xlsx`;
+  a.download = `${compound.sttHC || 'ID'}_${(compound.tenHC || t('excelExport.mainInfo.untitledCompound', 'compound')).replace(/[:*?"<>|/\\]/g, '_')}.xlsx`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
