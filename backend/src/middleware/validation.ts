@@ -197,8 +197,8 @@ export const compoundValidationSchema = Joi.object({
   // Spectral data validation (mirror frontend validation)
   pho: spectralRecordSchema,
 
-  // NMR data validation
-  nmrData: nmrDataBlockSchema.default({})
+  // NMR data validation (now an array)
+  nmrData: Joi.array().items(nmrDataBlockSchema).default([{ }])
 });
 
 // Validation middleware

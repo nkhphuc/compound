@@ -105,14 +105,14 @@ export const ViewCompoundPage: React.FC = () => {
     }
   };
 
-  const nmrDataContentExists = compound.nmrData && (
-    (compound.nmrData.signals && compound.nmrData.signals.length > 0) ||
-    (compound.nmrData.luuYNMR && compound.nmrData.luuYNMR.trim() !== '') ||
-    (compound.nmrData.tltkNMR && compound.nmrData.tltkNMR.trim() !== '') ||
-    (compound.nmrData.nmrConditions && (
-        (compound.nmrData.nmrConditions.dmNMR && compound.nmrData.nmrConditions.dmNMR.trim() !== '') ||
-        (compound.nmrData.nmrConditions.tanSo1H && compound.nmrData.nmrConditions.tanSo1H.trim() !== '') ||
-        (compound.nmrData.nmrConditions.tanSo13C && compound.nmrData.nmrConditions.tanSo13C.trim() !== '')
+  const nmrDataContentExists = Array.isArray(compound.nmrData) && compound.nmrData.some(block =>
+    (block.signals && block.signals.length > 0) ||
+    (block.luuYNMR && block.luuYNMR.trim() !== '') ||
+    (block.tltkNMR && block.tltkNMR.trim() !== '') ||
+    (block.nmrConditions && (
+      (block.nmrConditions.dmNMR && block.nmrConditions.dmNMR.trim() !== '') ||
+      (block.nmrConditions.tanSo1H && block.nmrConditions.tanSo1H.trim() !== '') ||
+      (block.nmrConditions.tanSo13C && block.nmrConditions.tanSo13C.trim() !== '')
     ))
   );
 
@@ -172,7 +172,7 @@ export const ViewCompoundPage: React.FC = () => {
       {nmrDataContentExists && (
         <div className="mt-10">
           <h2 className="text-2xl font-semibold text-gray-800 mb-6 border-t pt-6">{t('compoundForm.nmrData.title')}</h2>
-          <NMRTableView nmrDataBlock={compound.nmrData!} compoundSttHC={String(compound.sttHC)} />
+          <NMRTableView nmrDataBlocks={compound.nmrData} compoundSttHC={String(compound.sttHC)} />
         </div>
       )}
 

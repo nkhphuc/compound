@@ -1,5 +1,5 @@
 import { SPECTRAL_FIELDS } from '../constants'; // Import SPECTRAL_FIELDS
-import { CompoundData, initialCompoundData, NMRDataBlock, initialNMRDataBlock, initialNMRCondition, initialNMRSignalData, CompoundStatus, UVSKLMData, SpectralRecord, NMRCondition } from '../types';
+import { CompoundData, initialCompoundData, NMRDataBlock, initialNMRDataBlock, initialNMRCondition, initialNMRSignalData, CompoundStatus, UVSKLMData, SpectralRecord, NMRCondition, NMRSignalData } from '../types';
 
 // Use relative URL for API since nginx handles the routing
 const API_BASE_URL = '/api';
@@ -8,43 +8,54 @@ const API_BASE_URL = '/api';
 const ensureCompoundDataIntegrity = (compound: Partial<CompoundData>): CompoundData => {
   const defaults = {
     ...initialCompoundData,
-    id: compound.id || crypto.randomUUID(), // Ensure ID
-    nmrData: {
-      ...initialNMRDataBlock,
-      id: `${compound.id || crypto.randomUUID()}-nmr`,
-      ...(compound.nmrData || {}),
-    }
+    id: compound.id || crypto.randomUUID(),
+    nmrData: [{ ...initialNMRDataBlock, id: '' }],
   };
 
   const validatedPho: SpectralRecord = {};
   SPECTRAL_FIELDS.forEach(field => {
-      const key = field.key;
-      const existingValue = compound.pho?.[key as keyof SpectralRecord];
-      // Handle both legacy single string and new array format
-      if (Array.isArray(existingValue)) {
-        validatedPho[key] = existingValue;
-      } else if (typeof existingValue === 'string' && existingValue) {
-        // Convert legacy single file to array
-        validatedPho[key] = [existingValue];
-      } else {
-        validatedPho[key] = [];
-      }
+    const key = field.key;
+    const existingValue = compound.pho?.[key as keyof SpectralRecord];
+    if (Array.isArray(existingValue)) {
+      validatedPho[key] = existingValue;
+    } else if (typeof existingValue === 'string' && existingValue) {
+      validatedPho[key] = [existingValue];
+    } else {
+      validatedPho[key] = [];
+    }
   });
 
-  let finalNmrConditions: NMRCondition;
-  const rawNmrConditions = compound.nmrData?.nmrConditions;
-
-  if (Array.isArray(rawNmrConditions) && rawNmrConditions.length > 0) {
-    // Old format: array of conditions, take the first one
-    finalNmrConditions = { ...initialNMRCondition, ...rawNmrConditions[0], id: rawNmrConditions[0].id || crypto.randomUUID() };
-  } else if (typeof rawNmrConditions === 'object' && rawNmrConditions !== null && !Array.isArray(rawNmrConditions)) {
-    // New format or already migrated: single object
-    finalNmrConditions = { ...initialNMRCondition, ...(rawNmrConditions as NMRCondition), id: (rawNmrConditions as NMRCondition).id || crypto.randomUUID() };
+  // Normalize nmrData to array
+  let nmrDataBlocks: NMRDataBlock[] = [];
+  if (Array.isArray(compound.nmrData)) {
+    nmrDataBlocks = (compound.nmrData as Partial<NMRDataBlock>[]).map((block: Partial<NMRDataBlock>, idx: number): NMRDataBlock => ({
+      ...initialNMRDataBlock,
+      ...block,
+      id: block.id || crypto.randomUUID(),
+      nmrConditions: {
+        ...initialNMRCondition,
+        ...(block.nmrConditions || {}),
+        id: (block.nmrConditions && block.nmrConditions.id) ? block.nmrConditions.id : crypto.randomUUID(),
+      },
+      signals: (block.signals || []).map((sig: Partial<NMRSignalData>): NMRSignalData => ({ ...initialNMRSignalData, ...sig, id: sig.id || crypto.randomUUID() })),
+    }));
+  } else if (compound.nmrData && typeof compound.nmrData === 'object') {
+    // Legacy: single block
+    const block = compound.nmrData as Partial<NMRDataBlock>;
+    nmrDataBlocks = [{
+      ...initialNMRDataBlock,
+      ...block,
+      id: block.id || crypto.randomUUID(),
+      nmrConditions: {
+        ...initialNMRCondition,
+        ...(block.nmrConditions || {}),
+        id: (block.nmrConditions && block.nmrConditions.id) ? block.nmrConditions.id : crypto.randomUUID(),
+      },
+      signals: (block.signals || []).map((sig: Partial<NMRSignalData>): NMRSignalData => ({ ...initialNMRSignalData, ...sig, id: sig.id || crypto.randomUUID() })),
+    }];
   } else {
-    // Default single condition if none provided or invalid format
-    finalNmrConditions = { ...initialNMRCondition, id: crypto.randomUUID() };
+    nmrDataBlocks = [{ ...initialNMRDataBlock, id: crypto.randomUUID() }];
   }
-
 
   const validatedCompound: CompoundData = {
     ...defaults,
@@ -53,18 +64,12 @@ const ensureCompoundDataIntegrity = (compound: Partial<CompoundData>): CompoundD
     hinhCauTruc: compound.hinhCauTruc || '',
     status: compound.status || CompoundStatus.NEW,
     uvSklm: {
-        nm254: typeof compound.uvSklm?.nm254 === 'boolean' ? compound.uvSklm.nm254 : false,
-        nm365: typeof compound.uvSklm?.nm365 === 'boolean' ? compound.uvSklm.nm365 : false,
+      nm254: typeof compound.uvSklm?.nm254 === 'boolean' ? compound.uvSklm.nm254 : false,
+      nm365: typeof compound.uvSklm?.nm365 === 'boolean' ? compound.uvSklm.nm365 : false,
     } as UVSKLMData,
     cauHinhTuyetDoi: typeof compound.cauHinhTuyetDoi === 'boolean' ? compound.cauHinhTuyetDoi : false,
     pho: validatedPho,
-    nmrData: {
-      ...defaults.nmrData,
-      id: defaults.nmrData.id || `${compound.id || crypto.randomUUID()}-nmr`, // Ensure nmrData.id
-      sttBang: (typeof compound.nmrData?.sttBang === 'string' && compound.nmrData.sttBang.trim() !== '') ? compound.nmrData.sttBang : "",
-      nmrConditions: finalNmrConditions, // Use the processed single condition object
-      signals: (compound.nmrData?.signals || []).map(sig => ({ ...initialNMRSignalData, ...sig, id: sig.id || crypto.randomUUID() })),
-    } as NMRDataBlock,
+    nmrData: nmrDataBlocks,
   };
   return validatedCompound;
 };
@@ -138,46 +143,45 @@ export const getCompoundById = async (id: string): Promise<CompoundData | undefi
   }
 };
 
+// In saveCompound, remove legacy single-block logic and always send nmrData as array
 export const saveCompound = async (compoundToSave: CompoundData): Promise<CompoundData> => {
   try {
     const validatedDataToSave = ensureCompoundDataIntegrity({
-        ...compoundToSave,
-        nmrData: {
-            ...compoundToSave.nmrData,
-            id: compoundToSave.nmrData.id || `${compoundToSave.id}-nmr`,
-        }
+      ...compoundToSave,
+      nmrData: (compoundToSave.nmrData || []).map(block => ({
+        ...block,
+        id: block.id || crypto.randomUUID(),
+        nmrConditions: {
+          ...(block.nmrConditions || initialNMRCondition),
+          id: (block.nmrConditions && block.nmrConditions.id) ? block.nmrConditions.id : crypto.randomUUID(),
+        },
+        signals: (block.signals || []).map(s => ({ ...s, id: s.id || crypto.randomUUID() })),
+      })),
     });
 
     let response;
-    // Check if this is an existing compound (has a valid ID that's not empty or default)
     const isExistingCompound = validatedDataToSave.id &&
-                              validatedDataToSave.id !== '' &&
-                              validatedDataToSave.id !== '0' &&
-                              validatedDataToSave.id !== 'undefined' &&
-                              validatedDataToSave.id !== 'null';
+      validatedDataToSave.id !== '' &&
+      validatedDataToSave.id !== '0' &&
+      validatedDataToSave.id !== 'undefined' &&
+      validatedDataToSave.id !== 'null';
 
     if (isExistingCompound) {
-      // Update existing compound
       response = await apiRequest(`/compounds/${validatedDataToSave.id}`, {
         method: 'PUT',
         body: JSON.stringify(validatedDataToSave),
       });
     } else {
-      // Create new compound - remove ID fields to let backend generate them
       const dataForCreation = {
         ...validatedDataToSave,
-        id: undefined, // Remove ID for creation
-        nmrData: {
-          ...validatedDataToSave.nmrData,
-          id: undefined, // Remove NMR ID for creation
-          sttBang: undefined, // Remove sttBang for creation - let backend auto-generate
-          signals: validatedDataToSave.nmrData.signals.map(signal => ({
-            ...signal,
-            id: undefined // Remove signal IDs for creation
-          }))
-        }
+        id: undefined,
+        nmrData: validatedDataToSave.nmrData.map(block => ({
+          ...block,
+          id: undefined,
+          sttBang: undefined,
+          signals: (block.signals || []).map(signal => ({ ...signal, id: undefined }))
+        }))
       };
-
       response = await apiRequest('/compounds', {
         method: 'POST',
         body: JSON.stringify(dataForCreation),

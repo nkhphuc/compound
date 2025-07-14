@@ -88,7 +88,7 @@ export interface CompoundData {
   te?: string; // Total Energy
 
   // Single NMR Data Block (Format Trang 2)
-  nmrData: NMRDataBlock;
+  nmrData: NMRDataBlock[];
 }
 
 
@@ -112,7 +112,7 @@ export const initialNMRDataBlock: Omit<NMRDataBlock, 'id'> = {
   tltkNMR: '',
 };
 
-export const initialCompoundData: Omit<CompoundData, 'id' | 'nmrData'> & { nmrData: Omit<NMRDataBlock, 'id'> } = {
+export const initialCompoundData: Omit<CompoundData, 'id' | 'nmrData'> & { nmrData: Omit<NMRDataBlock, 'id'>[] } = {
   sttHC: 0,
   tenHC: '',
   tenHCKhac: '',
@@ -143,5 +143,5 @@ export const initialCompoundData: Omit<CompoundData, 'id' | 'nmrData'> & { nmrDa
   cartCoor: '',
   imgFreq: '',
   te: '',
-  nmrData: { ...initialNMRDataBlock },
+  nmrData: [{ ...initialNMRDataBlock }],
 };

@@ -60,6 +60,9 @@ const initialSpectralUrlsState: Record<keyof SpectralRecord, string[]> =
 export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave, saveError: parentSaveError, isSaving }) => {
   const { t } = useTranslation();
 
+  // Add state for selected NMR data block index
+  const [selectedNmrIndex, setSelectedNmrIndex] = useState(0);
+
   // Initialize formData with a simple default
   const [formData, setFormData] = useState<CompoundData>(() => {
     const defaultPho = SPECTRAL_FIELDS.reduce((acc, field) => {
@@ -70,7 +73,7 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
     return {
       ...JSON.parse(JSON.stringify(initialCompoundData)),
       id: '',
-      nmrData: { ...initialNMRDataBlock, id: '' },
+      nmrData: [{ ...initialNMRDataBlock, id: '' }],
       pho: defaultPho
     };
   });
@@ -156,7 +159,7 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
 
       // Handle NMRConditions: if array (old data), take first; otherwise, use as is or default
       let initialNmrConditionsObj: NMRCondition;
-      const rawNmrConditions = parsedInitial.nmrData?.nmrConditions;
+      const rawNmrConditions = parsedInitial.nmrData;
       if (Array.isArray(rawNmrConditions) && rawNmrConditions.length > 0) {
         initialNmrConditionsObj = { ...initialNMRCondition, ...rawNmrConditions[0], id: rawNmrConditions[0].id || crypto.randomUUID() };
       } else if (typeof rawNmrConditions === 'object' && rawNmrConditions !== null && !Array.isArray(rawNmrConditions)) {
@@ -199,7 +202,7 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
         sttHC: typeof parsedInitial.sttHC === 'number' ? parsedInitial.sttHC : parseInt(String(parsedInitial.sttHC), 10) || 0,
         cauHinhTuyetDoi: typeof parsedInitial.cauHinhTuyetDoi === 'boolean' ? parsedInitial.cauHinhTuyetDoi : false,
         pho: sanitizedPho,
-        nmrData: nmrData
+        nmrData: parsedInitial.nmrData || [{ ...initialNMRDataBlock, id: crypto.randomUUID() }]
       };
 
       setFormData(dataToSet);
@@ -635,59 +638,99 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
     }));
   };
 
-  const handleNmrDataBlockFieldChange = (field: keyof Omit<NMRDataBlock, 'signals' | 'id' | 'nmrConditions'>, value: string) => {
-    setFormData(prev => ({ ...prev, nmrData: { ...prev.nmrData, [field]: value } }));
-  };
-
-  const handleNmrConditionChange = (field: keyof Omit<NMRCondition, 'id'>, value: string) => { // No index
+  // Add NMR block
+  const addNmrDataBlock = () => {
     setFormData(prev => ({
       ...prev,
-      nmrData: {
+      nmrData: [
         ...prev.nmrData,
-        nmrConditions: {
-          ...prev.nmrData.nmrConditions,
-          [field]: value
-        }
-      }
+        { ...initialNMRDataBlock, id: crypto.randomUUID() }
+      ]
     }));
+    setSelectedNmrIndex(formData.nmrData.length); // select the new block
   };
 
-  const handleNmrSignalChange = (signalIndex: number, field: keyof Omit<NMRSignalData, 'id'>, value: string) => {
+  // Remove NMR block
+  const removeNmrDataBlock = (index: number) => {
     setFormData(prev => {
-      const newSignals = [...prev.nmrData.signals];
-      newSignals[signalIndex] = { ...newSignals[signalIndex], [field]: value };
-      return { ...prev, nmrData: { ...prev.nmrData, signals: newSignals } };
+      const newBlocks = prev.nmrData.filter((_, i) => i !== index);
+      return {
+        ...prev,
+        nmrData: newBlocks.length > 0 ? newBlocks : [{ ...initialNMRDataBlock, id: crypto.randomUUID() }]
+      };
+    });
+    setSelectedNmrIndex(0);
+  };
+
+  // Switch NMR block
+  const selectNmrDataBlock = (index: number) => setSelectedNmrIndex(index);
+
+  // Update NMR handlers to work on selected block
+  const handleNmrDataBlockFieldChange = (field: keyof Omit<NMRDataBlock, 'signals' | 'id' | 'nmrConditions'>, value: string) => {
+    setFormData(prev => {
+      const nmrData = [...prev.nmrData];
+      nmrData[selectedNmrIndex] = { ...nmrData[selectedNmrIndex], [field]: value };
+      return { ...prev, nmrData };
     });
   };
-
+  const handleNmrConditionChange = (field: keyof Omit<NMRCondition, 'id'>, value: string) => {
+    setFormData(prev => {
+      const nmrData = [...prev.nmrData];
+      nmrData[selectedNmrIndex] = {
+        ...nmrData[selectedNmrIndex],
+        nmrConditions: {
+          ...nmrData[selectedNmrIndex].nmrConditions,
+          [field]: value
+        }
+      };
+      return { ...prev, nmrData };
+    });
+  };
+  const handleNmrSignalChange = (signalIndex: number, field: keyof Omit<NMRSignalData, 'id'>, value: string) => {
+    setFormData(prev => {
+      const nmrData = [...prev.nmrData];
+      const signals = [...nmrData[selectedNmrIndex].signals];
+      signals[signalIndex] = { ...signals[signalIndex], [field]: value };
+      nmrData[selectedNmrIndex] = { ...nmrData[selectedNmrIndex], signals };
+      return { ...prev, nmrData };
+    });
+  };
   const addNmrSignal = () => {
-    setFormData(prev => ({ ...prev, nmrData: { ...prev.nmrData, signals: [...prev.nmrData.signals, { ...initialNMRSignalData, id: crypto.randomUUID() }] } }));
+    setFormData(prev => {
+      const nmrData = [...prev.nmrData];
+      nmrData[selectedNmrIndex] = {
+        ...nmrData[selectedNmrIndex],
+        signals: [...nmrData[selectedNmrIndex].signals, { ...initialNMRSignalData, id: crypto.randomUUID() }]
+      };
+      return { ...prev, nmrData };
+    });
   };
-
   const addNmrSignalsBulk = (signals: NMRSignalData[]) => {
-    setFormData(prev => ({
-      ...prev,
-      nmrData: {
-        ...prev.nmrData,
-        signals: [...prev.nmrData.signals, ...signals]
-      }
-    }));
+    setFormData(prev => {
+      const nmrData = [...prev.nmrData];
+      nmrData[selectedNmrIndex] = {
+        ...nmrData[selectedNmrIndex],
+        signals: [...nmrData[selectedNmrIndex].signals, ...signals]
+      };
+      return { ...prev, nmrData };
+    });
   };
-
   const replaceNmrSignals = (signals: NMRSignalData[]) => {
-    setFormData(prev => ({
-      ...prev,
-      nmrData: {
-        ...prev.nmrData,
-        signals: signals
-      }
-    }));
+    setFormData(prev => {
+      const nmrData = [...prev.nmrData];
+      nmrData[selectedNmrIndex] = {
+        ...nmrData[selectedNmrIndex],
+        signals
+      };
+      return { ...prev, nmrData };
+    });
   };
-
   const removeNmrSignal = (signalIndex: number) => {
     setFormData(prev => {
-      const newSignals = prev.nmrData.signals.filter((_, index) => index !== signalIndex);
-      return { ...prev, nmrData: { ...prev.nmrData, signals: newSignals } };
+      const nmrData = [...prev.nmrData];
+      const signals = nmrData[selectedNmrIndex].signals.filter((_, idx) => idx !== signalIndex);
+      nmrData[selectedNmrIndex] = { ...nmrData[selectedNmrIndex], signals };
+      return { ...prev, nmrData };
     });
   };
 
@@ -814,15 +857,15 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
 
           return acc;
         }, {} as SpectralRecord),
-        nmrData: {
-          ...formData.nmrData,
-          id: formData.nmrData.id || `${formData.id}-nmr`,
+        nmrData: formData.nmrData.map(block => ({
+          ...block,
+          id: block.id || crypto.randomUUID(),
           nmrConditions: {
-             ...(formData.nmrData.nmrConditions || initialNMRCondition),
-             id: (formData.nmrData.nmrConditions && formData.nmrData.nmrConditions.id) ? formData.nmrData.nmrConditions.id : crypto.randomUUID(),
+            ...(block.nmrConditions || initialNMRCondition),
+            id: (block.nmrConditions && block.nmrConditions.id) ? block.nmrConditions.id : crypto.randomUUID(),
           },
-          signals: formData.nmrData.signals.map(s => ({...s, id: s.id || crypto.randomUUID()})),
-        }
+          signals: (block.signals || []).map(s => ({ ...s, id: s.id || crypto.randomUUID() }))
+        })),
     };
 
     await onSave(dataToSave);
@@ -1296,8 +1339,28 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
       </SectionCard>
 
       <SectionCard title={t('compoundForm.nmrData.title')}>
+        <div className="flex items-center mb-4 space-x-2">
+          {formData.nmrData.map((block, idx) => (
+            <button
+              key={block.id || idx}
+              type="button"
+              className={`px-3 py-1 rounded border ${selectedNmrIndex === idx ? 'bg-indigo-600 text-white' : 'bg-white text-indigo-600 border-indigo-300'} font-medium text-sm mr-1`}
+              onClick={() => selectNmrDataBlock(idx)}
+            >
+              {t('nmrForm.spectralDataTable')} #{idx + 1}
+            </button>
+          ))}
+          <Button type="button" size="sm" variant="secondary" onClick={addNmrDataBlock} leftIcon={<span>+</span>}>
+            {t('nmrForm.addSpectralTable', 'Add Table')}
+          </Button>
+          {formData.nmrData.length > 1 && (
+            <Button type="button" size="sm" variant="ghost" onClick={() => removeNmrDataBlock(selectedNmrIndex)} leftIcon={<span>-</span>}>
+              {t('nmrForm.removeSpectralTable', 'Remove Table')}
+            </Button>
+          )}
+        </div>
         <SingleNMRDataForm
-          nmrDataBlock={formData.nmrData}
+          nmrDataBlock={formData.nmrData[selectedNmrIndex]}
           onFieldChange={handleNmrDataBlockFieldChange}
           onConditionChange={handleNmrConditionChange}
           onSignalChange={handleNmrSignalChange}

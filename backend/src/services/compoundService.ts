@@ -1,5 +1,5 @@
 import { pool } from '../config/database.js';
-import { CompoundData, CompoundStatus, SpectralRecord, NMRSignalData } from '../types';
+import { CompoundData, CompoundStatus, SpectralRecord, NMRSignalData, NMRDataBlock } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 // S3/MinIO imports and config
 import { DeleteObjectCommand, HeadBucketCommand } from '@aws-sdk/client-s3';
@@ -159,7 +159,6 @@ export class CompoundService {
 
       // Generate IDs
       const compoundId = uuidv4();
-      const nmrDataBlockId = uuidv4();
 
       // Insert compound with JSONB fields
       const compoundQuery = `
@@ -202,49 +201,46 @@ export class CompoundService {
 
       await client.query(compoundQuery, compoundValues);
 
-      // Insert NMR data block
-      if (compoundData.nmrData) {
-        const nmrQuery = `
-          INSERT INTO nmr_data_blocks (id, compound_id, dm_nmr, tan_so_13c, tan_so_1h, luu_y_nmr, tltk_nmr)
-          VALUES ($1, $2, $3, $4, $5, $6, $7)
-        `;
+      // Insert all NMR data blocks and their signals
+      if (Array.isArray(compoundData.nmrData)) {
+        for (const nmrBlock of compoundData.nmrData) {
+          const nmrDataBlockId = nmrBlock.id || uuidv4();
+          const nmrQuery = `
+            INSERT INTO nmr_data_blocks (id, compound_id, stt_bang, dm_nmr, tan_so_13c, tan_so_1h, luu_y_nmr, tltk_nmr)
+            VALUES ($1, $2, DEFAULT, $3, $4, $5, $6, $7)
+          `;
+          const nmrValues = [
+            nmrDataBlockId,
+            compoundId,
+            nmrBlock.nmrConditions?.dmNMR || '',
+            nmrBlock.nmrConditions?.tanSo13C || '',
+            nmrBlock.nmrConditions?.tanSo1H || '',
+            nmrBlock.luuYNMR || '',
+            nmrBlock.tltkNMR || ''
+          ];
+          await client.query(nmrQuery, nmrValues);
 
-        const nmrValues = [
-          nmrDataBlockId,
-          compoundId,
-          compoundData.nmrData.nmrConditions?.dmNMR || '',
-          compoundData.nmrData.nmrConditions?.tanSo13C || '',
-          compoundData.nmrData.nmrConditions?.tanSo1H || '',
-          compoundData.nmrData.luuYNMR || '',
-          compoundData.nmrData.tltkNMR || ''
-        ];
-
-        await client.query(nmrQuery, nmrValues);
-
-        // Insert NMR signals
-        if (compoundData.nmrData.signals && compoundData.nmrData.signals.length > 0) {
-          for (const signal of compoundData.nmrData.signals) {
-            const signalQuery = `
-              INSERT INTO nmr_signals (id, nmr_data_block_id, vi_tri, scab, shac_j_hz)
-              VALUES ($1, $2, $3, $4, $5)
-            `;
-
-            const signalValues = [
-              signal.id || uuidv4(),
-              nmrDataBlockId,
-              signal.viTri || '',
-              signal.scab || '',
-              signal.shacJHz || ''
-            ];
-
-            await client.query(signalQuery, signalValues);
+          // Insert signals for this block
+          if (nmrBlock.signals && nmrBlock.signals.length > 0) {
+            for (const signal of nmrBlock.signals) {
+              const signalQuery = `
+                INSERT INTO nmr_signals (id, nmr_data_block_id, vi_tri, scab, shac_j_hz)
+                VALUES ($1, $2, $3, $4, $5)
+              `;
+              const signalValues = [
+                signal.id || uuidv4(),
+                nmrDataBlockId,
+                signal.viTri || '',
+                signal.scab || '',
+                signal.shacJHz || ''
+              ];
+              await client.query(signalQuery, signalValues);
+            }
           }
         }
       }
 
       await client.query('COMMIT');
-
-      // Return the created compound
       return await this.getCompoundById(compoundId) as CompoundData;
     } catch (error) {
       await client.query('ROLLBACK');
@@ -256,16 +252,13 @@ export class CompoundService {
 
   async updateCompound(id: string, compoundData: Partial<CompoundData>): Promise<CompoundData | null> {
     const client = await pool.connect();
-
     try {
       await client.query('BEGIN');
-
       // Check if compound exists
       const existingCompound = await this.getCompoundById(id);
       if (!existingCompound) {
         return null;
       }
-
       // --- S3 file cleanup logic ---
       // Check pho field for file changes
       const oldPho = existingCompound.pho || {};
@@ -360,56 +353,47 @@ export class CompoundService {
       ];
 
       await client.query(compoundQuery, compoundValues);
-
-      // Update NMR data block if provided
-      if (compoundData.nmrData) {
-        const nmrQuery = `
-          UPDATE nmr_data_blocks SET
-            stt_bang = $2, dm_nmr = $3, tan_so_13c = $4, tan_so_1h = $5,
-            luu_y_nmr = $6, tltk_nmr = $7, updated_at = CURRENT_TIMESTAMP
-          WHERE compound_id = $1
-        `;
-
-        const nmrValues = [
-          id,
-          compoundData.nmrData.sttBang ?? existingCompound.nmrData.sttBang,
-          compoundData.nmrData.nmrConditions?.dmNMR ?? existingCompound.nmrData.nmrConditions.dmNMR,
-          compoundData.nmrData.nmrConditions?.tanSo13C ?? existingCompound.nmrData.nmrConditions.tanSo13C,
-          compoundData.nmrData.nmrConditions?.tanSo1H ?? existingCompound.nmrData.nmrConditions.tanSo1H,
-          compoundData.nmrData.luuYNMR ?? existingCompound.nmrData.luuYNMR,
-          compoundData.nmrData.tltkNMR ?? existingCompound.nmrData.tltkNMR
-        ];
-
-        await client.query(nmrQuery, nmrValues);
-
-        // Update NMR signals if provided
-        if (compoundData.nmrData.signals) {
-          // Delete existing signals
-          await client.query('DELETE FROM nmr_signals WHERE nmr_data_block_id = (SELECT id FROM nmr_data_blocks WHERE compound_id = $1)', [id]);
-
-          // Insert new signals
-          for (const signal of compoundData.nmrData.signals) {
-            const signalQuery = `
-              INSERT INTO nmr_signals (id, nmr_data_block_id, vi_tri, scab, shac_j_hz)
-              VALUES ($1, (SELECT id FROM nmr_data_blocks WHERE compound_id = $2), $3, $4, $5)
-            `;
-
-            const signalValues = [
-              signal.id || uuidv4(),
-              id,
-              signal.viTri || '',
-              signal.scab || '',
-              signal.shacJHz || ''
-            ];
-
-            await client.query(signalQuery, signalValues);
+      // Delete all existing NMR data blocks and signals for this compound
+      await client.query('DELETE FROM nmr_signals WHERE nmr_data_block_id IN (SELECT id FROM nmr_data_blocks WHERE compound_id = $1)', [id]);
+      await client.query('DELETE FROM nmr_data_blocks WHERE compound_id = $1', [id]);
+      // Insert all new NMR data blocks and their signals
+      if (Array.isArray(compoundData.nmrData)) {
+        for (const nmrBlock of compoundData.nmrData) {
+          const nmrDataBlockId = nmrBlock.id || uuidv4();
+          const nmrQuery = `
+            INSERT INTO nmr_data_blocks (id, compound_id, stt_bang, dm_nmr, tan_so_13c, tan_so_1h, luu_y_nmr, tltk_nmr)
+            VALUES ($1, $2, DEFAULT, $3, $4, $5, $6, $7)
+          `;
+          const nmrValues = [
+            nmrDataBlockId,
+            id,
+            nmrBlock.nmrConditions?.dmNMR || '',
+            nmrBlock.nmrConditions?.tanSo13C || '',
+            nmrBlock.nmrConditions?.tanSo1H || '',
+            nmrBlock.luuYNMR || '',
+            nmrBlock.tltkNMR || ''
+          ];
+          await client.query(nmrQuery, nmrValues);
+          // Insert signals for this block
+          if (nmrBlock.signals && nmrBlock.signals.length > 0) {
+            for (const signal of nmrBlock.signals) {
+              const signalQuery = `
+                INSERT INTO nmr_signals (id, nmr_data_block_id, vi_tri, scab, shac_j_hz)
+                VALUES ($1, $2, $3, $4, $5)
+              `;
+              const signalValues = [
+                signal.id || uuidv4(),
+                nmrDataBlockId,
+                signal.viTri || '',
+                signal.scab || '',
+                signal.shacJHz || ''
+              ];
+              await client.query(signalQuery, signalValues);
+            }
           }
         }
       }
-
       await client.query('COMMIT');
-
-      // Return the updated compound
       return await this.getCompoundById(id) as CompoundData;
     } catch (error) {
       await client.query('ROLLBACK');
@@ -494,14 +478,50 @@ export class CompoundService {
 
   private async transformRowsToCompounds(rows: Record<string, unknown>[]): Promise<CompoundData[]> {
     const compoundsMap = new Map<string, CompoundData>();
-
+    const nmrBlocksMap = new Map<string, NMRDataBlock[]>();
+    // First, fetch all nmr_data_blocks for all compounds in the rows
+    const compoundIds = Array.from(new Set(rows.map(row => row.id as string)));
+    if (compoundIds.length > 0) {
+      const nmrBlocksResult = await pool.query(
+        `SELECT * FROM nmr_data_blocks WHERE compound_id = ANY($1::uuid[]) ORDER BY stt_bang ASC`,
+        [compoundIds]
+      );
+      // For each nmr_data_block, fetch its signals
+      for (const nmrBlockRow of nmrBlocksResult.rows) {
+        const signalsResult = await pool.query(
+          `SELECT id, vi_tri, scab, shac_j_hz FROM nmr_signals WHERE nmr_data_block_id = $1 ORDER BY sort_order`,
+          [nmrBlockRow.id]
+        );
+        const signals: NMRSignalData[] = signalsResult.rows.map(signalRow => ({
+          id: signalRow.id,
+          viTri: signalRow.vi_tri,
+          scab: signalRow.scab,
+          shacJHz: signalRow.shac_j_hz
+        }));
+        const nmrBlock: NMRDataBlock = {
+          id: nmrBlockRow.id,
+          sttBang: nmrBlockRow.stt_bang ? nmrBlockRow.stt_bang.toString() : '',
+          nmrConditions: {
+            id: uuidv4(),
+            dmNMR: nmrBlockRow.dm_nmr || '',
+            tanSo13C: nmrBlockRow.tan_so_13c || '',
+            tanSo1H: nmrBlockRow.tan_so_1h || ''
+          },
+          signals,
+          luuYNMR: nmrBlockRow.luu_y_nmr || '',
+          tltkNMR: nmrBlockRow.tltk_nmr || ''
+        };
+        if (!nmrBlocksMap.has(nmrBlockRow.compound_id)) {
+          nmrBlocksMap.set(nmrBlockRow.compound_id, []);
+        }
+        nmrBlocksMap.get(nmrBlockRow.compound_id)!.push(nmrBlock);
+      }
+    }
     for (const row of rows) {
       if (!compoundsMap.has(row.id as string)) {
         // Parse JSONB fields
         const uvSklm = typeof row.uv_sklm === 'string' ? JSON.parse(row.uv_sklm as string) : row.uv_sklm || { nm254: false, nm365: false };
         const pho = typeof row.pho === 'string' ? JSON.parse(row.pho as string) : row.pho || {};
-
-        // Create base compound
         const compound: CompoundData = {
           id: row.id as string,
           sttHC: row.stt_hc as number,
@@ -529,46 +549,11 @@ export class CompoundService {
           cartCoor: row.cart_coor as string | undefined,
           imgFreq: row.img_freq as string | undefined,
           te: row.te as string | undefined,
-          nmrData: {
-            id: (row.nmr_data_block_id as string) || '',
-            sttBang: row.stt_bang ? (row.stt_bang as string | number).toString() : '',
-            nmrConditions: {
-              id: uuidv4(),
-              dmNMR: (row.dm_nmr as string) || '',
-              tanSo13C: (row.tan_so_13c as string) || '',
-              tanSo1H: (row.tan_so_1h as string) || ''
-            },
-            signals: [],
-            luuYNMR: (row.luu_y_nmr as string) || '',
-            tltkNMR: (row.tltk_nmr as string) || ''
-          }
+          nmrData: nmrBlocksMap.get(row.id as string) || []
         };
-
         compoundsMap.set(row.id as string, compound);
       }
-
-      // Add NMR signals if available
-      if (row.nmr_data_block_id) {
-        const signalsQuery = `
-          SELECT id, vi_tri, scab, shac_j_hz
-          FROM nmr_signals
-          WHERE nmr_data_block_id = $1
-          ORDER BY sort_order
-        `;
-
-        const signalsResult = await pool.query(signalsQuery, [row.nmr_data_block_id as string]);
-        const signals: NMRSignalData[] = signalsResult.rows.map(signalRow => ({
-          id: signalRow.id as string,
-          viTri: signalRow.vi_tri as string,
-          scab: signalRow.scab as string,
-          shacJHz: signalRow.shac_j_hz as string
-        }));
-
-        const compound = compoundsMap.get(row.id as string)!;
-        compound.nmrData.signals = signals;
-      }
     }
-
     return Array.from(compoundsMap.values());
   }
 }

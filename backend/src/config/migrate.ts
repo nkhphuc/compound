@@ -87,9 +87,21 @@ const createTables = async () => {
       END $$;
     `);
 
-    // Create unique index to enforce one-to-one relationship
+    // Remove unique index to allow multiple NMR data blocks per compound
     await client.query(`
-      CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_nmr_data_compound_id ON nmr_data_blocks(compound_id)
+      DO $$
+      BEGIN
+        IF EXISTS (
+          SELECT 1 FROM pg_indexes WHERE indexname = 'idx_unique_nmr_data_compound_id'
+        ) THEN
+          EXECUTE 'DROP INDEX idx_unique_nmr_data_compound_id';
+        END IF;
+      END $$;
+    `);
+
+    // Create regular (non-unique) index for performance
+    await client.query(`
+      CREATE INDEX IF NOT EXISTS idx_nmr_data_blocks_compound_id ON nmr_data_blocks(compound_id);
     `);
 
     // Create nmr_signals table - following the frontend guidelines exactly
