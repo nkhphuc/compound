@@ -2,6 +2,7 @@
   "name": "@compound/backend",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "description": "Compound Chemistry Data Manager - Backend API",
   "main": "dist/index.js",
   "scripts": {
@@ -27,6 +28,8 @@
     "uuid": "^11.0.2"
   },
   "devDependencies": {
+    "@eslint/eslintrc": "^3.3.1",
+    "@eslint/js": "^9.31.0",
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
     "@types/express-fileupload": "^1.5.1",
@@ -35,9 +38,10 @@
     "@types/node": "^22.14.0",
     "@types/pg": "^8.11.10",
     "@types/uuid": "^10.0.0",
-    "@typescript-eslint/eslint-plugin": "^8.15.0",
-    "@typescript-eslint/parser": "^8.15.0",
-    "eslint": "^9.17.0",
+    "@typescript-eslint/eslint-plugin": "^8.35.0",
+    "@typescript-eslint/parser": "^8.35.0",
+    "eslint": "^9.29.0",
+    "eslint-plugin-import": "^2.32.0",
     "tsx": "^4.19.2",
     "typescript": "~5.7.2"
   }

@@ -124,6 +124,15 @@ const urlValidation = (value: string) => {
   return value.startsWith('http') || value.startsWith('/compound-uploads/');
 };
 
+// Type for uploaded file (from express-fileupload or similar middleware)
+type FileUpload = {
+  name: string;
+  data: Buffer;
+  size: number;
+  mimetype: string;
+  mv?: (path: string, callback: (err: Error | null) => void) => void;
+};
+
 // Main compound validation schema - mirrors frontend validation exactly
 export const compoundValidationSchema = Joi.object({
   // ID is optional for creation, required for updates
@@ -277,7 +286,7 @@ export const validateFileUpload = (req: Request, res: Response, next: NextFuncti
     return;
   }
 
-  const uploadedFile = req.files.file as any;
+  const uploadedFile = req.files.file as FileUpload;
   if (Array.isArray(uploadedFile)) {
     res.status(400).json({
       success: false,
@@ -329,7 +338,7 @@ export const validateMultipleFileUpload = (req: Request, res: Response, next: Ne
     return;
   }
 
-  let uploadedFiles = req.files.files as any[] | any;
+  let uploadedFiles = req.files.files as FileUpload[] | FileUpload;
   if (!Array.isArray(uploadedFiles)) {
     uploadedFiles = [uploadedFiles];
   }
@@ -344,7 +353,7 @@ export const validateMultipleFileUpload = (req: Request, res: Response, next: Ne
   }
 
   // Validate each file
-  for (const file of uploadedFiles) {
+  for (const file of uploadedFiles as FileUpload[]) {
     // File size validation (50MB limit per file)
     const maxSize = 50 * 1024 * 1024;
     if (file.size > maxSize) {

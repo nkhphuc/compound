@@ -1,5 +1,5 @@
 import { pool } from '../config/database';
-import { CompoundData, CompoundStatus, SpectralRecord, NMRDataBlock, NMRCondition, NMRSignalData } from '../types';
+import { CompoundData, CompoundStatus, SpectralRecord, NMRSignalData } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 // S3/MinIO imports and config
 import { DeleteObjectCommand, HeadBucketCommand } from '@aws-sdk/client-s3';
@@ -91,7 +91,7 @@ export class CompoundService {
       LEFT JOIN nmr_data_blocks ndb ON c.id = ndb.compound_id
     `;
 
-    const queryParams: any[] = [];
+    const queryParams: unknown[] = [];
 
     if (searchTerm) {
       query += ` WHERE c.ten_hc ILIKE $1 OR c.stt_hc::text ILIKE $1 OR c.loai_hc ILIKE $1`;
@@ -278,8 +278,8 @@ export class CompoundService {
         console.log(`S3 Cleanup - Checking field ${key}: old="${oldValue}", new="${newValue}"`);
 
         // Get file URLs from both old and new values (handles both arrays and legacy strings)
-        const oldFileUrls = getFileUrls(oldValue as any);
-        const newFileUrls = getFileUrls(newValue as any);
+        const oldFileUrls = getFileUrls(oldValue as string[] | string | undefined);
+        const newFileUrls = getFileUrls(newValue as string[] | string | undefined);
 
         // Check each file in the old array
         for (const oldFile of oldFileUrls) {
@@ -432,7 +432,7 @@ export class CompoundService {
           const value = compound.pho[key as keyof SpectralRecord];
 
           // Get file URLs (handles both arrays and legacy strings)
-          const fileUrls = getFileUrls(value as any);
+          const fileUrls = getFileUrls(value as string[] | string | undefined);
 
           for (const fileUrl of fileUrls) {
             if (fileUrl && (fileUrl.startsWith('http') || fileUrl.startsWith('/compound-uploads/'))) {
@@ -492,59 +492,59 @@ export class CompoundService {
     return result.rows.map(row => row.mau);
   }
 
-  private async transformRowsToCompounds(rows: any[]): Promise<CompoundData[]> {
+  private async transformRowsToCompounds(rows: Record<string, unknown>[]): Promise<CompoundData[]> {
     const compoundsMap = new Map<string, CompoundData>();
 
     for (const row of rows) {
-      if (!compoundsMap.has(row.id)) {
+      if (!compoundsMap.has(row.id as string)) {
         // Parse JSONB fields
-        const uvSklm = typeof row.uv_sklm === 'string' ? JSON.parse(row.uv_sklm) : row.uv_sklm || { nm254: false, nm365: false };
-        const pho = typeof row.pho === 'string' ? JSON.parse(row.pho) : row.pho || {};
+        const uvSklm = typeof row.uv_sklm === 'string' ? JSON.parse(row.uv_sklm as string) : row.uv_sklm || { nm254: false, nm365: false };
+        const pho = typeof row.pho === 'string' ? JSON.parse(row.pho as string) : row.pho || {};
 
         // Create base compound
         const compound: CompoundData = {
-          id: row.id,
-          sttHC: row.stt_hc,
-          tenHC: row.ten_hc,
-          tenHCKhac: row.ten_hc_khac,
-          loaiHC: row.loai_hc,
+          id: row.id as string,
+          sttHC: row.stt_hc as number,
+          tenHC: row.ten_hc as string,
+          tenHCKhac: row.ten_hc_khac as string | undefined,
+          loaiHC: row.loai_hc as string,
           status: row.status as CompoundStatus,
-          tenLatin: row.ten_latin,
-          tenTA: row.ten_ta,
-          tenTV: row.ten_tv,
-          bpnc: row.bpnc,
-          trangThai: row.trang_thai,
-          mau: row.mau,
+          tenLatin: row.ten_latin as string | undefined,
+          tenTA: row.ten_ta as string | undefined,
+          tenTV: row.ten_tv as string | undefined,
+          bpnc: row.bpnc as string | undefined,
+          trangThai: row.trang_thai as string,
+          mau: row.mau as string,
           uvSklm,
-          diemNongChay: row.diem_nong_chay,
-          alphaD: row.alpha_d,
-          dungMoiHoaTanTCVL: row.dung_moi_hoa_tan_tcvl,
-          ctpt: row.ctpt,
-          klpt: row.klpt,
-          hinhCauTruc: row.hinh_cau_truc,
-          cauHinhTuyetDoi: row.cau_hinh_tuyet_doi,
-          smiles: row.smiles,
+          diemNongChay: row.diem_nong_chay as string | undefined,
+          alphaD: row.alpha_d as string | undefined,
+          dungMoiHoaTanTCVL: row.dung_moi_hoa_tan_tcvl as string | undefined,
+          ctpt: row.ctpt as string,
+          klpt: row.klpt as string | undefined,
+          hinhCauTruc: row.hinh_cau_truc as string,
+          cauHinhTuyetDoi: row.cau_hinh_tuyet_doi as boolean,
+          smiles: row.smiles as string | undefined,
           pho,
-          dmNMRGeneral: row.dm_nmr_general,
-          cartCoor: row.cart_coor,
-          imgFreq: row.img_freq,
-          te: row.te,
+          dmNMRGeneral: row.dm_nmr_general as string | undefined,
+          cartCoor: row.cart_coor as string | undefined,
+          imgFreq: row.img_freq as string | undefined,
+          te: row.te as string | undefined,
           nmrData: {
-            id: row.nmr_data_block_id || '',
-            sttBang: row.stt_bang ? row.stt_bang.toString() : '',
+            id: (row.nmr_data_block_id as string) || '',
+            sttBang: row.stt_bang ? (row.stt_bang as string | number).toString() : '',
             nmrConditions: {
               id: uuidv4(),
-              dmNMR: row.dm_nmr || '',
-              tanSo13C: row.tan_so_13c || '',
-              tanSo1H: row.tan_so_1h || ''
+              dmNMR: (row.dm_nmr as string) || '',
+              tanSo13C: (row.tan_so_13c as string) || '',
+              tanSo1H: (row.tan_so_1h as string) || ''
             },
             signals: [],
-            luuYNMR: row.luu_y_nmr || '',
-            tltkNMR: row.tltk_nmr || ''
+            luuYNMR: (row.luu_y_nmr as string) || '',
+            tltkNMR: (row.tltk_nmr as string) || ''
           }
         };
 
-        compoundsMap.set(row.id, compound);
+        compoundsMap.set(row.id as string, compound);
       }
 
       // Add NMR signals if available
@@ -556,15 +556,15 @@ export class CompoundService {
           ORDER BY sort_order
         `;
 
-        const signalsResult = await pool.query(signalsQuery, [row.nmr_data_block_id]);
+        const signalsResult = await pool.query(signalsQuery, [row.nmr_data_block_id as string]);
         const signals: NMRSignalData[] = signalsResult.rows.map(signalRow => ({
-          id: signalRow.id,
-          viTri: signalRow.vi_tri,
-          scab: signalRow.scab,
-          shacJHz: signalRow.shac_j_hz
+          id: signalRow.id as string,
+          viTri: signalRow.vi_tri as string,
+          scab: signalRow.scab as string,
+          shacJHz: signalRow.shac_j_hz as string
         }));
 
-        const compound = compoundsMap.get(row.id)!;
+        const compound = compoundsMap.get(row.id as string)!;
         compound.nmrData.signals = signals;
       }
     }

@@ -4,14 +4,24 @@ import { v4 as uuidv4 } from 'uuid';
 import path from 'path';
 import { s3Client, S3_CONFIG } from '../config/s3';
 
+// Type for uploaded file (from express-fileupload or similar middleware)
+type FileUpload = {
+  name: string;
+  data: Buffer;
+  size: number;
+  mimetype: string;
+  mv?: (path: string, callback: (err: Error | null) => void) => void;
+};
+
 // Ensure bucket exists (create if not)
 async function ensureBucketExists() {
   try {
     await s3Client.send(new HeadBucketCommand({ Bucket: S3_CONFIG.BUCKET }));
-  } catch (err: any) {
-    if (err.$metadata && err.$metadata.httpStatusCode === 404) {
+  } catch (err: unknown) {
+    const error = err as { $metadata?: { httpStatusCode?: number }; name?: string };
+    if (error.$metadata && error.$metadata.httpStatusCode === 404) {
       await s3Client.send(new CreateBucketCommand({ Bucket: S3_CONFIG.BUCKET }));
-    } else if (err.name === 'NotFound') {
+    } else if (error.name === 'NotFound') {
       await s3Client.send(new CreateBucketCommand({ Bucket: S3_CONFIG.BUCKET }));
     } else {
       throw err;
@@ -22,7 +32,7 @@ async function ensureBucketExists() {
 export const uploadFile = async (req: Request, res: Response): Promise<void> => {
   try {
     // Validation is now handled by middleware, so we can assume file exists
-    const uploadedFile = req.files!.file as any;
+    const uploadedFile = req.files!.file as FileUpload;
 
     await ensureBucketExists();
     const fileExtension = path.extname(uploadedFile.name);
@@ -57,14 +67,14 @@ export const uploadFile = async (req: Request, res: Response): Promise<void> => 
 
 export const uploadMultipleFiles = async (req: Request, res: Response): Promise<void> => {
   try {
-    let uploadedFiles = req.files!.files as any[] | any;
+    let uploadedFiles = req.files!.files as FileUpload[] | FileUpload;
     if (!Array.isArray(uploadedFiles)) {
       // If it's a single file, wrap it in an array
       uploadedFiles = [uploadedFiles];
     }
 
     await ensureBucketExists();
-    const uploadPromises = uploadedFiles.map(async (file: any) => {
+    const uploadPromises = uploadedFiles.map(async (file: FileUpload) => {
       const fileExtension = path.extname(file.name);
       const fileName = `${uuidv4()}${fileExtension}`;
       const putParams = {
