@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { CompoundService } from '../services/compoundService';
+import { CompoundService } from '../services/compoundService.js';
 
 const compoundService = new CompoundService();
 

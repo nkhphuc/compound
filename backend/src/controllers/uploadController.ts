@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { HeadBucketCommand, CreateBucketCommand, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { v4 as uuidv4 } from 'uuid';
 import path from 'path';
-import { s3Client, S3_CONFIG } from '../config/s3';
+import { s3Client, S3_CONFIG } from '../config/s3.js';
 
 // Type for uploaded file (from express-fileupload or similar middleware)
 type FileUpload = {

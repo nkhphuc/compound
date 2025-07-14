@@ -7,12 +7,12 @@ import {
   deleteCompound,
   getNextSttHC,
   getNextSttBang,
-} from '../controllers/compoundController';
+} from '../controllers/compoundController.js';
 import {
   validateCompound,
   validateQueryParams,
   validateId
-} from '../middleware/validation';
+} from '../middleware/validation.js';
 
 const router: Router = Router();
 

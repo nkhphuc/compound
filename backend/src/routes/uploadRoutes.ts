@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import { uploadFile, uploadMultipleFiles, deleteFile } from '../controllers/uploadController';
-import { validateFileUpload, validateMultipleFileUpload } from '../middleware/validation';
+import { uploadFile, uploadMultipleFiles, deleteFile } from '../controllers/uploadController.js';
+import { validateFileUpload, validateMultipleFileUpload } from '../middleware/validation.js';
 
 const router: Router = Router();
 

@@ -127,10 +127,10 @@ const enTranslations = {
   },
   excelExport: {
     sheetNames: {
-        mainInfo: "Main Info",
-        nmrDataTable: "NMR Data Table",
-        nmrDetails: "NMR Details",
-        spectraImages: "Spectra Images"
+        mainInfo: "main_info",
+        nmrDataTable: "nmr_data_table",
+        nmrDetails: "nmr_details",
+        spectraImages: "spectra_images"
     },
     mainInfo: {
         untitledCompound: "Untitled Compound", otherName: "Other name:", type: "Type:",
@@ -343,10 +343,10 @@ const viTranslations = {
   },
   excelExport: {
     sheetNames: {
-        mainInfo: "Thông tin chính",
-        nmrDataTable: "Bảng dữ liệu NMR",
-        nmrDetails: "Chi tiết NMR",
-        spectraImages: "Ảnh phổ"
+        mainInfo: "thong_tin_chinh",
+        nmrDataTable: "bang_du_lieu_nmr",
+        nmrDetails: "chi_tiet_nmr",
+        spectraImages: "anh_pho"
     },
     mainInfo: {
         untitledCompound: "Hợp chất không tên", otherName: "Tên khác:", type: "Loại:",

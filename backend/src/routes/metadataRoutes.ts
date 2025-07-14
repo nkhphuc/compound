@@ -3,7 +3,7 @@ import {
   getUniqueLoaiHCValues,
   getUniqueTrangThaiValues,
   getUniqueMauValues
-} from '../controllers/compoundController';
+} from '../controllers/compoundController.js';
 
 const router: Router = Router();
 

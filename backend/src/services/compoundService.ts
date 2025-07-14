@@ -1,9 +1,9 @@
-import { pool } from '../config/database';
+import { pool } from '../config/database.js';
 import { CompoundData, CompoundStatus, SpectralRecord, NMRSignalData } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 // S3/MinIO imports and config
 import { DeleteObjectCommand, HeadBucketCommand } from '@aws-sdk/client-s3';
-import { s3Client, S3_CONFIG } from '../config/s3';
+import { s3Client, S3_CONFIG } from '../config/s3.js';
 
 // Helper: extract S3 key from a file path
 function extractS3KeyFromUrl(url: string): string | null {

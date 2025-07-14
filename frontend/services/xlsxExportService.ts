@@ -141,7 +141,7 @@ export const exportCompoundToXlsx = async (compound: CompoundData, options?: { r
   workbook.created = new Date();
   workbook.modified = new Date();
 
-  const mainInfoSheet = workbook.addWorksheet(t('excelExport.sheetNames.mainInfo', 'Main Info'));
+  const mainInfoSheet = workbook.addWorksheet(t('excelExport.sheetNames.mainInfo'));
   mainInfoSheet.properties.defaultRowHeight = 20;
   mainInfoSheet.columns = [
     { width: 25 }, { width: 20 }, { width: 12 }, { width: 8 }, { width: 8 }, { width: 8 }, { width: 8 },
@@ -303,7 +303,7 @@ export const exportCompoundToXlsx = async (compound: CompoundData, options?: { r
   mainInfoSheet.mergeCells(ccStartRow, 1, rowNum, 1);
   applyCellStyle(mainInfoSheet.getCell(ccStartRow, 1), true, {vertical: 'middle', horizontal: 'left'});
 
-  const nmrTableSheet = workbook.addWorksheet(t('excelExport.sheetNames.nmrDataTable', 'NMR Data Table'));
+  const nmrTableSheet = workbook.addWorksheet(t('excelExport.sheetNames.nmrDataTable'));
   nmrTableSheet.properties.defaultRowHeight = 20;
   nmrTableSheet.columns = [{ width: 15 }, { width: 20 }, { width: 40 }];
   let nmrTableRowNum = 1;
@@ -326,7 +326,7 @@ export const exportCompoundToXlsx = async (compound: CompoundData, options?: { r
     nmrTableRowNum++;
   });
 
-  const nmrDetailsSheet = workbook.addWorksheet(t('excelExport.sheetNames.nmrDetails', 'NMR Details'));
+  const nmrDetailsSheet = workbook.addWorksheet(t('excelExport.sheetNames.nmrDetails'));
   nmrDetailsSheet.properties.defaultRowHeight = 20;
   nmrDetailsSheet.columns = [{ width: 25 }, { width: 25 }, { width: 20 }, { width: 20 }];
   let nmrDetailsRowNum = 1;
@@ -359,7 +359,7 @@ export const exportCompoundToXlsx = async (compound: CompoundData, options?: { r
   nmrDetailsSheet.getRow(nmrDetailsRowNum).height = 20;
   nmrDetailsRowNum++;
 
-  const spectraImagesSheet = workbook.addWorksheet(t('excelExport.sheetNames.spectraImages', 'Spectra Images'));
+  const spectraImagesSheet = workbook.addWorksheet(t('excelExport.sheetNames.spectraImages'));
   spectraImagesSheet.properties.defaultRowHeight = 20;
   let spectraRowNum = 1;
   spectraImagesSheet.getCell(spectraRowNum, 1).value = t('excelExport.spectraImagesSheet.title', 'Ảnh của các phổ đã tích ở trang 1');

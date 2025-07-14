@@ -4,10 +4,15 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
 import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 import fileUpload from 'express-fileupload';
-import { compoundRoutes } from './routes/compoundRoutes';
-import { metadataRoutes } from './routes/metadataRoutes';
-import { uploadRoutes } from './routes/uploadRoutes';
+import { compoundRoutes } from './routes/compoundRoutes.js';
+import { metadataRoutes } from './routes/metadataRoutes.js';
+import { uploadRoutes } from './routes/uploadRoutes.js';
 
 // Load environment variables
 dotenv.config();
