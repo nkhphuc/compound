@@ -1,5 +1,5 @@
 import { SPECTRAL_FIELDS } from '../constants'; // Import SPECTRAL_FIELDS
-import { CompoundData, initialCompoundData, NMRDataBlock, initialNMRDataBlock, initialNMRCondition, initialNMRSignalData, CompoundStatus, UVSKLMData, SpectralRecord, NMRCondition, NMRSignalData } from '../types';
+import { CompoundData, initialCompoundData, NMRDataBlock, initialNMRDataBlock, initialNMRCondition, initialNMRSignalData, CompoundStatus, UVSKLMData, SpectralRecord, NMRSignalData } from '../types';
 
 // Use relative URL for API since nginx handles the routing
 const API_BASE_URL = '/api';
@@ -28,7 +28,7 @@ const ensureCompoundDataIntegrity = (compound: Partial<CompoundData>): CompoundD
   // Normalize nmrData to array
   let nmrDataBlocks: NMRDataBlock[] = [];
   if (Array.isArray(compound.nmrData)) {
-    nmrDataBlocks = (compound.nmrData as Partial<NMRDataBlock>[]).map((block: Partial<NMRDataBlock>, idx: number): NMRDataBlock => ({
+    nmrDataBlocks = (compound.nmrData as Partial<NMRDataBlock>[]).map((block: Partial<NMRDataBlock>): NMRDataBlock => ({
       ...initialNMRDataBlock,
       ...block,
       id: block.id || crypto.randomUUID(),
