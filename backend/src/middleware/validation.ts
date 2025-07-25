@@ -241,7 +241,7 @@ export const validateQueryParams = (req: Request, res: Response, next: NextFunct
   const { error, value } = querySchema.validate(req.query, {
     abortEarly: false,
     allowUnknown: true,
-    stripUnknown: true
+    stripUnknown: false // Allow filter params to pass through
   });
 
   if (error) {

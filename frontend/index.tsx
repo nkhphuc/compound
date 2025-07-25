@@ -76,7 +76,13 @@ const enTranslations = {
     searchPlaceholder: "Search compounds...",
     noCompoundsFound: "No compounds found",
     noCompoundsFoundWithSearch: "Try adjusting your search term.",
-    noCompoundsFoundGeneral: "Use the 'Add New Compound' button in the navigation bar to get started."
+    noCompoundsFoundGeneral: "Use the 'Add New Compound' button in the navigation bar to get started.",
+    filter: {
+      type: "Type",
+      status: "Status",
+      state: "State",
+      color: "Color"
+    }
   },
   bulkActions: {
     selected: "Selected ({{count}}):",
@@ -224,6 +230,17 @@ const enTranslations = {
     fieldFiles: "{{fieldLabel}} Files ({{count}})",
     addUrl: "Add URL",
     noUrlsAdded: "No URLs added yet"
+  },
+  compoundState: {
+    "Bột": "Powder",
+    "Tinh thể": "Crystal",
+    "Dầu": "Oil"
+  },
+  compoundColor: {
+    "Đỏ": "Red",
+    "Cam": "Orange",
+    "Vàng": "Yellow",
+    "Trắng": "White"
   }
 };
 
@@ -294,7 +311,13 @@ const viTranslations = {
     searchPlaceholder: "Tìm kiếm hợp chất...",
     noCompoundsFound: "Không tìm thấy hợp chất nào",
     noCompoundsFoundWithSearch: "Thử điều chỉnh từ khóa tìm kiếm của bạn.",
-    noCompoundsFoundGeneral: "Sử dụng nút 'Thêm Hợp chất Mới' trên thanh điều hướng để bắt đầu."
+    noCompoundsFoundGeneral: "Sử dụng nút 'Thêm Hợp chất Mới' trên thanh điều hướng để bắt đầu.",
+    filter: {
+      type: "Loại",
+      status: "Trạng thái",
+      state: "Trạng thái vật lý",
+      color: "Màu"
+    }
   },
   bulkActions: {
     selected: "Đã chọn ({{count}}):",
@@ -442,6 +465,17 @@ const viTranslations = {
     fieldFiles: "{{fieldLabel}} Tệp ({{count}})",
     addUrl: "Thêm URL",
     noUrlsAdded: "Chưa có URL nào được thêm"
+  },
+  compoundState: {
+    "Bột": "Bột",
+    "Tinh thể": "Tinh thể",
+    "Dầu": "Dầu"
+  },
+  compoundColor: {
+    "Đỏ": "Đỏ",
+    "Cam": "Cam",
+    "Vàng": "Vàng",
+    "Trắng": "Trắng"
   }
 };
 // --- END EMBEDDED TRANSLATIONS ---

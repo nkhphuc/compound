@@ -9,7 +9,19 @@ export const getAllCompounds = async (req: Request, res: Response) => {
     const limit = parseInt(req.query.limit as string) || 10;
     const searchTerm = req.query.searchTerm as string || '';
 
-    const result = await compoundService.getCompounds({ page, limit, searchTerm });
+    // Parse filters: allow string or array
+    const parseArray = (val: unknown): string[] => {
+      if (val === undefined) return [];
+      if (Array.isArray(val)) return val.filter((v): v is string => typeof v === 'string');
+      if (typeof val === 'string') return [val];
+      return [];
+    };
+    const loaiHC = parseArray(req.query.loaiHC);
+    const status = parseArray(req.query.status);
+    const trangThai = parseArray(req.query.trangThai);
+    const mau = parseArray(req.query.mau);
+
+    const result = await compoundService.getCompounds({ page, limit, searchTerm, loaiHC, status, trangThai, mau });
 
     res.json({
       success: true,

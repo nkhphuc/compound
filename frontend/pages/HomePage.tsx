@@ -1,10 +1,12 @@
 import JSZip from 'jszip';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import ReactSelect from 'react-select';
 import { CompoundListItem } from '../components/CompoundListItem';
 import { ConfirmModal } from '../components/ui/ConfirmModal';
 import { Pagination } from '../components/ui/Pagination';
-import { getCompounds, deleteCompound } from '../services/compoundService';
+import { DEFAULT_LOAI_HC_OPTIONS, DEFAULT_TRANG_THAI_OPTIONS, DEFAULT_MAU_OPTIONS, COMPOUND_STATUS_OPTIONS_KEYS } from '../constants';
+import { getCompounds, deleteCompound, getUniqueLoaiHCValues, getUniqueTrangThaiValues, getUniqueMauValues } from '../services/compoundService';
 import { exportCompoundToXlsx } from '../services/xlsxExportService';
 import { CompoundData } from '../types';
 
@@ -30,6 +32,27 @@ export const HomePage: React.FC = () => {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [isExporting, setIsExporting] = useState(false);
 
+  // Filter state
+  const [loaiHCOptions, setLoaiHCOptions] = useState<string[]>(DEFAULT_LOAI_HC_OPTIONS);
+  const [trangThaiOptions, setTrangThaiOptions] = useState<string[]>(DEFAULT_TRANG_THAI_OPTIONS);
+  const [mauOptions, setMauOptions] = useState<string[]>(DEFAULT_MAU_OPTIONS);
+
+  const [selectedLoaiHC, setSelectedLoaiHC] = useState<string[]>([]);
+  const [selectedStatus, setSelectedStatus] = useState<string[]>([]);
+  const [selectedTrangThai, setSelectedTrangThai] = useState<string[]>([]);
+  const [selectedMau, setSelectedMau] = useState<string[]>([]);
+
+  // Status options (static, from constants)
+  const statusOptions = COMPOUND_STATUS_OPTIONS_KEYS.map(opt => ({ value: opt.value, label: t(opt.labelKey) }));
+
+  // Fetch filter options on mount (merge with defaults, dedupe)
+  useEffect(() => {
+    getUniqueLoaiHCValues().then(values => setLoaiHCOptions(Array.from(new Set([...DEFAULT_LOAI_HC_OPTIONS, ...values])))).catch(() => setLoaiHCOptions(DEFAULT_LOAI_HC_OPTIONS));
+    getUniqueTrangThaiValues().then(values => setTrangThaiOptions(Array.from(new Set([...DEFAULT_TRANG_THAI_OPTIONS, ...values])))).catch(() => setTrangThaiOptions(DEFAULT_TRANG_THAI_OPTIONS));
+    getUniqueMauValues().then(values => setMauOptions(Array.from(new Set([...DEFAULT_MAU_OPTIONS, ...values])))).catch(() => setMauOptions(DEFAULT_MAU_OPTIONS));
+  }, []);
+
+  // Update fetchCompounds to use filters and auto-apply on change
   const fetchCompounds = useCallback(async () => {
     try {
       setLoading(true);
@@ -37,7 +60,11 @@ export const HomePage: React.FC = () => {
       const { data, pagination } = await getCompounds({
         page: currentPage,
         limit: ITEMS_PER_PAGE,
-        searchTerm: debouncedSearchTerm
+        searchTerm: debouncedSearchTerm,
+        loaiHC: selectedLoaiHC,
+        status: selectedStatus,
+        trangThai: selectedTrangThai,
+        mau: selectedMau,
       });
       setCompounds(data);
       setTotalPages(pagination.totalPages);
@@ -48,11 +75,29 @@ export const HomePage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [currentPage, debouncedSearchTerm]);
+  }, [currentPage, debouncedSearchTerm, selectedLoaiHC, selectedStatus, selectedTrangThai, selectedMau]);
 
+  // Effect 1: Reset page to 1 if any filter changes
+  const prevFiltersRef = useRef({ selectedLoaiHC, selectedStatus, selectedTrangThai, selectedMau, debouncedSearchTerm });
+  useEffect(() => {
+    const prev = prevFiltersRef.current;
+    const filtersChanged =
+      prev.selectedLoaiHC !== selectedLoaiHC ||
+      prev.selectedStatus !== selectedStatus ||
+      prev.selectedTrangThai !== selectedTrangThai ||
+      prev.selectedMau !== selectedMau ||
+      prev.debouncedSearchTerm !== debouncedSearchTerm;
+
+    if (filtersChanged && currentPage !== 1) {
+      setCurrentPage(1);
+    }
+    prevFiltersRef.current = { selectedLoaiHC, selectedStatus, selectedTrangThai, selectedMau, debouncedSearchTerm };
+  }, [selectedLoaiHC, selectedStatus, selectedTrangThai, selectedMau, debouncedSearchTerm, currentPage]);
+
+  // Effect 2: Fetch compounds when page or filters change
   useEffect(() => {
     fetchCompounds();
-  }, [fetchCompounds]);
+  }, [currentPage, selectedLoaiHC, selectedStatus, selectedTrangThai, selectedMau, debouncedSearchTerm, fetchCompounds]);
 
   // Debounce search term
   useEffect(() => {
@@ -62,10 +107,6 @@ export const HomePage: React.FC = () => {
 
     return () => clearTimeout(timer);
   }, [searchTerm]);
-
-  useEffect(() => {
-    setCurrentPage(1); // Reset to first page on new search
-  }, [debouncedSearchTerm]);
 
   // Maintain focus after re-renders
   useEffect(() => {
@@ -175,6 +216,59 @@ export const HomePage: React.FC = () => {
                 onBlur={handleSearchBlur}
                 className="px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 w-full sm:w-64"
             />
+        </div>
+      </div>
+      {/* Filter dropdowns */}
+      <div className="mb-6">
+        <div className="bg-white/80 border border-gray-200 rounded-lg p-4 shadow-sm flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:gap-4">
+          <div className="w-full sm:w-[220px]">
+            <label className="block text-sm font-medium text-gray-700 mb-1">{t('compoundListPage.filter.type')}</label>
+            <ReactSelect
+              isMulti
+              options={loaiHCOptions.map(opt => ({ value: opt, label: opt }))}
+              value={loaiHCOptions.filter(opt => selectedLoaiHC.includes(opt)).map(opt => ({ value: opt, label: opt }))}
+              onChange={vals => setSelectedLoaiHC(vals.map(v => v.value))}
+              placeholder={t('compoundListPage.filter.type')}
+              classNamePrefix="react-select"
+              styles={{ container: base => ({ ...base, width: '100%' }), menu: base => ({ ...base, zIndex: 20 }) }}
+            />
+          </div>
+          <div className="w-full sm:w-[220px]">
+            <label className="block text-sm font-medium text-gray-700 mb-1">{t('compoundListPage.filter.status')}</label>
+            <ReactSelect
+              isMulti
+              options={statusOptions}
+              value={statusOptions.filter(opt => selectedStatus.includes(opt.value))}
+              onChange={vals => setSelectedStatus(vals.map(v => v.value))}
+              placeholder={t('compoundListPage.filter.status')}
+              classNamePrefix="react-select"
+              styles={{ container: base => ({ ...base, width: '100%' }), menu: base => ({ ...base, zIndex: 20 }) }}
+            />
+          </div>
+          <div className="w-full sm:w-[220px]">
+            <label className="block text-sm font-medium text-gray-700 mb-1">{t('compoundListPage.filter.state')}</label>
+            <ReactSelect
+              isMulti
+              options={trangThaiOptions.map(opt => ({ value: opt, label: t(`compoundState.${opt}`, opt) }))}
+              value={trangThaiOptions.filter(opt => selectedTrangThai.includes(opt)).map(opt => ({ value: opt, label: t(`compoundState.${opt}`, opt) }))}
+              onChange={vals => setSelectedTrangThai(vals.map(v => v.value))}
+              placeholder={t('compoundListPage.filter.state')}
+              classNamePrefix="react-select"
+              styles={{ container: base => ({ ...base, width: '100%' }), menu: base => ({ ...base, zIndex: 20 }) }}
+            />
+          </div>
+          <div className="w-full sm:w-[220px]">
+            <label className="block text-sm font-medium text-gray-700 mb-1">{t('compoundListPage.filter.color')}</label>
+            <ReactSelect
+              isMulti
+              options={mauOptions.map(opt => ({ value: opt, label: t(`compoundColor.${opt}`, opt) }))}
+              value={mauOptions.filter(opt => selectedMau.includes(opt)).map(opt => ({ value: opt, label: t(`compoundColor.${opt}`, opt) }))}
+              onChange={vals => setSelectedMau(vals.map(v => v.value))}
+              placeholder={t('compoundListPage.filter.color')}
+              classNamePrefix="react-select"
+              styles={{ container: base => ({ ...base, width: '100%' }), menu: base => ({ ...base, zIndex: 20 }) }}
+            />
+          </div>
         </div>
       </div>
 

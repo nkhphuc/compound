@@ -103,16 +103,21 @@ const apiRequest = async (endpoint: string, options: RequestInit = {}) => {
 };
 
 // Public function to get paginated and filtered compounds
-export const getCompounds = async (options: { page: number; limit: number; searchTerm?: string }): Promise<{ data: CompoundData[]; pagination: { totalItems: number; totalPages: number; currentPage: number; limit: number; } }> => {
+export const getCompounds = async (options: { page: number; limit: number; searchTerm?: string; loaiHC?: string[]; status?: string[]; trangThai?: string[]; mau?: string[] }): Promise<{ data: CompoundData[]; pagination: { totalItems: number; totalPages: number; currentPage: number; limit: number; } }> => {
   try {
-    const { page, limit, searchTerm = '' } = options;
+    const { page, limit, searchTerm = '', loaiHC = [], status = [], trangThai = [], mau = [] } = options;
     const params = new URLSearchParams({
       page: page.toString(),
       limit: limit.toString(),
       ...(searchTerm && { searchTerm }),
     });
-
-    const response = await apiRequest(`/compounds?${params}`);
+    // Add filters as repeated params for arrays
+    loaiHC.forEach(val => params.append('loaiHC', val));
+    status.forEach(val => params.append('status', val));
+    trangThai.forEach(val => params.append('trangThai', val));
+    mau.forEach(val => params.append('mau', val));
+    const url = `/compounds?${params}`;
+    const response = await apiRequest(url);
 
     if (response.success) {
       return {

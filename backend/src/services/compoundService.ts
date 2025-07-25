@@ -73,8 +73,8 @@ function getFileUrls(value: string[] | string | undefined): string[] {
 }
 
 export class CompoundService {
-  async getCompounds(options: { page: number; limit: number; searchTerm?: string }) {
-    const { page, limit, searchTerm = '' } = options;
+  async getCompounds(options: { page: number; limit: number; searchTerm?: string; loaiHC?: string[]; status?: string[]; trangThai?: string[]; mau?: string[] }) {
+    const { page, limit, searchTerm = '', loaiHC = [], status = [], trangThai = [], mau = [] } = options;
     const offset = (page - 1) * limit;
 
     let query = `
@@ -91,13 +91,34 @@ export class CompoundService {
       LEFT JOIN nmr_data_blocks ndb ON c.id = ndb.compound_id
     `;
 
+    // Build whereClauses for all filters
+    const whereClauses: string[] = [];
     const queryParams: unknown[] = [];
 
     if (searchTerm) {
-      query += ` WHERE c.ten_hc ILIKE $1 OR c.stt_hc::text ILIKE $1 OR c.loai_hc ILIKE $1`;
+      whereClauses.push(`(c.ten_hc ILIKE $${queryParams.length + 1} OR c.stt_hc::text ILIKE $${queryParams.length + 1} OR c.loai_hc ILIKE $${queryParams.length + 1})`);
       queryParams.push(`%${searchTerm}%`);
     }
+    if (loaiHC.length > 0) {
+      whereClauses.push(`(${loaiHC.map((_, i) => `c.loai_hc = $${queryParams.length + i + 1}`).join(' OR ')})`);
+      queryParams.push(...loaiHC);
+    }
+    if (status.length > 0) {
+      whereClauses.push(`(${status.map((_, i) => `c.status = $${queryParams.length + i + 1}`).join(' OR ')})`);
+      queryParams.push(...status);
+    }
+    if (trangThai.length > 0) {
+      whereClauses.push(`(${trangThai.map((_, i) => `c.trang_thai = $${queryParams.length + i + 1}`).join(' OR ')})`);
+      queryParams.push(...trangThai);
+    }
+    if (mau.length > 0) {
+      whereClauses.push(`(${mau.map((_, i) => `c.mau = $${queryParams.length + i + 1}`).join(' OR ')})`);
+      queryParams.push(...mau);
+    }
 
+    if (whereClauses.length > 0) {
+      query += ' WHERE ' + whereClauses.join(' AND ');
+    }
     query += ` ORDER BY c.created_at DESC LIMIT $${queryParams.length + 1} OFFSET $${queryParams.length + 2}`;
     queryParams.push(limit, offset);
 
@@ -105,10 +126,34 @@ export class CompoundService {
 
     // Get total count for pagination
     let countQuery = 'SELECT COUNT(*) FROM compounds';
+    const countParams: unknown[] = [];
+    const countWhereClauses: string[] = [];
+    let paramIdx = 1;
     if (searchTerm) {
-      countQuery += ' WHERE ten_hc ILIKE $1 OR stt_hc::text ILIKE $1 OR loai_hc ILIKE $1';
+      countWhereClauses.push(`(ten_hc ILIKE $${paramIdx} OR stt_hc::text ILIKE $${paramIdx} OR loai_hc ILIKE $${paramIdx})`);
+      countParams.push(`%${searchTerm}%`);
+      paramIdx++;
     }
-    const countResult = await pool.query(countQuery, searchTerm ? [`%${searchTerm}%`] : []);
+    if (loaiHC.length > 0) {
+      countWhereClauses.push(`(${loaiHC.map(() => `loai_hc = $${paramIdx++}`).join(' OR ')})`);
+      countParams.push(...loaiHC);
+    }
+    if (status.length > 0) {
+      countWhereClauses.push(`(${status.map(() => `status = $${paramIdx++}`).join(' OR ')})`);
+      countParams.push(...status);
+    }
+    if (trangThai.length > 0) {
+      countWhereClauses.push(`(${trangThai.map(() => `trang_thai = $${paramIdx++}`).join(' OR ')})`);
+      countParams.push(...trangThai);
+    }
+    if (mau.length > 0) {
+      countWhereClauses.push(`(${mau.map(() => `mau = $${paramIdx++}`).join(' OR ')})`);
+      countParams.push(...mau);
+    }
+    if (countWhereClauses.length > 0) {
+      countQuery += ' WHERE ' + countWhereClauses.join(' AND ');
+    }
+    const countResult = await pool.query(countQuery, countParams);
     const totalItems = parseInt(countResult.rows[0].count);
 
     // Transform database rows to CompoundData objects
