@@ -303,61 +303,74 @@ export const exportCompoundToXlsx = async (compound: CompoundData, options?: { r
   mainInfoSheet.mergeCells(ccStartRow, 1, rowNum, 1);
   applyCellStyle(mainInfoSheet.getCell(ccStartRow, 1), true, {vertical: 'middle', horizontal: 'left'});
 
-  const nmrTableSheet = workbook.addWorksheet(t('excelExport.sheetNames.nmrDataTable'));
-  nmrTableSheet.properties.defaultRowHeight = 20;
-  nmrTableSheet.columns = [{ width: 15 }, { width: 20 }, { width: 40 }];
-  let nmrTableRowNum = 1;
-  const nmrTitleCell = nmrTableSheet.getCell(nmrTableRowNum, 1);
-  nmrTitleCell.value = t('excelExport.nmrDataTableSheet.title', { tableId: compound.nmrData.sttBang || notAvailable, compoundSttHC: compound.sttHC || notAvailable });
-  nmrTableSheet.mergeCells(nmrTableRowNum, 1, nmrTableRowNum, 3);
-  applyCellStyle(nmrTitleCell, true, {horizontal: 'center', vertical: 'middle'});
-  nmrTitleCell.font = { name: 'Arial', size: 11, bold: true, family: 2 };
-  nmrTableSheet.getRow(nmrTableRowNum).height = 20;
-  nmrTableRowNum++;
-  nmrTableSheet.getCell(nmrTableRowNum, 1).value = t('excelExport.nmrDataTableSheet.position', 'Vị trí'); applyCellStyle(nmrTableSheet.getCell(nmrTableRowNum, 1), true, {horizontal: 'center', vertical: 'middle'});
-  nmrTableSheet.getCell(nmrTableRowNum, 2).value = t('excelExport.nmrDataTableSheet.deltaC', 'δC (ppm)'); applyCellStyle(nmrTableSheet.getCell(nmrTableRowNum, 2), true, {horizontal: 'center', vertical: 'middle'});
-  nmrTableSheet.getCell(nmrTableRowNum, 3).value = t('excelExport.nmrDataTableSheet.deltaH', 'δH (ppm, J Hz)'); applyCellStyle(nmrTableSheet.getCell(nmrTableRowNum, 3), true, {horizontal: 'center', vertical: 'middle'});
-  nmrTableSheet.getRow(nmrTableRowNum).height = 20;
-  nmrTableRowNum++;
-  compound.nmrData.signals.forEach(signal => {
-    nmrTableSheet.getCell(nmrTableRowNum, 1).value = signal.viTri || no; applyCellStyle(nmrTableSheet.getCell(nmrTableRowNum, 1));
-    nmrTableSheet.getCell(nmrTableRowNum, 2).value = signal.scab || no; applyCellStyle(nmrTableSheet.getCell(nmrTableRowNum, 2));
-    nmrTableSheet.getCell(nmrTableRowNum, 3).value = signal.shacJHz || no; applyCellStyle(nmrTableSheet.getCell(nmrTableRowNum, 3));
+  // --- NMR Table Sheets for each NMRDataBlock ---
+  const nmrTableSheets: ExcelJS.Worksheet[] = [];
+  const nmrDetailsSheets: ExcelJS.Worksheet[] = [];
+  (compound.nmrData || []).forEach((nmrBlock, nmrIdx) => {
+    // NMR Table Sheet
+    const tableNumber = nmrBlock.sttBang || (nmrIdx + 1);
+    const nmrTableSheet = workbook.addWorksheet(
+      `${t('excelExport.sheetNames.nmrDataTable')}_${tableNumber}`
+    );
+    nmrTableSheets.push(nmrTableSheet);
+    nmrTableSheet.properties.defaultRowHeight = 20;
+    nmrTableSheet.columns = [{ width: 15 }, { width: 20 }, { width: 40 }];
+    let nmrTableRowNum = 1;
+    const nmrTitleCell = nmrTableSheet.getCell(nmrTableRowNum, 1);
+    nmrTitleCell.value = t('excelExport.nmrDataTableSheet.title', { tableId: nmrBlock.sttBang || notAvailable, compoundSttHC: compound.sttHC || notAvailable });
+    nmrTableSheet.mergeCells(nmrTableRowNum, 1, nmrTableRowNum, 3);
+    applyCellStyle(nmrTitleCell, true, {horizontal: 'center', vertical: 'middle'});
+    nmrTitleCell.font = { name: 'Arial', size: 11, bold: true, family: 2 };
+    nmrTableSheet.getRow(nmrTableRowNum).height = 20;
     nmrTableRowNum++;
-  });
+    nmrTableSheet.getCell(nmrTableRowNum, 1).value = t('excelExport.nmrDataTableSheet.position', 'Vị trí'); applyCellStyle(nmrTableSheet.getCell(nmrTableRowNum, 1), true, {horizontal: 'center', vertical: 'middle'});
+    nmrTableSheet.getCell(nmrTableRowNum, 2).value = t('excelExport.nmrDataTableSheet.deltaC', 'δC (ppm)'); applyCellStyle(nmrTableSheet.getCell(nmrTableRowNum, 2), true, {horizontal: 'center', vertical: 'middle'});
+    nmrTableSheet.getCell(nmrTableRowNum, 3).value = t('excelExport.nmrDataTableSheet.deltaH', 'δH (ppm, J Hz)'); applyCellStyle(nmrTableSheet.getCell(nmrTableRowNum, 3), true, {horizontal: 'center', vertical: 'middle'});
+    nmrTableSheet.getRow(nmrTableRowNum).height = 20;
+    nmrTableRowNum++;
+    (nmrBlock.signals || []).forEach(signal => {
+      nmrTableSheet.getCell(nmrTableRowNum, 1).value = signal.viTri || no; applyCellStyle(nmrTableSheet.getCell(nmrTableRowNum, 1));
+      nmrTableSheet.getCell(nmrTableRowNum, 2).value = signal.scab || no; applyCellStyle(nmrTableSheet.getCell(nmrTableRowNum, 2));
+      nmrTableSheet.getCell(nmrTableRowNum, 3).value = signal.shacJHz || no; applyCellStyle(nmrTableSheet.getCell(nmrTableRowNum, 3));
+      nmrTableRowNum++;
+    });
 
-  const nmrDetailsSheet = workbook.addWorksheet(t('excelExport.sheetNames.nmrDetails'));
-  nmrDetailsSheet.properties.defaultRowHeight = 20;
-  nmrDetailsSheet.columns = [{ width: 25 }, { width: 25 }, { width: 20 }, { width: 20 }];
-  let nmrDetailsRowNum = 1;
-  const luuYLabelCell = nmrDetailsSheet.getCell(nmrDetailsRowNum, 1);
-  luuYLabelCell.value = t('excelExport.nmrDetailsSheet.notesLabel', 'Một số lưu ý');
-  applyCellStyle(luuYLabelCell, true, { vertical: 'middle', horizontal: 'left' });
-  nmrDetailsSheet.mergeCells(nmrDetailsRowNum, 1, nmrDetailsRowNum + 2, 1);
-  nmrDetailsSheet.getCell(nmrDetailsRowNum, 2).value = t('excelExport.nmrDetailsSheet.headerA', 'a'); applyCellStyle(nmrDetailsSheet.getCell(nmrDetailsRowNum, 2), true, {horizontal: 'center', vertical: 'middle'});
-  nmrDetailsSheet.getCell(nmrDetailsRowNum, 3).value = t('excelExport.nmrDetailsSheet.headerB', 'b'); applyCellStyle(nmrDetailsSheet.getCell(nmrDetailsRowNum, 3), true, {horizontal: 'center', vertical: 'middle'});
-  nmrDetailsSheet.getCell(nmrDetailsRowNum, 4).value = t('excelExport.nmrDetailsSheet.headerC', 'c'); applyCellStyle(nmrDetailsSheet.getCell(nmrDetailsRowNum, 4), true, {horizontal: 'center', vertical: 'middle'});
-  nmrDetailsSheet.getRow(nmrDetailsRowNum).height = 20;
-  nmrDetailsRowNum++;
-  const condition = compound.nmrData.nmrConditions;
-  nmrDetailsSheet.getCell(nmrDetailsRowNum, 2).value = {richText: formatFormulaRichText(condition.dmNMR)}; applyCellStyle(nmrDetailsSheet.getCell(nmrDetailsRowNum, 2));
-  nmrDetailsSheet.getCell(nmrDetailsRowNum, 3).value = condition.tanSo13C || no; applyCellStyle(nmrDetailsSheet.getCell(nmrDetailsRowNum, 3));
-  nmrDetailsSheet.getCell(nmrDetailsRowNum, 4).value = condition.tanSo1H || no; applyCellStyle(nmrDetailsSheet.getCell(nmrDetailsRowNum, 4));
-  nmrDetailsSheet.getRow(nmrDetailsRowNum).height = 20;
-  nmrDetailsRowNum++;
-  const notesCell = nmrDetailsSheet.getCell(nmrDetailsRowNum, 2);
-  notesCell.value = compound.nmrData.luuYNMR && compound.nmrData.luuYNMR.trim() !== "" ? compound.nmrData.luuYNMR : no;
-  nmrDetailsSheet.mergeCells(nmrDetailsRowNum, 2, nmrDetailsRowNum, 4);
-  applyCellStyle(notesCell);
-  nmrDetailsSheet.getRow(nmrDetailsRowNum).height = 20;
-  nmrDetailsRowNum++;
-  nmrDetailsSheet.getCell(nmrDetailsRowNum, 1).value = t('excelExport.nmrDetailsSheet.referencesLabel', 'TLTK'); applyCellStyle(nmrDetailsSheet.getCell(nmrDetailsRowNum, 1), true);
-  const tltkCell = nmrDetailsSheet.getCell(nmrDetailsRowNum, 2);
-  tltkCell.value = compound.nmrData.tltkNMR || no;
-  nmrDetailsSheet.mergeCells(nmrDetailsRowNum, 2, nmrDetailsRowNum, 4);
-  applyCellStyle(tltkCell);
-  nmrDetailsSheet.getRow(nmrDetailsRowNum).height = 20;
-  nmrDetailsRowNum++;
+    // NMR Details Sheet
+    const nmrDetailsSheet = workbook.addWorksheet(
+      `${t('excelExport.sheetNames.nmrDetails')}_${tableNumber}`
+    );
+    nmrDetailsSheets.push(nmrDetailsSheet);
+    nmrDetailsSheet.properties.defaultRowHeight = 20;
+    nmrDetailsSheet.columns = [{ width: 25 }, { width: 25 }, { width: 20 }, { width: 20 }];
+    let nmrDetailsRowNum = 1;
+    const luuYLabelCell = nmrDetailsSheet.getCell(nmrDetailsRowNum, 1);
+    luuYLabelCell.value = t('excelExport.nmrDetailsSheet.notesLabel', 'Một số lưu ý');
+    applyCellStyle(luuYLabelCell, true, { vertical: 'middle', horizontal: 'left' });
+    nmrDetailsSheet.mergeCells(nmrDetailsRowNum, 1, nmrDetailsRowNum + 2, 1);
+    nmrDetailsSheet.getCell(nmrDetailsRowNum, 2).value = t('excelExport.nmrDetailsSheet.headerA', 'a'); applyCellStyle(nmrDetailsSheet.getCell(nmrDetailsRowNum, 2), true, {horizontal: 'center', vertical: 'middle'});
+    nmrDetailsSheet.getCell(nmrDetailsRowNum, 3).value = t('excelExport.nmrDetailsSheet.headerB', 'b'); applyCellStyle(nmrDetailsSheet.getCell(nmrDetailsRowNum, 3), true, {horizontal: 'center', vertical: 'middle'});
+    nmrDetailsSheet.getCell(nmrDetailsRowNum, 4).value = t('excelExport.nmrDetailsSheet.headerC', 'c'); applyCellStyle(nmrDetailsSheet.getCell(nmrDetailsRowNum, 4), true, {horizontal: 'center', vertical: 'middle'});
+    nmrDetailsSheet.getRow(nmrDetailsRowNum).height = 20;
+    nmrDetailsRowNum++;
+    const condition = nmrBlock.nmrConditions;
+    nmrDetailsSheet.getCell(nmrDetailsRowNum, 2).value = {richText: formatFormulaRichText(condition.dmNMR)}; applyCellStyle(nmrDetailsSheet.getCell(nmrDetailsRowNum, 2));
+    nmrDetailsSheet.getCell(nmrDetailsRowNum, 3).value = condition.tanSo13C || no; applyCellStyle(nmrDetailsSheet.getCell(nmrDetailsRowNum, 3));
+    nmrDetailsSheet.getCell(nmrDetailsRowNum, 4).value = condition.tanSo1H || no; applyCellStyle(nmrDetailsSheet.getCell(nmrDetailsRowNum, 4));
+    nmrDetailsSheet.getRow(nmrDetailsRowNum).height = 20;
+    nmrDetailsRowNum++;
+    const notesCell = nmrDetailsSheet.getCell(nmrDetailsRowNum, 2);
+    notesCell.value = nmrBlock.luuYNMR && nmrBlock.luuYNMR.trim() !== "" ? nmrBlock.luuYNMR : no;
+    nmrDetailsSheet.mergeCells(nmrDetailsRowNum, 2, nmrDetailsRowNum, 4);
+    applyCellStyle(notesCell);
+    nmrDetailsSheet.getRow(nmrDetailsRowNum).height = 20;
+    nmrDetailsRowNum++;
+    nmrDetailsSheet.getCell(nmrDetailsRowNum, 1).value = t('excelExport.nmrDetailsSheet.referencesLabel', 'TLTK'); applyCellStyle(nmrDetailsSheet.getCell(nmrDetailsRowNum, 1), true);
+    const tltkCell = nmrDetailsSheet.getCell(nmrDetailsRowNum, 2);
+    tltkCell.value = nmrBlock.tltkNMR || no;
+    nmrDetailsSheet.mergeCells(nmrDetailsRowNum, 2, nmrDetailsRowNum, 4);
+    applyCellStyle(tltkCell);
+    nmrDetailsSheet.getRow(nmrDetailsRowNum).height = 20;
+  });
 
   const spectraImagesSheet = workbook.addWorksheet(t('excelExport.sheetNames.spectraImages'));
   spectraImagesSheet.properties.defaultRowHeight = 20;
@@ -454,14 +467,14 @@ export const exportCompoundToXlsx = async (compound: CompoundData, options?: { r
     mainInfoSheet.getRow(i).height = 15;
   }
   // Apply to all other sheets
-  [nmrTableSheet, nmrDetailsSheet, spectraImagesSheet].forEach(sheet => {
+  [...nmrTableSheets, ...nmrDetailsSheets, spectraImagesSheet].forEach(sheet => {
     for (let i = 1; i <= sheet.rowCount; i++) {
       sheet.getRow(i).height = 15;
     }
   });
 
   // Set page setup for all sheets
-  [mainInfoSheet, nmrTableSheet, nmrDetailsSheet, spectraImagesSheet].forEach(sheet => {
+  [mainInfoSheet, ...nmrTableSheets, ...nmrDetailsSheets, spectraImagesSheet].forEach(sheet => {
     sheet.pageSetup = {
       paperSize: 9, // A4
       orientation: 'portrait',
