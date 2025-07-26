@@ -136,6 +136,8 @@ export const HomePage: React.FC = () => {
 
     try {
       await deleteCompound(compoundIdToDelete);
+      // Remove the deleted compound from selectedIds
+      setSelectedIds(prev => prev.filter(id => id !== compoundIdToDelete));
       // After deleting, refetch. If the last item on a page is deleted, we might need to go to the previous page.
       if (compounds.length === 1 && currentPage > 1) {
         setCurrentPage(prev => prev - 1);
