@@ -15,6 +15,7 @@ import { MultiFileInput } from './ui/MultiFileInput';
 import { Notification } from './ui/Notification';
 import { Select } from './ui/Select';
 import { SpectralFilesPreview } from './ui/SpectralFilesPreview';
+import { Textarea } from './ui/Textarea';
 
 interface CompoundFormProps {
   initialData?: CompoundData;
@@ -156,25 +157,6 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
       if (!initialData) return; // Only setup if we have initial data
 
       const parsedInitial = JSON.parse(JSON.stringify(initialData));
-
-      // Handle NMRConditions: if array (old data), take first; otherwise, use as is or default
-      let initialNmrConditionsObj: NMRCondition;
-      const rawNmrConditions = parsedInitial.nmrData;
-      if (Array.isArray(rawNmrConditions) && rawNmrConditions.length > 0) {
-        initialNmrConditionsObj = { ...initialNMRCondition, ...rawNmrConditions[0], id: rawNmrConditions[0].id || crypto.randomUUID() };
-      } else if (typeof rawNmrConditions === 'object' && rawNmrConditions !== null && !Array.isArray(rawNmrConditions)) {
-        initialNmrConditionsObj = { ...initialNMRCondition, ...rawNmrConditions, id: rawNmrConditions.id || crypto.randomUUID() };
-      } else {
-        initialNmrConditionsObj = { ...initialNMRCondition, id: crypto.randomUUID() };
-      }
-
-      const nmrData = {
-        ...(parsedInitial.nmrData || { ...initialNMRDataBlock, id: crypto.randomUUID() }),
-        nmrConditions: initialNmrConditionsObj,
-        signals: parsedInitial.nmrData?.signals
-          ? parsedInitial.nmrData.signals.map((sig: Partial<NMRSignalData>) => ({ ...initialNMRSignalData, ...sig, id: sig.id || crypto.randomUUID() }))
-          : []
-      };
 
       const sanitizedPho: SpectralRecord = {} as SpectralRecord;
 
@@ -962,6 +944,7 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
         </div>
         <Input label={t('excelExport.mainInfo.vietnameseName').replace(':','')} name="tenTV" value={formData.tenTV || ''} onChange={handleChange} />
         <Input label={t('excelExport.mainInfo.researchPart').replace(':','')} name="bpnc" value={formData.bpnc || ''} onChange={handleChange} />
+        <Textarea label={t('compoundForm.otherSources')} name="nguonKhac" value={formData.nguonKhac || ''} onChange={handleChange} />
       </SectionCard>
 
       <SectionCard title={t('compoundForm.physicalProperties.title')}>

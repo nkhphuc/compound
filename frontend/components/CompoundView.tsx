@@ -206,7 +206,7 @@ export const CompoundView: React.FC<CompoundViewProps> = ({ compound }) => {
 
   // Conditions for showing sections
   const hasGeneralInfo = !!(compound.sttHC || compound.tenHC || compound.tenHCKhac || compound.loaiHC || compound.status);
-  const hasSourceData = !!(compound.tenLatin || compound.tenTA || compound.tenTV || compound.bpnc);
+  const hasSourceData = !!(compound.tenLatin || compound.tenTA || compound.tenTV || compound.bpnc || compound.nguonKhac);
 
   const uvSklmHasTrueValue = compound.uvSklm && (compound.uvSklm.nm254 === true || compound.uvSklm.nm365 === true);
   const hasPhysicalPropertiesData = !!(
@@ -251,6 +251,7 @@ export const CompoundView: React.FC<CompoundViewProps> = ({ compound }) => {
             <DataField label={t('excelExport.mainInfo.englishName').replace(':', '')} value={compound.tenTA} />
             <DataField label={t('excelExport.mainInfo.vietnameseName').replace(':', '')} value={compound.tenTV} />
             <DataField label={t('excelExport.mainInfo.researchPart').replace(':', '')} value={compound.bpnc} />
+            <DataField label={t('compoundForm.otherSources')} value={compound.nguonKhac} />
           </dl>
         </SectionCard>
       )}

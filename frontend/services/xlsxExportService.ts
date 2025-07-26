@@ -188,6 +188,9 @@ export const exportCompoundToXlsx = async (compound: CompoundData, options?: { r
   rowNum++;
   mainInfoSheet.getCell(rowNum, 2).value = t('excelExport.mainInfo.researchPart', '4. Bộ phận nghiên cứu:'); applyCellStyle(mainInfoSheet.getCell(rowNum, 2), true);
   mainInfoSheet.getCell(rowNum, 3).value = compound.bpnc || no; mainInfoSheet.mergeCells(rowNum, 3, rowNum, 14); applyCellStyle(mainInfoSheet.getCell(rowNum, 3));
+  rowNum++;
+  mainInfoSheet.getCell(rowNum, 2).value = t('excelExport.mainInfo.otherSources', '5. Nguồn khác:'); applyCellStyle(mainInfoSheet.getCell(rowNum, 2), true);
+  mainInfoSheet.getCell(rowNum, 3).value = compound.nguonKhac || no; mainInfoSheet.mergeCells(rowNum, 3, rowNum, 14); applyCellStyle(mainInfoSheet.getCell(rowNum, 3));
   mainInfoSheet.mergeCells(nguonStartRow, 1, rowNum, 1);
   applyCellStyle(mainInfoSheet.getCell(nguonStartRow, 1), true, {vertical: 'middle', horizontal: 'left'});
   rowNum++;

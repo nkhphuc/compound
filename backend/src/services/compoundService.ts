@@ -208,11 +208,11 @@ export class CompoundService {
       // Insert compound with JSONB fields
       const compoundQuery = `
         INSERT INTO compounds (
-          id, ten_hc, ten_hc_khac, loai_hc, status, ten_latin, ten_ta, ten_tv, bpnc,
+          id, ten_hc, ten_hc_khac, loai_hc, status, ten_latin, ten_ta, ten_tv, bpnc, nguon_khac,
           trang_thai, mau, uv_sklm, diem_nong_chay, alpha_d, dung_moi_hoa_tan_tcvl,
           ctpt, klpt, hinh_cau_truc, cau_hinh_tuyet_doi, smiles, pho,
           dm_nmr_general, cart_coor, img_freq, te
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26)
         RETURNING *
       `;
 
@@ -226,6 +226,7 @@ export class CompoundService {
         compoundData.tenTA || null,
         compoundData.tenTV || null,
         compoundData.bpnc || null,
+        compoundData.nguonKhac || null,
         compoundData.trangThai || '',
         compoundData.mau || '',
         JSON.stringify(compoundData.uvSklm || { nm254: false, nm365: false }),
@@ -360,11 +361,11 @@ export class CompoundService {
       const compoundQuery = `
         UPDATE compounds SET
           stt_hc = $2, ten_hc = $3, ten_hc_khac = $4, loai_hc = $5, status = $6,
-          ten_latin = $7, ten_ta = $8, ten_tv = $9, bpnc = $10, trang_thai = $11,
-          mau = $12, uv_sklm = $13, diem_nong_chay = $14, alpha_d = $15,
-          dung_moi_hoa_tan_tcvl = $16, ctpt = $17, klpt = $18, hinh_cau_truc = $19,
-          cau_hinh_tuyet_doi = $20, smiles = $21, pho = $22, dm_nmr_general = $23,
-          cart_coor = $24, img_freq = $25, te = $26, updated_at = CURRENT_TIMESTAMP
+          ten_latin = $7, ten_ta = $8, ten_tv = $9, bpnc = $10, nguon_khac = $11, trang_thai = $12,
+          mau = $13, uv_sklm = $14, diem_nong_chay = $15, alpha_d = $16,
+          dung_moi_hoa_tan_tcvl = $17, ctpt = $18, klpt = $19, hinh_cau_truc = $20,
+          cau_hinh_tuyet_doi = $21, smiles = $22, pho = $23, dm_nmr_general = $24,
+          cart_coor = $25, img_freq = $26, te = $27, updated_at = CURRENT_TIMESTAMP
         WHERE id = $1
       `;
 
@@ -379,6 +380,7 @@ export class CompoundService {
         compoundData.tenTA ?? existingCompound.tenTA,
         compoundData.tenTV ?? existingCompound.tenTV,
         compoundData.bpnc ?? existingCompound.bpnc,
+        compoundData.nguonKhac ?? existingCompound.nguonKhac,
         compoundData.trangThai ?? existingCompound.trangThai,
         compoundData.mau ?? existingCompound.mau,
         JSON.stringify(compoundData.uvSklm ?? existingCompound.uvSklm),
@@ -578,6 +580,7 @@ export class CompoundService {
           tenTA: row.ten_ta as string | undefined,
           tenTV: row.ten_tv as string | undefined,
           bpnc: row.bpnc as string | undefined,
+          nguonKhac: row.nguon_khac as string | undefined,
           trangThai: row.trang_thai as string,
           mau: row.mau as string,
           uvSklm,

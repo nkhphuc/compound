@@ -58,6 +58,7 @@ export interface CompoundData {
   tenTA?: string; // English Name
   tenTV?: string; // Vietnamese Name
   bpnc?: string; // Research Part
+  nguonKhac?: string; // Other Sources
 
   // Physical Properties (TCVL)
   trangThai: string; // State/Phase
@@ -122,6 +123,7 @@ export const initialCompoundData: Omit<CompoundData, 'id' | 'nmrData'> & { nmrDa
   tenTA: '',
   tenTV: '',
   bpnc: '',
+  nguonKhac: '',
   trangThai: '', // << UPDATED
   mau: '', // << UPDATED
   uvSklm: { nm254: false, nm365: false },

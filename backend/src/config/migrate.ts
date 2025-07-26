@@ -17,6 +17,7 @@ const createTables = async () => {
         ten_ta VARCHAR(255),
         ten_tv VARCHAR(255),
         bpnc TEXT,
+        nguon_khac TEXT,
         trang_thai VARCHAR(100) NOT NULL,
         mau VARCHAR(100) NOT NULL,
         uv_sklm JSONB DEFAULT '{"nm254": false, "nm365": false}',
@@ -95,6 +96,20 @@ const createTables = async () => {
           SELECT 1 FROM pg_indexes WHERE indexname = 'idx_unique_nmr_data_compound_id'
         ) THEN
           EXECUTE 'DROP INDEX idx_unique_nmr_data_compound_id';
+        END IF;
+      END $$;
+    `);
+
+    // Add nguon_khac column if it doesn't exist
+    await client.query(`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.columns
+          WHERE table_name = 'compounds'
+          AND column_name = 'nguon_khac'
+        ) THEN
+          ALTER TABLE compounds ADD COLUMN nguon_khac TEXT;
         END IF;
       END $$;
     `);

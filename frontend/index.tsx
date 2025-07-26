@@ -69,7 +69,8 @@ const enTranslations = {
     noFileSelected: "No file selected.",
     uploadedFilePlaceholder: "Uploaded file",
     preview: "Preview:",
-    validationErrors: "Please fix the following validation errors:"
+    validationErrors: "Please fix the following validation errors:",
+    otherSources: "Other Sources"
   },
   compoundListPage: {
     title: "Compound List",
@@ -142,7 +143,7 @@ const enTranslations = {
         untitledCompound: "Untitled Compound", otherName: "Other name:", type: "Type:",
         newMaterial: "New", knownMaterial: "Known", source: "Source:",
         latinName: "1. Latin Name:", englishName: "2. English Name:", vietnameseName: "3. Vietnamese Name:",
-        researchPart: "4. Research Part:", physicalProperties: "Physical Properties:", state: "State:",
+        researchPart: "4. Research Part:", otherSources: "5. Other Sources:", physicalProperties: "Physical Properties:", state: "State:",
         color: "Color:", uvSklm: "UV TLC", uv254nm: "254nm", uv365nm: "365nm",
         meltingPoint: "Melting Point", solventTCVL: "Solvent:", opticalRotation: "[α]D",
         structure: "Structure:", molecularFormula: "Formula", molecularWeight: "MW",
@@ -304,7 +305,8 @@ const viTranslations = {
     noFileSelected: "Chưa có tệp nào được chọn.",
     uploadedFilePlaceholder: "Tệp đã tải lên",
     preview: "Xem trước:",
-    validationErrors: "Vui lòng sửa các lỗi xác thực sau:"
+    validationErrors: "Vui lòng sửa các lỗi xác thực sau:",
+    otherSources: "Nguồn khác"
   },
   compoundListPage: {
     title: "Danh sách Hợp chất",
@@ -377,7 +379,7 @@ const viTranslations = {
         untitledCompound: "Hợp chất không tên", otherName: "Tên khác:", type: "Loại:",
         newMaterial: "Chất mới", knownMaterial: "Đã biết", source: "Nguồn:",
         latinName: "1. Tên Latin:", englishName: "2. Tên tiếng Anh:", vietnameseName: "3. Tên tiếng Việt:",
-        researchPart: "4. Bộ phận nghiên cứu:", physicalProperties: "TCVL:", state: "Trạng thái:",
+        researchPart: "4. Bộ phận nghiên cứu:", otherSources: "5. Nguồn khác:", physicalProperties: "TCVL:", state: "Trạng thái:",
         color: "Màu:", uvSklm: "UV SKLM", uv254nm: "254nm", uv365nm: "365nm",
         meltingPoint: "Điểm nóng chảy", solventTCVL: "Dung môi hòa tan:", opticalRotation: "[α]D",
         structure: "Cấu trúc:", molecularFormula: "CTPT", molecularWeight: "KLPT",

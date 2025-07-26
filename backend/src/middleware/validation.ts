@@ -171,6 +171,7 @@ export const compoundValidationSchema = Joi.object({
   tenTA: Joi.string().allow('', null).default(''),
   tenTV: Joi.string().allow('', null).default(''),
   bpnc: Joi.string().allow('', null).default(''),
+  nguonKhac: Joi.string().allow('', null).default(''),
   diemNongChay: Joi.string().allow('', null).default(''),
   alphaD: Joi.string().allow('', null).default(''),
   dungMoiHoaTanTCVL: Joi.string().allow('', null).default(''),
