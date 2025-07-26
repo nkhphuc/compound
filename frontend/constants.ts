@@ -77,3 +77,15 @@ export const DEFAULT_MAU_OPTIONS: string[] = [
 
 export const LOAI_HC_OTHER_STRING_KEY = "variousLabels.other"; // Translation key for "Other"
 export const LOAI_HC_OTHER_STRING = "Khác"; // Keep original for value comparison if needed, but display t(LOAI_HC_OTHER_STRING_KEY)
+
+export const DEFAULT_NMR_SOLVENT_OPTIONS: string[] = [
+  "CDCl_3",
+  "CD_3OD",
+  "Acetone-d_6",
+  "Pyridine-d_5",
+  "DMSO",
+  "CDCl_3+CD_3OD",
+];
+
+export const NMR_SOLVENT_OTHER_STRING_KEY = "variousLabels.other"; // Translation key for "Other"
+export const NMR_SOLVENT_OTHER_STRING = "Khác"; // Keep original for value comparison if needed, but display t(NMR_SOLVENT_OTHER_STRING_KEY)

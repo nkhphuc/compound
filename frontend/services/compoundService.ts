@@ -316,6 +316,21 @@ export const getUniqueMauValues = async (): Promise<string[]> => {
   }
 };
 
+export const getUniqueNmrSolventValues = async (): Promise<string[]> => {
+  try {
+    const response = await apiRequest('/meta/nmr-solvent');
+
+    if (response.success) {
+      return response.data;
+    } else {
+      throw new Error(response.error || 'Failed to fetch NMR solvent values');
+    }
+  } catch (error) {
+    console.error('Error fetching unique NMR solvent values:', error);
+    throw error;
+  }
+};
+
 export const getNextSttHC = async (): Promise<number> => {
   try {
     const response = await apiRequest('/compounds/next-stt-hc');

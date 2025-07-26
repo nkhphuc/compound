@@ -214,3 +214,20 @@ export const getUniqueMauValues = async (req: Request, res: Response) => {
     });
   }
 };
+
+export const getUniqueNmrSolventValues = async (req: Request, res: Response) => {
+  try {
+    const values = await compoundService.getUniqueNmrSolventValues();
+
+    res.json({
+      success: true,
+      data: values
+    });
+  } catch (error) {
+    console.error('Error getting unique NMR solvent values:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get unique NMR solvent values'
+    });
+  }
+};

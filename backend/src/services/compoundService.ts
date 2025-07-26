@@ -523,6 +523,11 @@ export class CompoundService {
     return result.rows.map(row => row.mau);
   }
 
+  async getUniqueNmrSolventValues(): Promise<string[]> {
+    const result = await pool.query('SELECT DISTINCT dm_nmr FROM nmr_data_blocks WHERE dm_nmr IS NOT NULL AND dm_nmr != \'\' ORDER BY dm_nmr');
+    return result.rows.map(row => row.dm_nmr);
+  }
+
   private async transformRowsToCompounds(rows: Record<string, unknown>[]): Promise<CompoundData[]> {
     const compoundsMap = new Map<string, CompoundData>();
     const nmrBlocksMap = new Map<string, NMRDataBlock[]>();

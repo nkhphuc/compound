@@ -1,11 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation, Trans } from 'react-i18next';
+import { DEFAULT_NMR_SOLVENT_OPTIONS, NMR_SOLVENT_OTHER_STRING, NMR_SOLVENT_OTHER_STRING_KEY } from '../constants';
+import { getUniqueNmrSolventValues } from '../services/compoundService';
 import { NMRDataBlock, NMRSignalData, NMRCondition, initialNMRCondition } from '../types';
 import { NMRSignalCSVInput } from './NMRSignalCSVInput';
 import { NMRSignalForm } from './NMRSignalForm';
 import { PlusIcon } from './icons/PlusIcon';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
+import { Select } from './ui/Select';
 import { Textarea } from './ui/Textarea';
 // TrashIcon is no longer needed for conditions
 
@@ -35,6 +38,82 @@ export const SingleNMRDataForm: React.FC<SingleNMRDataFormProps> = ({
 }) => {
   const { t } = useTranslation();
   const [showCSVInput, setShowCSVInput] = useState(false);
+
+  // State for solvent dropdown
+  const [solventDropdownOptions, setSolventDropdownOptions] = useState<Array<{ value: string; label: string }>>([]);
+  const [selectedSolventInDropdown, setSelectedSolventInDropdown] = useState<string>('');
+  const [customSolventInput, setCustomSolventInput] = useState<string>('');
+  const [showCustomSolventInput, setShowCustomSolventInput] = useState<boolean>(false);
+
+  // Initialize solvent dropdown options
+  useEffect(() => {
+    const fetchCustomSolvents = async () => {
+      try {
+        const customSolvents = await getUniqueNmrSolventValues();
+        // Use Set to remove duplicates when combining default and custom options
+        const allSolventOptions = Array.from(new Set([...DEFAULT_NMR_SOLVENT_OPTIONS, ...customSolvents]));
+        const solventOpts = allSolventOptions.map(opt => ({ value: opt, label: opt }));
+        solventOpts.push({ value: NMR_SOLVENT_OTHER_STRING, label: t(NMR_SOLVENT_OTHER_STRING_KEY) });
+        setSolventDropdownOptions(solventOpts);
+      } catch (error) {
+        console.error('Error fetching custom NMR solvents:', error);
+        // Fallback to default options only
+        const solventOpts = DEFAULT_NMR_SOLVENT_OPTIONS.map(opt => ({ value: opt, label: opt }));
+        solventOpts.push({ value: NMR_SOLVENT_OTHER_STRING, label: t(NMR_SOLVENT_OTHER_STRING_KEY) });
+        setSolventDropdownOptions(solventOpts);
+      }
+    };
+    fetchCustomSolvents();
+  }, [t]);
+
+  // Initialize solvent dropdown state based on current value (only once when options are loaded)
+  useEffect(() => {
+    const currentSolvent = nmrDataBlock.nmrConditions?.dmNMR || '';
+
+    // Only initialize if we have dropdown options loaded and we haven't initialized yet
+    if (solventDropdownOptions.length === 0 || selectedSolventInDropdown !== '') return;
+
+    if (currentSolvent === '') {
+      setSelectedSolventInDropdown('');
+      setCustomSolventInput('');
+      setShowCustomSolventInput(false);
+    } else {
+      // Check if the current solvent is in the dropdown options (excluding "Khác")
+      const isStandardSolvent = solventDropdownOptions.some(opt => opt.value === currentSolvent && opt.value !== NMR_SOLVENT_OTHER_STRING);
+      if (isStandardSolvent) {
+        setSelectedSolventInDropdown(currentSolvent);
+        setCustomSolventInput('');
+        setShowCustomSolventInput(false);
+      } else {
+        // If it's not a standard solvent, it must be a custom one
+        setSelectedSolventInDropdown(NMR_SOLVENT_OTHER_STRING);
+        setCustomSolventInput(currentSolvent);
+        setShowCustomSolventInput(true);
+      }
+    }
+  }, [nmrDataBlock.nmrConditions?.dmNMR, solventDropdownOptions, selectedSolventInDropdown]);
+
+  const handleSolventDropdownChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const { value } = e.target;
+    setSelectedSolventInDropdown(value);
+    if (value === NMR_SOLVENT_OTHER_STRING) {
+      setShowCustomSolventInput(true);
+      // Don't update the condition here, let the custom input handler do it
+    } else {
+      setShowCustomSolventInput(false);
+      setCustomSolventInput('');
+      onConditionChange('dmNMR', value);
+    }
+  };
+
+  const handleCustomSolventInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { value } = e.target;
+    setCustomSolventInput(value);
+    // Only update the condition if we're in "Khác" mode (like compound type dropdown)
+    if (selectedSolventInDropdown === NMR_SOLVENT_OTHER_STRING) {
+      onConditionChange('dmNMR', value);
+    }
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -128,14 +207,26 @@ export const SingleNMRDataForm: React.FC<SingleNMRDataFormProps> = ({
         {/* NMR Conditions part - simplified to a single set of fields */}
         <div className="mb-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start p-3 border border-gray-200 rounded-md mb-1 bg-slate-50 shadow-sm">
-            <Input
-              label={t('nmrForm.solvent')}
-              name="dmNMR"
-              value={currentCondition.dmNMR}
-              onChange={handleConditionFieldChange}
-              placeholder={t('nmrForm.solventPlaceholder')}
-              wrapperClassName="mb-0"
-            />
+            <div>
+              <Select
+                label={t('nmrForm.solvent')}
+                name="selectedSolventInDropdown"
+                value={selectedSolventInDropdown}
+                onChange={handleSolventDropdownChange}
+                options={solventDropdownOptions}
+                placeholder={t('nmrForm.solventPlaceholder')}
+                wrapperClassName="mb-0"
+              />
+              {showCustomSolventInput && (
+                <Input
+                  name="customSolventInput"
+                  value={customSolventInput}
+                  onChange={handleCustomSolventInputChange}
+                  placeholder={t('nmrForm.solventPlaceholder')}
+                  className="mt-2"
+                />
+              )}
+            </div>
             <Input
               label={t('nmrForm.freq13c')}
               name="tanSo13C"
