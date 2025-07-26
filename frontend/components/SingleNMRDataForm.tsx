@@ -156,22 +156,26 @@ export const SingleNMRDataForm: React.FC<SingleNMRDataFormProps> = ({
       />
 
       <div className="mt-4 pt-3 border-t border-indigo-200">
-        <div className="flex justify-between items-center mb-2">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2 gap-2">
           <h5 className="text-md font-medium text-gray-700">{t('nmrForm.spectralDataTable')}</h5>
-          <div className="flex space-x-2">
+          <div className="flex space-x-1 sm:space-x-2">
             <Button
               variant={showCSVInput ? "ghost" : "secondary"}
               size="sm"
               onClick={() => setShowCSVInput(false)}
+              className="text-xs sm:text-sm px-2 sm:px-3"
             >
-              {t('nmrForm.inputMethod.rowByRow', 'Row by Row')}
+              <span className="hidden sm:inline">{t('nmrForm.inputMethod.rowByRow', 'Row by Row')}</span>
+              <span className="sm:hidden">{t('nmrForm.inputMethod.rowByRowShort', 'Row')}</span>
             </Button>
             <Button
               variant={showCSVInput ? "secondary" : "ghost"}
               size="sm"
               onClick={() => setShowCSVInput(true)}
+              className="text-xs sm:text-sm px-2 sm:px-3"
             >
-              {t('nmrForm.inputMethod.csvBulk', 'CSV Bulk')}
+              <span className="hidden sm:inline">{t('nmrForm.inputMethod.csvBulk', 'CSV Bulk')}</span>
+              <span className="sm:hidden">{t('nmrForm.inputMethod.csvBulkShort', 'CSV')}</span>
             </Button>
           </div>
         </div>
@@ -206,8 +210,8 @@ export const SingleNMRDataForm: React.FC<SingleNMRDataFormProps> = ({
 
         {/* NMR Conditions part - simplified to a single set of fields */}
         <div className="mb-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start p-3 border border-gray-200 rounded-md mb-1 bg-slate-50 shadow-sm">
-            <div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 items-start p-3 border border-gray-200 rounded-md mb-1 bg-slate-50 shadow-sm">
+            <div className="sm:col-span-2 lg:col-span-1">
               <Select
                 label={t('nmrForm.solvent')}
                 name="selectedSolventInDropdown"

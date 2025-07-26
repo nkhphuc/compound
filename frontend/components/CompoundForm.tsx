@@ -105,6 +105,12 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
   const [imageUrlInput, setImageUrlInput] = useState<string>('');
   const [structureImageFileName, setStructureImageFileName] = useState<string>('');
 
+  // Molecular weight calculation state
+  const [weightCalculationMode, setWeightCalculationMode] = useState<'manual' | 'auto'>('manual');
+  const [elementCounts, setElementCounts] = useState({
+    C: 0, H: 0, O: 0, N: 0, S: 0, Cl: 0, Br: 0, I: 0, F: 0, Na: 0
+  });
+
   const [spectralInputMethods, setSpectralInputMethods] = useState<Record<keyof SpectralRecord, SpectralInputMethod>>(initialSpectralMethodsState);
   const [spectralUrlInputs, setSpectralUrlInputs] = useState<Record<keyof SpectralRecord, string[]>>(initialSpectralUrlsState);
 
@@ -117,6 +123,40 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
   );
 
   const navigate = useNavigate();
+
+  // Atomic weights for molecular weight calculation
+  const ATOMIC_WEIGHTS = {
+    C: 12.01, H: 1.008, O: 16.00, N: 14.01, S: 32.07,
+    Cl: 35.45, Br: 79.90, I: 126.90, F: 18.998, Na: 22.99
+  };
+
+  // Calculate molecular weight from element counts
+  const calculateMolecularWeight = (counts: typeof elementCounts): number => {
+    return Object.entries(counts).reduce((total, [element, count]) => {
+      return total + (count * ATOMIC_WEIGHTS[element as keyof typeof ATOMIC_WEIGHTS]);
+    }, 0);
+  };
+
+  // Handle element count changes
+  const handleElementCountChange = (element: keyof typeof elementCounts, value: string) => {
+    const count = parseInt(value) || 0;
+    setElementCounts(prev => ({ ...prev, [element]: count }));
+
+    // Auto-update the molecular weight field
+    const newCounts = { ...elementCounts, [element]: count };
+    const calculatedWeight = calculateMolecularWeight(newCounts);
+    setFormData(prev => ({ ...prev, klpt: calculatedWeight.toFixed(2) }));
+  };
+
+  // Handle weight calculation mode change
+  const handleWeightModeChange = (mode: 'manual' | 'auto') => {
+    setWeightCalculationMode(mode);
+    if (mode === 'auto') {
+      // Calculate weight from current element counts
+      const calculatedWeight = calculateMolecularWeight(elementCounts);
+      setFormData(prev => ({ ...prev, klpt: calculatedWeight.toFixed(2) }));
+    }
+  };
 
   useEffect(() => {
     const loadMetadata = async () => {
@@ -188,6 +228,15 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
       };
 
       setFormData(dataToSet);
+
+      // Initialize molecular weight calculation mode and element counts
+      if (dataToSet.klpt && dataToSet.ctpt) {
+        // If we have both molecular weight and formula, try to parse the formula
+        setWeightCalculationMode('auto');
+        // TODO: Add formula parsing logic here if needed
+      } else {
+        setWeightCalculationMode('manual');
+      }
 
       // Initialize LoaiHC dropdown state
       const initialType = dataToSet.loaiHC || '';
@@ -1077,10 +1126,78 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
               />
             </p>
           </div>
-          <Input label={t('excelExport.mainInfo.molecularWeight')} name="klpt" value={formData.klpt || ''} onChange={handleChange} />
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              {t('excelExport.mainInfo.molecularWeight')}
+            </label>
+            <div className="flex space-x-4 mb-2">
+              <label className="flex items-center space-x-2">
+                <input
+                  type="radio"
+                  value="manual"
+                  checked={weightCalculationMode === 'manual'}
+                  onChange={() => handleWeightModeChange('manual')}
+                  className="custom-styled-radio"
+                />
+                <span className="text-sm text-gray-700">{t('compoundForm.molecularWeight.manualInput')}</span>
+              </label>
+              <label className="flex items-center space-x-2">
+                <input
+                  type="radio"
+                  value="auto"
+                  checked={weightCalculationMode === 'auto'}
+                  onChange={() => handleWeightModeChange('auto')}
+                  className="custom-styled-radio"
+                />
+                <span className="text-sm text-gray-700">{t('compoundForm.molecularWeight.autoCalculate')}</span>
+              </label>
+            </div>
+
+            {weightCalculationMode === 'manual' ? (
+              <Input
+                name="klpt"
+                value={formData.klpt || ''}
+                onChange={handleChange}
+                placeholder={t('compoundForm.molecularWeight.manualPlaceholder')}
+                wrapperClassName="mb-0"
+              />
+            ) : (
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                  {Object.entries(elementCounts).map(([element, count]) => (
+                    <div key={element} className="flex flex-col">
+                      <label className="text-xs font-medium text-gray-600 mb-1">
+                        {element === 'I' ? t('compoundForm.molecularWeight.elements.iodine') : element}
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={count}
+                        onChange={(e) => handleElementCountChange(element as keyof typeof elementCounts, e.target.value)}
+                        className="px-2 py-1 border border-gray-300 rounded text-sm focus:ring-indigo-500 focus:border-indigo-500"
+                        placeholder="0"
+                      />
+                    </div>
+                  ))}
+                </div>
+                <div className="bg-gray-50 p-3 rounded border">
+                  <div className="text-sm text-gray-600 mb-1">{t('compoundForm.molecularWeight.calculatedWeight')}:</div>
+                  <div className="text-lg font-semibold text-gray-800">
+                    {calculateMolecularWeight(elementCounts).toFixed(2)} g/mol
+                  </div>
+                  <div className="text-xs text-gray-500 mt-1">
+                    {t('compoundForm.molecularWeight.formula')}: {Object.entries(elementCounts)
+                      .filter(([_, count]) => count > 0)
+                      .map(([element, count]) => `${element}_${count}`)
+                      .join('') || t('compoundForm.molecularWeight.noElements')}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
-        <div className="mb-4">
+        <div className="mt-4 mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">
                 {t('compoundForm.structureImage')}
             </label>
@@ -1186,7 +1303,7 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
               <div key={fieldKey} className="p-4 border border-gray-200 rounded-md bg-slate-50 shadow-sm">
                 <h4 className="text-md font-semibold text-gray-700 mb-3">{fieldLabel}</h4>
 
-                <div className="flex space-x-4 mb-3">
+                <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4 mb-3">
                   <label className="flex items-center space-x-2 cursor-pointer">
                     <input
                       type="radio"
@@ -1234,7 +1351,7 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
                   <div className="space-y-4">
                     <div className="space-y-2">
                       {(spectralUrlInputs[fieldKey] || []).map((url, index) => (
-                        <div key={index} className="flex items-center space-x-2">
+                        <div key={index} className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
                           <Input
                             type="url"
                             value={url}
@@ -1246,7 +1363,7 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
                           <button
                             type="button"
                             onClick={() => removeSpectralUrl(fieldKey, index)}
-                            className="px-3 py-2 text-sm text-red-600 hover:text-red-800 hover:bg-red-50 rounded"
+                            className="px-3 py-2 text-sm text-red-600 hover:text-red-800 hover:bg-red-50 rounded self-start sm:self-auto"
                           >
                             {t('fileUpload.remove')}
                           </button>
@@ -1254,12 +1371,12 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
                       ))}
                     </div>
 
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
                       {(spectralUrlInputs[fieldKey] || []).length < 10 && (
                         <button
                           type="button"
                           onClick={() => addSpectralUrl(fieldKey)}
-                          className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                          className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 self-start"
                         >
                           {t('fileUpload.addUrl')}
                         </button>
@@ -1268,7 +1385,7 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
                         <button
                           type="button"
                           onClick={() => removeAllSpectralUrls(fieldKey)}
-                          className="px-3 py-1 text-sm text-red-600 hover:text-red-800 hover:bg-red-50 rounded"
+                          className="px-3 py-1 text-sm text-red-600 hover:text-red-800 hover:bg-red-50 rounded self-start"
                         >
                           {t('fileUpload.removeAll')}
                         </button>
@@ -1322,25 +1439,35 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
       </SectionCard>
 
       <SectionCard title={t('compoundForm.nmrData.title')}>
-        <div className="flex items-center mb-4 space-x-2">
-          {formData.nmrData.map((block, idx) => (
-            <button
-              key={block.id || idx}
-              type="button"
-              className={`px-3 py-1 rounded border ${selectedNmrIndex === idx ? 'bg-indigo-600 text-white' : 'bg-white text-indigo-600 border-indigo-300'} font-medium text-sm mr-1`}
-              onClick={() => selectNmrDataBlock(idx)}
-            >
-              {t('nmrForm.spectralDataTable')} #{idx + 1}
-            </button>
-          ))}
-          <Button type="button" size="sm" variant="secondary" onClick={addNmrDataBlock} leftIcon={<span>+</span>}>
-            {t('nmrForm.addSpectralTable', 'Add Table')}
-          </Button>
-          {formData.nmrData.length > 1 && (
-            <Button type="button" size="sm" variant="ghost" onClick={() => removeNmrDataBlock(selectedNmrIndex)} leftIcon={<span>-</span>}>
-              {t('nmrForm.removeSpectralTable', 'Remove Table')}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center mb-4 gap-2">
+          <div className="flex flex-wrap items-center gap-1 flex-1 min-w-0">
+            {formData.nmrData.map((block, idx) => (
+              <button
+                key={block.id || idx}
+                type="button"
+                className={`px-2 sm:px-3 py-1 rounded border text-xs sm:text-sm whitespace-nowrap ${
+                  selectedNmrIndex === idx
+                    ? 'bg-indigo-600 text-white'
+                    : 'bg-white text-indigo-600 border-indigo-300'
+                } font-medium`}
+                onClick={() => selectNmrDataBlock(idx)}
+              >
+                {t('nmrForm.spectralDataTable')} #{idx + 1}
+              </button>
+            ))}
+          </div>
+          <div className="flex items-center gap-1 flex-shrink-0">
+            <Button type="button" size="sm" variant="secondary" onClick={addNmrDataBlock}>
+              <span className="hidden sm:inline">{t('nmrForm.addSpectralTable', 'Add Table')}</span>
+              <span className="sm:hidden">+</span>
             </Button>
-          )}
+            {formData.nmrData.length > 1 && (
+              <Button type="button" size="sm" variant="ghost" onClick={() => removeNmrDataBlock(selectedNmrIndex)}>
+                <span className="hidden sm:inline">{t('nmrForm.removeSpectralTable', 'Remove Table')}</span>
+                <span className="sm:hidden">-</span>
+              </Button>
+            )}
+          </div>
         </div>
         <SingleNMRDataForm
           nmrDataBlock={formData.nmrData[selectedNmrIndex]}

@@ -70,7 +70,18 @@ const enTranslations = {
     uploadedFilePlaceholder: "Uploaded file",
     preview: "Preview:",
     validationErrors: "Please fix the following validation errors:",
-    otherSources: "Other Sources"
+    otherSources: "Other Sources",
+    molecularWeight: {
+      manualInput: "Manual Input",
+      autoCalculate: "Auto Calculate",
+      manualPlaceholder: "Enter molecular weight",
+      calculatedWeight: "Calculated Weight",
+      formula: "Formula",
+      noElements: "No elements",
+      elements: {
+        iodine: "Iod"
+      }
+    }
   },
   compoundListPage: {
     title: "Compound List",
@@ -195,7 +206,9 @@ const enTranslations = {
     removeSignalTooltip: "Remove Signal",
     inputMethod: {
       rowByRow: "Row by Row",
-      csvBulk: "CSV Bulk"
+      rowByRowShort: "Row",
+      csvBulk: "CSV Bulk",
+      csvBulkShort: "CSV"
     },
     csvInput: {
       title: "Bulk Input (CSV)",
@@ -306,7 +319,18 @@ const viTranslations = {
     uploadedFilePlaceholder: "Tệp đã tải lên",
     preview: "Xem trước:",
     validationErrors: "Vui lòng sửa các lỗi xác thực sau:",
-    otherSources: "Nguồn khác"
+    otherSources: "Nguồn khác",
+    molecularWeight: {
+      manualInput: "Nhập thủ công",
+      autoCalculate: "Tự động tính toán",
+      manualPlaceholder: "Nhập khối lượng phân tử",
+      calculatedWeight: "Khối lượng tính toán",
+      formula: "Công thức",
+      noElements: "Không có nguyên tố",
+      elements: {
+        iodine: "Iot"
+      }
+    }
   },
   compoundListPage: {
     title: "Danh sách Hợp chất",
@@ -431,7 +455,9 @@ const viTranslations = {
     removeSignalTooltip: "Xóa tín hiệu",
     inputMethod: {
       rowByRow: "Từng dòng",
-      csvBulk: "CSV hàng loạt"
+      rowByRowShort: "Dòng",
+      csvBulk: "CSV hàng loạt",
+      csvBulkShort: "CSV"
     },
     csvInput: {
       title: "Nhập hàng loạt (CSV)",
