@@ -301,7 +301,7 @@ const viTranslations = {
     nmrSolvent: { title: "Dung môi NMR" },
     compChem: { title: "Dữ liệu tính toán hóa học" },
     nmrData: { title: "Dữ liệu NMR" },
-    sttRC: "Stt bản ghi (ID)",
+    sttRC: "ID bản ghi",
     sttRCPlaceholder: "Tự động gán khi lưu",
     sttHC: "ID Hợp chất",
     codeHC: "Mã Hợp chất",
