@@ -124,7 +124,6 @@ const renderSpectrumLinkOrPreview = (data: string[] | undefined, label: string, 
             if (!fileUrl) return null;
 
             const imageUrl = getImageUrl(fileUrl);
-            const fileName = fileUrl.split('/').pop() || `File ${index + 1}`;
             const isImage = fileUrl.startsWith('data:image') ||
                            (fileUrl.toLowerCase().includes('.jpg') || fileUrl.toLowerCase().includes('.jpeg') ||
                             fileUrl.toLowerCase().includes('.png') || fileUrl.toLowerCase().includes('.gif') ||
