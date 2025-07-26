@@ -8,7 +8,7 @@ const createTables = async () => {
     await client.query(`
       CREATE TABLE IF NOT EXISTS compounds (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        stt_hc SERIAL NOT NULL UNIQUE,
+        stt_rc SERIAL NOT NULL UNIQUE,
         ten_hc VARCHAR(255) NOT NULL,
         ten_hc_khac VARCHAR(255),
         loai_hc VARCHAR(100) NOT NULL,
@@ -135,7 +135,7 @@ const createTables = async () => {
 
     // Create indexes for better performance
     await client.query(`
-      CREATE INDEX IF NOT EXISTS idx_compounds_stt_hc ON compounds(stt_hc);
+      CREATE INDEX IF NOT EXISTS idx_compounds_stt_rc ON compounds(stt_rc);
       CREATE INDEX IF NOT EXISTS idx_compounds_ten_hc ON compounds(ten_hc);
       CREATE INDEX IF NOT EXISTS idx_compounds_loai_hc ON compounds(loai_hc);
       CREATE INDEX IF NOT EXISTS idx_compounds_created_at ON compounds(created_at DESC);

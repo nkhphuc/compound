@@ -172,7 +172,7 @@ export const ViewCompoundPage: React.FC = () => {
       {nmrDataContentExists && (
         <div className="mt-10">
           <h2 className="text-2xl font-semibold text-gray-800 mb-6 border-t pt-6">{t('compoundForm.nmrData.title')}</h2>
-          <NMRTableView nmrDataBlocks={compound.nmrData} compoundSttHC={String(compound.sttHC)} />
+          <NMRTableView nmrDataBlocks={compound.nmrData} compoundsttRC={String(compound.sttRC)} />
         </div>
       )}
 

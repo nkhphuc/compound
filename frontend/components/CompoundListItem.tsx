@@ -27,7 +27,7 @@ export const CompoundListItem: React.FC<CompoundListItemProps> = ({ compound, on
           />
         )}
         <Link to={`/view/${compound.id}`} className="text-indigo-600 hover:text-indigo-800 hover:underline">
-          <h3 className="text-lg font-semibold">{compound.tenHC} ({t('compoundListItem.sttHcPrefix')}{compound.sttHC})</h3>
+          <h3 className="text-lg font-semibold">{compound.tenHC} ({t('compoundListItem.sttRCPrefix')}{compound.sttRC})</h3>
         </Link>
       </div>
       <div>

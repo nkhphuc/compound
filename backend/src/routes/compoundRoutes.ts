@@ -5,7 +5,7 @@ import {
   createCompound,
   updateCompound,
   deleteCompound,
-  getNextSttHC,
+  getNextsttRC,
   getNextSttBang,
 } from '../controllers/compoundController.js';
 import {
@@ -19,8 +19,8 @@ const router: Router = Router();
 // GET /api/compounds - Get all compounds with pagination and search
 router.get('/', validateQueryParams, (req, res, next) => { getAllCompounds(req, res).catch(next); });
 
-// GET /api/compounds/next-stt-hc - Get next available serial number
-router.get('/next-stt-hc', (req, res, next) => { getNextSttHC(req, res).catch(next); });
+// GET /api/compounds/next-stt-rc - Get next available serial number
+router.get('/next-stt-rc', (req, res, next) => { getNextsttRC(req, res).catch(next); });
 
 // GET /api/compounds/next-stt-bang - Get next available table number
 router.get('/next-stt-bang', (req, res, next) => { getNextSttBang(req, res).catch(next); });

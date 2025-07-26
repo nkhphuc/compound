@@ -205,7 +205,7 @@ export const CompoundView: React.FC<CompoundViewProps> = ({ compound }) => {
   if (!compound) return <p className="text-center text-red-500">Compound data not found.</p>;
 
   // Conditions for showing sections
-  const hasGeneralInfo = !!(compound.sttHC || compound.tenHC || compound.tenHCKhac || compound.loaiHC || compound.status);
+  const hasGeneralInfo = !!(compound.sttRC || compound.tenHC || compound.tenHCKhac || compound.loaiHC || compound.status);
   const hasSourceData = !!(compound.tenLatin || compound.tenTA || compound.tenTV || compound.bpnc || compound.nguonKhac);
 
   const uvSklmHasTrueValue = compound.uvSklm && (compound.uvSklm.nm254 === true || compound.uvSklm.nm365 === true);
@@ -235,7 +235,7 @@ export const CompoundView: React.FC<CompoundViewProps> = ({ compound }) => {
       {hasGeneralInfo && (
         <SectionCard title={t('compoundForm.generalInfo.title')}>
           <dl className="divide-y divide-gray-200">
-            <DataField label={t('compoundForm.sttHC')} value={compound.sttHC} />
+            <DataField label={t('compoundForm.sttRC')} value={compound.sttRC} />
             <DataField label={t('compoundForm.tenHC')} value={compound.tenHC} />
             <DataField label={t('compoundForm.tenHCKhac')} value={compound.tenHCKhac} />
             <DataField label={t('compoundForm.loaiHC')} value={compound.loaiHC} />

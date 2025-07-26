@@ -60,7 +60,7 @@ const ensureCompoundDataIntegrity = (compound: Partial<CompoundData>): CompoundD
   const validatedCompound: CompoundData = {
     ...defaults,
     ...compound,
-    sttHC: typeof compound.sttHC === 'number' ? compound.sttHC : (parseInt(String(compound.sttHC), 10) || 0),
+    sttRC: typeof compound.sttRC === 'number' ? compound.sttRC : (parseInt(String(compound.sttRC), 10) || 0),
     hinhCauTruc: compound.hinhCauTruc || '',
     status: compound.status || CompoundStatus.NEW,
     uvSklm: {
@@ -331,17 +331,17 @@ export const getUniqueNmrSolventValues = async (): Promise<string[]> => {
   }
 };
 
-export const getNextSttHC = async (): Promise<number> => {
+export const getNextsttRC = async (): Promise<number> => {
   try {
-    const response = await apiRequest('/compounds/next-stt-hc');
+    const response = await apiRequest('/compounds/next-stt-rc');
 
     if (response.success) {
-      return response.data.nextSttHC;
+      return response.data.nextsttRC;
     } else {
-      throw new Error(response.error || 'Failed to fetch next SttHC');
+      throw new Error(response.error || 'Failed to fetch next sttRC');
     }
   } catch (error) {
-    console.error('Error fetching next SttHC:', error);
+    console.error('Error fetching next sttRC:', error);
     throw error;
   }
 };

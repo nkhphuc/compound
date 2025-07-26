@@ -165,7 +165,7 @@ export const compoundValidationSchema = Joi.object({
   }),
 
   // Optional fields
-  sttHC: Joi.number().integer().min(0).default(0),
+  sttRC: Joi.number().integer().min(0).default(0),
   tenHCKhac: Joi.string().allow('', null).default(''),
   tenLatin: Joi.string().allow('', null).default(''),
   tenTA: Joi.string().allow('', null).default(''),

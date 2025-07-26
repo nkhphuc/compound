@@ -129,19 +129,19 @@ export const deleteCompound = async (req: Request, res: Response) => {
   }
 };
 
-export const getNextSttHC = async (req: Request, res: Response) => {
+export const getNextsttRC = async (req: Request, res: Response) => {
   try {
-    const nextSttHC = await compoundService.getNextSttHC();
+    const nextsttRC = await compoundService.getNextsttRC();
 
     res.json({
       success: true,
-      data: { nextSttHC }
+      data: { nextsttRC }
     });
   } catch (error) {
-    console.error('Error getting next SttHC:', error);
+    console.error('Error getting next sttRC:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to get next SttHC'
+      error: 'Failed to get next sttRC'
     });
   }
 };

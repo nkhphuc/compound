@@ -221,7 +221,7 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
         loaiHC: parsedInitial.loaiHC || '',
         trangThai: parsedInitial.trangThai || '',
         mau: parsedInitial.mau || '',
-        sttHC: typeof parsedInitial.sttHC === 'number' ? parsedInitial.sttHC : parseInt(String(parsedInitial.sttHC), 10) || 0,
+        sttRC: typeof parsedInitial.sttRC === 'number' ? parsedInitial.sttRC : parseInt(String(parsedInitial.sttRC), 10) || 0,
         cauHinhTuyetDoi: typeof parsedInitial.cauHinhTuyetDoi === 'boolean' ? parsedInitial.cauHinhTuyetDoi : false,
         pho: sanitizedPho,
         nmrData: parsedInitial.nmrData || [{ ...initialNMRDataBlock, id: crypto.randomUUID() }]
@@ -432,7 +432,7 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
       }));
     } else if (name === 'cauHinhTuyetDoi') {
         setFormData(prev => ({ ...prev, cauHinhTuyetDoi: checked as boolean }));
-    } else if (name === 'sttHC') {
+    } else if (name === 'sttRC') {
         setFormData(prev => ({ ...prev, [name]: parseInt(value, 10) || 0 }));
     } else {
       setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
@@ -914,8 +914,8 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
   }));
 
 
-  const sttHCDisplayValue = (formData.sttHC === 0 && !initialData) ? '' : String(formData.sttHC);
-  const sttHCPlaceholder = (formData.sttHC === 0 && !initialData) ? t('compoundForm.sttHCPlaceholder') : undefined;
+  const sttRCDisplayValue = (formData.sttRC === 0 && !initialData) ? '' : String(formData.sttRC);
+  const sttRCPlaceholder = (formData.sttRC === 0 && !initialData) ? t('compoundForm.sttRCPlaceholder') : undefined;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8 p-4 md:p-6 lg:p-8 max-w-5xl mx-auto bg-gray-50 rounded-xl shadow-2xl">
@@ -932,10 +932,10 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6">
           <div>
             <Input
-              label={t('compoundForm.sttHC')}
-              name="sttHC"
-              value={sttHCDisplayValue}
-              placeholder={sttHCPlaceholder}
+              label={t('compoundForm.sttRC')}
+              name="sttRC"
+              value={sttRCDisplayValue}
+              placeholder={sttRCPlaceholder}
               readOnly
               className="bg-gray-100 cursor-not-allowed"
             />

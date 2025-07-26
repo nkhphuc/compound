@@ -49,7 +49,7 @@ export interface NMRDataBlock {
 
 export interface CompoundData {
   id: string; // Unique ID for the compound
-  sttHC: number; // Serial number, now consistently a number
+  sttRC: number; // Serial number, now consistently a number
   tenHC: string; // Compound Name
   tenHCKhac?: string; // Other Name
   loaiHC: string; // Compound Type
@@ -114,7 +114,7 @@ export const initialNMRDataBlock: Omit<NMRDataBlock, 'id'> = {
 };
 
 export const initialCompoundData: Omit<CompoundData, 'id' | 'nmrData'> & { nmrData: Omit<NMRDataBlock, 'id'>[] } = {
-  sttHC: 0,
+  sttRC: 0,
   tenHC: '',
   tenHCKhac: '',
   loaiHC: '', // << UPDATED

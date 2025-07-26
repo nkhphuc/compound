@@ -51,8 +51,8 @@ const enTranslations = {
     nmrSolvent: { title: "NMR Solvent" },
     compChem: { title: "Computational Chemistry Data" },
     nmrData: { title: "NMR Data" },
-    sttHC: "Compound ID",
-    sttHCPlaceholder: "Auto-assigned on save",
+    sttRC: "Record ID",
+    sttRCPlaceholder: "Auto-assigned on save",
     tenHC: "Compound Name",
     tenHCKhac: "Other Name",
     loaiHC: "Compound Type",
@@ -103,7 +103,7 @@ const enTranslations = {
     clearAll: "Clear All Selected"
   },
   compoundListItem: {
-    sttHcPrefix: "SttHC: ",
+    sttRCPrefix: "sttRC: ",
     typePrefix: "Type: ",
     latinPrefix: "Latin: "
   },
@@ -163,7 +163,7 @@ const enTranslations = {
         imaginaryFreq: "# of imaginary freq.", totalEnergy: "Total Energy"
     },
     nmrDataTableSheet: {
-        title: "Table {{tableId}}: ¹H and ¹³C NMR Data of compound {{compoundSttHC}}",
+        title: "Table {{tableId}}: ¹H and ¹³C NMR Data of compound {{compoundsttRC}}",
         position: "Position", deltaC: "δC (ppm)", deltaH: "δH (ppm, J Hz)"
     },
     nmrDetailsSheet: {
@@ -222,7 +222,7 @@ const enTranslations = {
     }
   },
   nmrView: {
-    title: "Table {{tableId}}: ¹H and ¹³C NMR Data of compound {{compoundSttHC}}",
+    title: "Table {{tableId}}: ¹H and ¹³C NMR Data of compound {{compoundsttRC}}",
     spectralDataTable: "Spectral Data Table:",
     conditionsTable: "Notes:",
     notes: "General Notes:",
@@ -300,8 +300,8 @@ const viTranslations = {
     nmrSolvent: { title: "Dung môi NMR" },
     compChem: { title: "Dữ liệu tính toán hóa học" },
     nmrData: { title: "Dữ liệu NMR" },
-    sttHC: "Stt Hoạt chất (ID)",
-    sttHCPlaceholder: "Tự động gán khi lưu",
+    sttRC: "Stt bản ghi (ID)",
+    sttRCPlaceholder: "Tự động gán khi lưu",
     tenHC: "Tên HC",
     tenHCKhac: "Tên khác",
     loaiHC: "Loại HC",
@@ -352,7 +352,7 @@ const viTranslations = {
     clearAll: "Bỏ chọn tất cả"
   },
   compoundListItem: {
-    sttHcPrefix: "SttHC: ",
+    sttRCPrefix: "sttRC: ",
     typePrefix: "Loại: ",
     latinPrefix: "Latin: "
   },
@@ -412,7 +412,7 @@ const viTranslations = {
         imaginaryFreq: "Số tần số ảo", totalEnergy: "Tổng năng lượng"
     },
     nmrDataTableSheet: {
-        title: "Bảng {{tableId}}: Dữ kiện phổ ¹H và ¹³C NMR của hợp chất {{compoundSttHC}}",
+        title: "Bảng {{tableId}}: Dữ kiện phổ ¹H và ¹³C NMR của hợp chất {{compoundsttRC}}",
         position: "Vị trí", deltaC: "δC (ppm)", deltaH: "δH (ppm, J Hz)"
     },
     nmrDetailsSheet: {
@@ -471,7 +471,7 @@ const viTranslations = {
     }
   },
   nmrView: {
-    title: "Bảng {{tableId}}: Dữ kiện phổ ¹H và ¹³C NMR của hợp chất {{compoundSttHC}}",
+    title: "Bảng {{tableId}}: Dữ kiện phổ ¹H và ¹³C NMR của hợp chất {{compoundsttRC}}",
     spectralDataTable: "Bảng dữ liệu phổ:",
     conditionsTable: "Một số lưu ý:",
     notes: "Ghi chú thêm về dữ liệu NMR:",

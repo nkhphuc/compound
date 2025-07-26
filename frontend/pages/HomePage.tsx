@@ -174,7 +174,7 @@ export const HomePage: React.FC = () => {
         // Generate Excel file as Blob
         const buffer = await exportCompoundToXlsx(compound, { returnBuffer: true });
         if (buffer) {
-          zip.file(`${compound.sttHC || compound.id}.xlsx`, buffer);
+          zip.file(`${compound.sttRC || compound.id}.xlsx`, buffer);
         }
       }
       const zipBlob = await zip.generateAsync({ type: 'blob' });

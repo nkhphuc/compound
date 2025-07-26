@@ -5,10 +5,10 @@ import { ChemicalFormulaDisplay } from './ui/ChemicalFormulaDisplay';
 
 interface NMRTableViewProps {
   nmrDataBlocks: NMRDataBlock[];
-  compoundSttHC: string;
+  compoundsttRC: string;
 }
 
-export const NMRTableView: React.FC<NMRTableViewProps> = ({ nmrDataBlocks, compoundSttHC }) => {
+export const NMRTableView: React.FC<NMRTableViewProps> = ({ nmrDataBlocks, compoundsttRC }) => {
   const { t } = useTranslation();
 
   if (!nmrDataBlocks || nmrDataBlocks.length === 0) return <p>{t('nmrView.noData')}</p>;
@@ -26,7 +26,7 @@ export const NMRTableView: React.FC<NMRTableViewProps> = ({ nmrDataBlocks, compo
         return (
           <div key={nmrDataBlock.id || idx} className="bg-white shadow-lg rounded-lg p-6 mb-8">
             <h3 className="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">
-              {t('nmrView.title', { tableId: nmrDataBlock.sttBang || t('variousLabels.notAvailable', 'N/A'), compoundSttHC })}
+              {t('nmrView.title', { tableId: nmrDataBlock.sttBang || t('variousLabels.notAvailable', 'N/A'), compoundsttRC })}
             </h3>
 
             {hasSignals && (

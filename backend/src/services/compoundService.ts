@@ -96,7 +96,7 @@ export class CompoundService {
     const queryParams: unknown[] = [];
 
     if (searchTerm) {
-      whereClauses.push(`(c.ten_hc ILIKE $${queryParams.length + 1} OR c.stt_hc::text ILIKE $${queryParams.length + 1} OR c.loai_hc ILIKE $${queryParams.length + 1})`);
+      whereClauses.push(`(c.ten_hc ILIKE $${queryParams.length + 1} OR c.stt_rc::text ILIKE $${queryParams.length + 1} OR c.loai_hc ILIKE $${queryParams.length + 1})`);
       queryParams.push(`%${searchTerm}%`);
     }
     if (loaiHC.length > 0) {
@@ -130,7 +130,7 @@ export class CompoundService {
     const countWhereClauses: string[] = [];
     let paramIdx = 1;
     if (searchTerm) {
-      countWhereClauses.push(`(ten_hc ILIKE $${paramIdx} OR stt_hc::text ILIKE $${paramIdx} OR loai_hc ILIKE $${paramIdx})`);
+      countWhereClauses.push(`(ten_hc ILIKE $${paramIdx} OR stt_rc::text ILIKE $${paramIdx} OR loai_hc ILIKE $${paramIdx})`);
       countParams.push(`%${searchTerm}%`);
       paramIdx++;
     }
@@ -360,7 +360,7 @@ export class CompoundService {
       // Update compound with JSONB fields
       const compoundQuery = `
         UPDATE compounds SET
-          stt_hc = $2, ten_hc = $3, ten_hc_khac = $4, loai_hc = $5, status = $6,
+          stt_rc = $2, ten_hc = $3, ten_hc_khac = $4, loai_hc = $5, status = $6,
           ten_latin = $7, ten_ta = $8, ten_tv = $9, bpnc = $10, nguon_khac = $11, trang_thai = $12,
           mau = $13, uv_sklm = $14, diem_nong_chay = $15, alpha_d = $16,
           dung_moi_hoa_tan_tcvl = $17, ctpt = $18, klpt = $19, hinh_cau_truc = $20,
@@ -371,7 +371,7 @@ export class CompoundService {
 
       const compoundValues = [
         id,
-        compoundData.sttHC ?? existingCompound.sttHC,
+        compoundData.sttRC ?? existingCompound.sttRC,
         compoundData.tenHC ?? existingCompound.tenHC,
         compoundData.tenHCKhac ?? existingCompound.tenHCKhac,
         compoundData.loaiHC ?? existingCompound.loaiHC,
@@ -497,9 +497,9 @@ export class CompoundService {
     return (result.rowCount || 0) > 0;
   }
 
-  async getNextSttHC(): Promise<number> {
-    const result = await pool.query('SELECT COALESCE(MAX(stt_hc), 0) + 1 as next_stt_hc FROM compounds');
-    return parseInt(result.rows[0].next_stt_hc);
+  async getNextsttRC(): Promise<number> {
+    const result = await pool.query('SELECT COALESCE(MAX(stt_rc), 0) + 1 as next_stt_rc FROM compounds');
+    return parseInt(result.rows[0].next_stt_rc);
   }
 
   async getNextSttBang(): Promise<number> {
@@ -576,7 +576,7 @@ export class CompoundService {
         const pho = typeof row.pho === 'string' ? JSON.parse(row.pho as string) : row.pho || {};
         const compound: CompoundData = {
           id: row.id as string,
-          sttHC: row.stt_hc as number,
+          sttRC: row.stt_rc as number,
           tenHC: row.ten_hc as string,
           tenHCKhac: row.ten_hc_khac as string | undefined,
           loaiHC: row.loai_hc as string,
