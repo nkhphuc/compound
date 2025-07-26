@@ -10,6 +10,9 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
 elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
     # Linux
     LAN_IP=$(ip route get 1.1.1.1 | grep -oP 'src \K\S+' | head -1)
+elif [[ "$OSTYPE" == "msys"* ]] || [[ "$OSTYPE" == "cygwin"* ]]; then
+    # Git Bash on Windows
+    LAN_IP=$(ipconfig | grep "IPv4" | grep -v "127.0.0.1" | head -1 | awk '{print $NF}')
 else
     # Fallback for other systems
     LAN_IP=$(hostname -I | awk '{print $1}')
