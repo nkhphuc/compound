@@ -167,6 +167,8 @@ export const HomePage: React.FC = () => {
     setIsExporting(true);
     try {
       const zip = new JSZip();
+      const usedFilenames = new Set<string>();
+
       // Fetch full data for each selected compound
       for (const id of selectedIds) {
         const compound = compounds.find(c => c.id === id);
@@ -174,7 +176,19 @@ export const HomePage: React.FC = () => {
         // Generate Excel file as Blob
         const buffer = await exportCompoundToXlsx(compound, { returnBuffer: true });
         if (buffer) {
-          zip.file(`${compound.sttRC || compound.id}.xlsx`, buffer);
+          // Use codeHC for filename if available, otherwise fallback to sttRC, then compound.id
+          const filenameIdentifier = compound.codeHC || compound.sttRC || compound.id;
+          let filename = `${filenameIdentifier}.xlsx`;
+
+          // Handle duplicate filenames by adding a counter suffix
+          let counter = 1;
+          while (usedFilenames.has(filename)) {
+            filename = `${filenameIdentifier}_${counter}.xlsx`;
+            counter++;
+          }
+
+          usedFilenames.add(filename);
+          zip.file(filename, buffer);
         }
       }
       const zipBlob = await zip.generateAsync({ type: 'blob' });

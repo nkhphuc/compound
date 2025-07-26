@@ -222,6 +222,8 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
         trangThai: parsedInitial.trangThai || '',
         mau: parsedInitial.mau || '',
         sttRC: typeof parsedInitial.sttRC === 'number' ? parsedInitial.sttRC : parseInt(String(parsedInitial.sttRC), 10) || 0,
+        sttHC: typeof parsedInitial.sttHC === 'number' ? parsedInitial.sttHC : (parsedInitial.sttHC ? parseInt(String(parsedInitial.sttHC), 10) : undefined),
+        codeHC: typeof parsedInitial.codeHC === 'number' ? parsedInitial.codeHC : (parsedInitial.codeHC ? parseInt(String(parsedInitial.codeHC), 10) : undefined),
         cauHinhTuyetDoi: typeof parsedInitial.cauHinhTuyetDoi === 'boolean' ? parsedInitial.cauHinhTuyetDoi : false,
         pho: sanitizedPho,
         nmrData: parsedInitial.nmrData || [{ ...initialNMRDataBlock, id: crypto.randomUUID() }]
@@ -434,6 +436,8 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
         setFormData(prev => ({ ...prev, cauHinhTuyetDoi: checked as boolean }));
     } else if (name === 'sttRC') {
         setFormData(prev => ({ ...prev, [name]: parseInt(value, 10) || 0 }));
+    } else if (name === 'sttHC' || name === 'codeHC') {
+        setFormData(prev => ({ ...prev, [name]: value === '' ? undefined : parseInt(value, 10) || 0 }));
     } else {
       setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
     }
@@ -929,7 +933,7 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
         />
       )}
       <SectionCard title={t('compoundForm.generalInfo.title')}>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-x-6">
           <div>
             <Input
               label={t('compoundForm.sttRC')}
@@ -941,9 +945,29 @@ export const CompoundForm: React.FC<CompoundFormProps> = ({ initialData, onSave,
             />
           </div>
           <div>
-            <Input label={t('compoundForm.tenHC')} name="tenHC" value={formData.tenHC} onChange={handleChange} aria-describedby="tenHC-error" required />
-            {formErrors.tenHC && <p id="tenHC-error" className="text-red-500 text-xs mt-1 mb-3">{formErrors.tenHC}</p>}
+            <Input
+              label={t('compoundForm.sttHC')}
+              name="sttHC"
+              type="number"
+              value={formData.sttHC || ''}
+              onChange={handleChange}
+              placeholder="Enter Compound ID"
+            />
           </div>
+          <div>
+            <Input
+              label={t('compoundForm.codeHC')}
+              name="codeHC"
+              type="number"
+              value={formData.codeHC || ''}
+              onChange={handleChange}
+              placeholder="Enter Compound Code"
+            />
+          </div>
+        </div>
+        <div className="mt-4">
+          <Input label={t('compoundForm.tenHC')} name="tenHC" value={formData.tenHC} onChange={handleChange} aria-describedby="tenHC-error" required />
+          {formErrors.tenHC && <p id="tenHC-error" className="text-red-500 text-xs mt-1 mb-3">{formErrors.tenHC}</p>}
         </div>
         <Input label={t('compoundForm.tenHCKhac')} name="tenHCKhac" value={formData.tenHCKhac || ''} onChange={handleChange} />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6">

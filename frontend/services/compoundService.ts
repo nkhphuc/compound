@@ -61,6 +61,8 @@ const ensureCompoundDataIntegrity = (compound: Partial<CompoundData>): CompoundD
     ...defaults,
     ...compound,
     sttRC: typeof compound.sttRC === 'number' ? compound.sttRC : (parseInt(String(compound.sttRC), 10) || 0),
+    sttHC: typeof compound.sttHC === 'number' ? compound.sttHC : (compound.sttHC ? parseInt(String(compound.sttHC), 10) : undefined),
+    codeHC: typeof compound.codeHC === 'number' ? compound.codeHC : (compound.codeHC ? parseInt(String(compound.codeHC), 10) : undefined),
     hinhCauTruc: compound.hinhCauTruc || '',
     status: compound.status || CompoundStatus.NEW,
     uvSklm: {

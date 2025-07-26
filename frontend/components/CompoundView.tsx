@@ -133,8 +133,7 @@ const renderSpectrumLinkOrPreview = (data: string[] | undefined, label: string, 
 
             return (
               <div key={index} className="border rounded-lg p-3 bg-gray-50">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-gray-700">{fileName}</span>
+                <div className="flex items-center justify-end mb-2">
                   <span className="text-xs text-gray-400">({index + 1}/{data.length})</span>
                 </div>
 
@@ -205,7 +204,7 @@ export const CompoundView: React.FC<CompoundViewProps> = ({ compound }) => {
   if (!compound) return <p className="text-center text-red-500">Compound data not found.</p>;
 
   // Conditions for showing sections
-  const hasGeneralInfo = !!(compound.sttRC || compound.tenHC || compound.tenHCKhac || compound.loaiHC || compound.status);
+  const hasGeneralInfo = !!(compound.sttRC || compound.sttHC || compound.codeHC || compound.tenHC || compound.tenHCKhac || compound.loaiHC || compound.status);
   const hasSourceData = !!(compound.tenLatin || compound.tenTA || compound.tenTV || compound.bpnc || compound.nguonKhac);
 
   const uvSklmHasTrueValue = compound.uvSklm && (compound.uvSklm.nm254 === true || compound.uvSklm.nm365 === true);
@@ -236,6 +235,8 @@ export const CompoundView: React.FC<CompoundViewProps> = ({ compound }) => {
         <SectionCard title={t('compoundForm.generalInfo.title')}>
           <dl className="divide-y divide-gray-200">
             <DataField label={t('compoundForm.sttRC')} value={compound.sttRC} />
+            <DataField label={t('compoundForm.sttHC')} value={compound.sttHC} />
+            <DataField label={t('compoundForm.codeHC')} value={compound.codeHC} />
             <DataField label={t('compoundForm.tenHC')} value={compound.tenHC} />
             <DataField label={t('compoundForm.tenHCKhac')} value={compound.tenHCKhac} />
             <DataField label={t('compoundForm.loaiHC')} value={compound.loaiHC} />

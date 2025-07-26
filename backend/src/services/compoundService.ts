@@ -196,7 +196,7 @@ export class CompoundService {
     return compounds[0];
   }
 
-  async createCompound(compoundData: Partial<CompoundData>): Promise<CompoundData> {
+    async createCompound(compoundData: Partial<CompoundData>): Promise<CompoundData> {
     const client = await pool.connect();
 
     try {
@@ -208,16 +208,18 @@ export class CompoundService {
       // Insert compound with JSONB fields
       const compoundQuery = `
         INSERT INTO compounds (
-          id, ten_hc, ten_hc_khac, loai_hc, status, ten_latin, ten_ta, ten_tv, bpnc, nguon_khac,
+          id, stt_hc, code_hc, ten_hc, ten_hc_khac, loai_hc, status, ten_latin, ten_ta, ten_tv, bpnc, nguon_khac,
           trang_thai, mau, uv_sklm, diem_nong_chay, alpha_d, dung_moi_hoa_tan_tcvl,
           ctpt, klpt, hinh_cau_truc, cau_hinh_tuyet_doi, smiles, pho,
           dm_nmr_general, cart_coor, img_freq, te
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28)
         RETURNING *
       `;
 
       const compoundValues = [
         compoundId,
+        compoundData.sttHC || null,
+        compoundData.codeHC || null,
         compoundData.tenHC || '',
         compoundData.tenHCKhac || null,
         compoundData.loaiHC || '',
@@ -296,7 +298,7 @@ export class CompoundService {
     }
   }
 
-  async updateCompound(id: string, compoundData: Partial<CompoundData>): Promise<CompoundData | null> {
+    async updateCompound(id: string, compoundData: Partial<CompoundData>): Promise<CompoundData | null> {
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
@@ -360,18 +362,20 @@ export class CompoundService {
       // Update compound with JSONB fields
       const compoundQuery = `
         UPDATE compounds SET
-          stt_rc = $2, ten_hc = $3, ten_hc_khac = $4, loai_hc = $5, status = $6,
-          ten_latin = $7, ten_ta = $8, ten_tv = $9, bpnc = $10, nguon_khac = $11, trang_thai = $12,
-          mau = $13, uv_sklm = $14, diem_nong_chay = $15, alpha_d = $16,
-          dung_moi_hoa_tan_tcvl = $17, ctpt = $18, klpt = $19, hinh_cau_truc = $20,
-          cau_hinh_tuyet_doi = $21, smiles = $22, pho = $23, dm_nmr_general = $24,
-          cart_coor = $25, img_freq = $26, te = $27, updated_at = CURRENT_TIMESTAMP
+          stt_rc = $2, stt_hc = $3, code_hc = $4, ten_hc = $5, ten_hc_khac = $6, loai_hc = $7, status = $8,
+          ten_latin = $9, ten_ta = $10, ten_tv = $11, bpnc = $12, nguon_khac = $13, trang_thai = $14,
+          mau = $15, uv_sklm = $16, diem_nong_chay = $17, alpha_d = $18,
+          dung_moi_hoa_tan_tcvl = $19, ctpt = $20, klpt = $21, hinh_cau_truc = $22,
+          cau_hinh_tuyet_doi = $23, smiles = $24, pho = $25, dm_nmr_general = $26,
+          cart_coor = $27, img_freq = $28, te = $29, updated_at = CURRENT_TIMESTAMP
         WHERE id = $1
       `;
 
       const compoundValues = [
         id,
         compoundData.sttRC ?? existingCompound.sttRC,
+        compoundData.sttHC ?? existingCompound.sttHC,
+        compoundData.codeHC ?? existingCompound.codeHC,
         compoundData.tenHC ?? existingCompound.tenHC,
         compoundData.tenHCKhac ?? existingCompound.tenHCKhac,
         compoundData.loaiHC ?? existingCompound.loaiHC,
@@ -577,6 +581,8 @@ export class CompoundService {
         const compound: CompoundData = {
           id: row.id as string,
           sttRC: row.stt_rc as number,
+          sttHC: row.stt_hc as number | undefined,
+          codeHC: row.code_hc as number | undefined,
           tenHC: row.ten_hc as string,
           tenHCKhac: row.ten_hc_khac as string | undefined,
           loaiHC: row.loai_hc as string,

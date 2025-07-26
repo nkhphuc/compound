@@ -53,6 +53,8 @@ const enTranslations = {
     nmrData: { title: "NMR Data" },
     sttRC: "Record ID",
     sttRCPlaceholder: "Auto-assigned on save",
+    sttHC: "Compound ID",
+    codeHC: "Compound Code",
     tenHC: "Compound Name",
     tenHCKhac: "Other Name",
     loaiHC: "Compound Type",
@@ -103,7 +105,6 @@ const enTranslations = {
     clearAll: "Clear All Selected"
   },
   compoundListItem: {
-    sttRCPrefix: "sttRC: ",
     typePrefix: "Type: ",
     latinPrefix: "Latin: "
   },
@@ -302,10 +303,12 @@ const viTranslations = {
     nmrData: { title: "Dữ liệu NMR" },
     sttRC: "Stt bản ghi (ID)",
     sttRCPlaceholder: "Tự động gán khi lưu",
-    tenHC: "Tên HC",
+    sttHC: "ID Hợp chất",
+    codeHC: "Mã Hợp chất",
+    tenHC: "Tên Hợp chất",
     tenHCKhac: "Tên khác",
-    loaiHC: "Loại HC",
-    selectLoaiHC: "Chọn Loại HC",
+    loaiHC: "Loại Hợp chất",
+    selectLoaiHC: "Chọn Loại Hợp chất",
     customLoaiHCPlaceholder: "Nhập loại tùy chỉnh",
     statusLabel: "Trạng thái chất",
     selectStatus: "Chọn Trạng thái",
@@ -352,7 +355,6 @@ const viTranslations = {
     clearAll: "Bỏ chọn tất cả"
   },
   compoundListItem: {
-    sttRCPrefix: "sttRC: ",
     typePrefix: "Loại: ",
     latinPrefix: "Latin: "
   },

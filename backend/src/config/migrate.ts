@@ -9,6 +9,8 @@ const createTables = async () => {
       CREATE TABLE IF NOT EXISTS compounds (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         stt_rc SERIAL NOT NULL UNIQUE,
+        stt_hc INTEGER,
+        code_hc INTEGER,
         ten_hc VARCHAR(255) NOT NULL,
         ten_hc_khac VARCHAR(255),
         loai_hc VARCHAR(100) NOT NULL,
@@ -114,6 +116,34 @@ const createTables = async () => {
       END $$;
     `);
 
+    // Add stt_hc column if it doesn't exist
+    await client.query(`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.columns
+          WHERE table_name = 'compounds'
+          AND column_name = 'stt_hc'
+        ) THEN
+          ALTER TABLE compounds ADD COLUMN stt_hc INTEGER;
+        END IF;
+      END $$;
+    `);
+
+    // Add code_hc column if it doesn't exist
+    await client.query(`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.columns
+          WHERE table_name = 'compounds'
+          AND column_name = 'code_hc'
+        ) THEN
+          ALTER TABLE compounds ADD COLUMN code_hc INTEGER;
+        END IF;
+      END $$;
+    `);
+
     // Create regular (non-unique) index for performance
     await client.query(`
       CREATE INDEX IF NOT EXISTS idx_nmr_data_blocks_compound_id ON nmr_data_blocks(compound_id);
@@ -136,6 +166,8 @@ const createTables = async () => {
     // Create indexes for better performance
     await client.query(`
       CREATE INDEX IF NOT EXISTS idx_compounds_stt_rc ON compounds(stt_rc);
+      CREATE INDEX IF NOT EXISTS idx_compounds_stt_hc ON compounds(stt_hc);
+      CREATE INDEX IF NOT EXISTS idx_compounds_code_hc ON compounds(code_hc);
       CREATE INDEX IF NOT EXISTS idx_compounds_ten_hc ON compounds(ten_hc);
       CREATE INDEX IF NOT EXISTS idx_compounds_loai_hc ON compounds(loai_hc);
       CREATE INDEX IF NOT EXISTS idx_compounds_created_at ON compounds(created_at DESC);

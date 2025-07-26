@@ -155,7 +155,9 @@ export const exportCompoundToXlsx = async (compound: CompoundData, options?: { r
   const yes = t('excelExport.common.yes', 'X');
   const no = t('excelExport.common.no', '-');
 
-  mainInfoSheet.getCell(rowNum, 1).value = compound.sttRC || notAvailable;
+  // Prioritize codeHC over sttRC for display
+  const compoundIdentifier = compound.codeHC || compound.sttRC || notAvailable;
+  mainInfoSheet.getCell(rowNum, 1).value = compoundIdentifier;
   applyCellStyle(mainInfoSheet.getCell(rowNum, 1), false, {horizontal: 'left', vertical: 'middle'});
   mainInfoSheet.getCell(rowNum, 2).value = { richText: [{text: compound.tenHC || t('excelExport.mainInfo.untitledCompound', 'Untitled Compound'), font: {bold: true, size: 11, name: 'Arial', family:2}}] };
   mainInfoSheet.mergeCells(rowNum, 2, rowNum, 14);
@@ -320,7 +322,9 @@ export const exportCompoundToXlsx = async (compound: CompoundData, options?: { r
     nmrTableSheet.columns = [{ width: 15 }, { width: 20 }, { width: 40 }];
     let nmrTableRowNum = 1;
     const nmrTitleCell = nmrTableSheet.getCell(nmrTableRowNum, 1);
-    nmrTitleCell.value = t('excelExport.nmrDataTableSheet.title', { tableId: nmrBlock.sttBang || notAvailable, compoundsttRC: compound.sttRC || notAvailable });
+    // Prioritize codeHC over sttRC for display
+    const compoundIdentifier = compound.codeHC || compound.sttRC || notAvailable;
+    nmrTitleCell.value = t('excelExport.nmrDataTableSheet.title', { tableId: nmrBlock.sttBang || notAvailable, compoundsttRC: compoundIdentifier });
     nmrTableSheet.mergeCells(nmrTableRowNum, 1, nmrTableRowNum, 3);
     applyCellStyle(nmrTitleCell, true, {horizontal: 'center', vertical: 'middle'});
     nmrTitleCell.font = { name: 'Arial', size: 11, bold: true, family: 2 };
@@ -503,7 +507,9 @@ export const exportCompoundToXlsx = async (compound: CompoundData, options?: { r
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `${compound.sttRC || 'ID'}_${(compound.tenHC || t('excelExport.mainInfo.untitledCompound', 'compound')).replace(/[:*?"<>|/\\]/g, '_')}.xlsx`;
+      // Use codeHC for filename if available, otherwise fallback to sttRC
+    const filenameIdentifier = compound.codeHC || compound.sttRC || 'ID';
+    a.download = `${filenameIdentifier}_${(compound.tenHC || t('excelExport.mainInfo.untitledCompound', 'compound')).replace(/[:*?"<>|/\\]/g, '_')}.xlsx`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
