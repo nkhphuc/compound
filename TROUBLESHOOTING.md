@@ -327,6 +327,39 @@ Then kill the conflicting process or change ports in `docker-compose.yml`
 2. Add your project folder to antivirus exclusions
 3. Temporarily disable antivirus for testing
 
+#### Shell Script Compatibility Issues
+
+##### 1. MinIO Initialization Script Errors
+
+**Symptoms**:
+
+```
+/minio-init.sh: line 2: set: -e
+set: usage: set [-abefhkmnptuvxBCHP] [-o option-name] [--] [arg...]
+```
+
+**Solution**: The script has been updated to be compatible with different shell environments. If you still see this error:
+
+1. Restart the MinIO initialization container:
+
+   ```bash
+   docker-compose restart minio-init
+   ```
+
+2. Check the logs:
+
+   ```bash
+   docker logs compound-minio-init-1
+   ```
+
+3. If the issue persists, manually create the bucket:
+
+   ```bash
+   docker exec compound-minio mc mb local/compound-uploads
+   docker exec compound-minio mc anonymous set download local/compound-uploads
+   docker exec compound-minio mc policy set download local/compound-uploads
+   ```
+
 ### Advanced Troubleshooting
 
 #### 1. Complete Reset

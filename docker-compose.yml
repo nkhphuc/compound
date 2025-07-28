@@ -51,7 +51,7 @@ services:
     volumes:
       - ./minio-init.sh:/minio-init.sh:ro
       - ./minio-cors.xml:/minio-cors.xml:ro
-    entrypoint: /bin/sh /minio-init.sh
+    entrypoint: ["/bin/sh", "/minio-init.sh"]
     networks:
       - compound-network
     restart: on-failure
