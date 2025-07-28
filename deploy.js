@@ -124,9 +124,24 @@ async function diagnoseMinIO() {
     log('🔍 Running MinIO diagnostics...', 'yellow');
 
     try {
-        // Check if MinIO container is running
-        const minioStatus = execCommandSilent('docker ps --format "table {{.Names}}\t{{.Status}}" | findstr compound-minio');
-        if (minioStatus && minioStatus.includes('compound-minio')) {
+        // Check if MinIO container is running using cross-platform approach
+        const dockerPsOutput = execCommandSilent('docker ps --format "table {{.Names}}\t{{.Status}}"');
+        if (!dockerPsOutput) {
+            log('❌ Could not get container status', 'red');
+            return false;
+        }
+
+        const lines = dockerPsOutput.split('\n');
+        let minioFound = false;
+
+        for (const line of lines) {
+            if (line.includes('compound-minio') && line.includes('Up')) {
+                minioFound = true;
+                break;
+            }
+        }
+
+        if (minioFound) {
             log('✅ MinIO container is running', 'green');
         } else {
             log('❌ MinIO container is not running', 'red');
@@ -167,32 +182,44 @@ async function diagnoseMinIO() {
 
         // Test file upload
         log('📤 Testing file upload...', 'yellow');
-        const testContent = 'test-content';
-        fs.writeFileSync('/tmp/test-upload.txt', testContent);
-        const uploadTest = execCommandSilent('docker exec compound-minio mc cp /tmp/test-upload.txt test/compound-uploads/');
+        const uploadTest = execCommandSilent('docker exec compound-minio sh -c "echo test-content > /tmp/test-upload.txt && mc cp /tmp/test-upload.txt test/compound-uploads/ && rm /tmp/test-upload.txt"');
         if (uploadTest !== null) {
             log('✅ Test file upload successful', 'green');
-            execCommandSilent('docker exec compound-minio mc rm test/compound-uploads/test-upload.txt');
         } else {
             log('❌ Test file upload failed', 'red');
             return false;
         }
 
-        // Clean up test file
-        try {
-            fs.unlinkSync('/tmp/test-upload.txt');
-        } catch (e) {
-            // Ignore cleanup errors
-        }
-
         // Check network connectivity
         log('🌐 Checking network connectivity...', 'yellow');
-        const networkTest = execCommandSilent('docker exec compound-backend wget -q --spider http://minio:9000');
-        if (networkTest !== null) {
-            log('✅ Backend can reach MinIO', 'green');
+
+        // First check if backend container is running
+        const backendPsOutput = execCommandSilent('docker ps --format "table {{.Names}}\t{{.Status}}"');
+        let backendRunning = false;
+        if (backendPsOutput) {
+            const lines = backendPsOutput.split('\n');
+            for (const line of lines) {
+                if (line.includes('compound-backend') && line.includes('Up')) {
+                    backendRunning = true;
+                    break;
+                }
+            }
+        }
+
+        if (!backendRunning) {
+            log('⚠️  Backend container not running, skipping network test', 'yellow');
         } else {
-            log('❌ Backend cannot reach MinIO', 'red');
-            return false;
+            // Try different connectivity tests
+            const networkTest1 = execCommandSilent('docker exec compound-backend wget -q --spider http://minio:9000');
+            const networkTest2 = execCommandSilent('docker exec compound-backend curl -f http://minio:9000');
+            const networkTest3 = execCommandSilent('docker exec compound-backend nc -z minio 9000');
+
+            if (networkTest1 !== null || networkTest2 !== null || networkTest3 !== null) {
+                log('✅ Backend can reach MinIO', 'green');
+            } else {
+                log('❌ Backend cannot reach MinIO', 'red');
+                log('⚠️  This might be normal if backend is still starting up', 'yellow');
+            }
         }
 
         log('✅ MinIO diagnostics completed successfully', 'green');

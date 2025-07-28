@@ -50,6 +50,16 @@ function wait(seconds) {
     return new Promise(resolve => setTimeout(resolve, seconds * 1000));
 }
 
+// Cross-platform grep function
+function grepCommand(pattern) {
+    const platform = os.platform();
+    if (platform === 'win32') {
+        return `findstr "${pattern}"`;
+    } else {
+        return `grep "${pattern}"`;
+    }
+}
+
 async function checkDockerStatus() {
     log('🔍 Checking Docker status...', 'yellow');
 
@@ -128,9 +138,24 @@ async function checkMinIOHealth() {
     log('🔍 Checking MinIO health...', 'yellow');
 
     try {
-        // Check if MinIO container is running
-        const minioStatus = execCommandSilent('docker ps --format "table {{.Names}}\t{{.Status}}" | findstr compound-minio');
-        if (!minioStatus || !minioStatus.includes('compound-minio')) {
+        // Check if MinIO container is running using cross-platform approach
+        const dockerPsOutput = execCommandSilent('docker ps --format "table {{.Names}}\t{{.Status}}"');
+        if (!dockerPsOutput) {
+            log('❌ Could not get container status', 'red');
+            return false;
+        }
+
+        const lines = dockerPsOutput.split('\n');
+        let minioFound = false;
+
+        for (const line of lines) {
+            if (line.includes('compound-minio') && line.includes('Up')) {
+                minioFound = true;
+                break;
+            }
+        }
+
+        if (!minioFound) {
             log('❌ MinIO container is not running', 'red');
             return false;
         }
@@ -168,9 +193,24 @@ async function checkBackendHealth() {
     log('🔍 Checking backend health...', 'yellow');
 
     try {
-        // Check if backend container is running
-        const backendStatus = execCommandSilent('docker ps --format "table {{.Names}}\t{{.Status}}" | findstr compound-backend');
-        if (!backendStatus || !backendStatus.includes('compound-backend')) {
+        // Check if backend container is running using cross-platform approach
+        const dockerPsOutput = execCommandSilent('docker ps --format "table {{.Names}}\t{{.Status}}"');
+        if (!dockerPsOutput) {
+            log('❌ Could not get container status', 'red');
+            return false;
+        }
+
+        const lines = dockerPsOutput.split('\n');
+        let backendFound = false;
+
+        for (const line of lines) {
+            if (line.includes('compound-backend') && line.includes('Up')) {
+                backendFound = true;
+                break;
+            }
+        }
+
+        if (!backendFound) {
             log('❌ Backend container is not running', 'red');
             return false;
         }
