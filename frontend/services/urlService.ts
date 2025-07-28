@@ -15,6 +15,12 @@ export function getImageUrl(url: string) {
     return `${S3_PUBLIC_ENDPOINT}${url}`;
   }
 
+  // If it's a path that includes the bucket name (e.g., /compound-uploads/filename.jpg)
+  // This handles the case where backend stores files with bucket name in path
+  if (url.includes('/compound-uploads/')) {
+    return `${S3_PUBLIC_ENDPOINT}${url}`;
+  }
+
   // Return as is if it doesn't match any pattern
   return url;
 }

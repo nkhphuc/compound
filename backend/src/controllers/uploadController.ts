@@ -46,8 +46,8 @@ export const uploadFile = async (req: Request, res: Response): Promise<void> => 
     };
     await s3Client.send(new PutObjectCommand(putParams));
 
-    // Save only the file path, not the full URL
-    const filePath = `/${S3_CONFIG.BUCKET}/${fileName}`;
+    // Save only the file path without bucket name, nginx will handle routing
+    const filePath = `/compound-uploads/${fileName}`;
 
     res.json({
       success: true,
@@ -86,7 +86,7 @@ export const uploadMultipleFiles = async (req: Request, res: Response): Promise<
       };
       await s3Client.send(new PutObjectCommand(putParams));
       return {
-        url: `/${S3_CONFIG.BUCKET}/${fileName}`,
+        url: `/compound-uploads/${fileName}`,
         filename: fileName,
         originalName: file.name,
         size: file.size,
