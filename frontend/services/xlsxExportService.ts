@@ -25,19 +25,81 @@ function base64ToBuffer(base64String: string): ArrayBuffer | null {
 }
 
 // Helper to fetch image from HTTP URL and convert to buffer for ExcelJS
-async function urlToBuffer(imageUrl: string): Promise<ArrayBuffer | null> {
-  try {
-    const response = await fetch(imageUrl);
-    if (!response.ok) {
-      console.error("Failed to fetch image:", response.status, response.statusText);
-      return null;
-    }
-    const blob = await response.blob();
-    return await blob.arrayBuffer();
-  } catch (e) {
-    console.error("Error fetching image from URL:", e);
+async function urlToBuffer(imageUrl: string, retries: number = 2): Promise<ArrayBuffer | null> {
+  // Validate URL format
+  if (!imageUrl || typeof imageUrl !== 'string') {
+    console.error('Invalid image URL provided:', imageUrl);
     return null;
   }
+
+  // Try to construct a valid URL
+  let validUrl: string;
+  try {
+    // If it's a relative URL, make it absolute
+    if (imageUrl.startsWith('/')) {
+      validUrl = `${window.location.origin}${imageUrl}`;
+    } else {
+      validUrl = imageUrl;
+    }
+    // Test if it's a valid URL
+    new URL(validUrl);
+  } catch (error) {
+    console.error('Invalid URL format:', imageUrl, error);
+    return null;
+  }
+
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      console.log(`Attempting to fetch image from URL: ${validUrl} (attempt ${attempt + 1}/${retries + 1})`);
+
+      // Add timeout to prevent hanging requests
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+      const response = await fetch(validUrl, {
+        signal: controller.signal,
+        mode: 'cors', // Try to handle CORS issues
+        credentials: 'omit' // Don't send cookies to avoid CORS issues
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        console.error(`Failed to fetch image: HTTP ${response.status} ${response.statusText} for URL: ${validUrl}`);
+        if (attempt === retries) return null;
+        continue; // Retry on next attempt
+      }
+
+      // Check if the response is actually an image
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.startsWith('image/')) {
+        console.error(`Invalid content type for image: ${contentType} for URL: ${validUrl}`);
+        if (attempt === retries) return null;
+        continue; // Retry on next attempt
+      }
+
+      const blob = await response.blob();
+      const arrayBuffer = await blob.arrayBuffer();
+
+      console.log(`Successfully fetched image from URL: ${validUrl}, size: ${arrayBuffer.byteLength} bytes`);
+      return arrayBuffer;
+    } catch (e) {
+      if (e instanceof Error) {
+        if (e.name === 'AbortError') {
+          console.error(`Image fetch timeout for URL: ${validUrl} (attempt ${attempt + 1})`);
+        } else {
+          console.error(`Error fetching image from URL: ${validUrl} (attempt ${attempt + 1})`, e.message);
+        }
+      } else {
+        console.error(`Unknown error fetching image from URL: ${validUrl} (attempt ${attempt + 1})`, e);
+      }
+
+      if (attempt === retries) return null;
+      // Wait a bit before retrying
+      await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
+    }
+  }
+  return null;
 }
 
 // Helper to get image extension from URL or data URL
@@ -237,11 +299,23 @@ export const exportCompoundToXlsx = async (compound: CompoundData, options?: { r
     let imageBuffer: ArrayBuffer | null = null;
 
     if (compound.hinhCauTruc.startsWith('data:image')) {
+      console.log('Processing structure image from base64 data');
       imageBuffer = base64ToBuffer(compound.hinhCauTruc);
+      if (imageBuffer) {
+        console.log('Successfully processed base64 structure image');
+      } else {
+        console.warn('Failed to process base64 structure image');
+      }
     } else if (compound.hinhCauTruc.startsWith('http') || compound.hinhCauTruc.startsWith('/compound-uploads/')) {
       // Use getImageUrl to build proper URL for S3 paths
       const fullImageUrl = getImageUrl(compound.hinhCauTruc);
+      console.log(`Processing structure image from URL: ${compound.hinhCauTruc} -> ${fullImageUrl}`);
       imageBuffer = await urlToBuffer(fullImageUrl);
+      if (imageBuffer) {
+        console.log('Successfully loaded structure image from URL');
+      } else {
+        console.warn(`Failed to load structure image from URL: ${fullImageUrl}`);
+      }
     }
 
     if (imageBuffer) {
@@ -255,6 +329,8 @@ export const exportCompoundToXlsx = async (compound: CompoundData, options?: { r
         mainInfoSheet.getRow(imageDisplayStartRow + i).height = 15; // 15 points per row
         for(let j=2; j<=14; j++) { applyCellStyle(mainInfoSheet.getCell(imageDisplayStartRow + i, j), false, undefined, { top: i === 0 ? {style: 'thin'} : undefined, bottom: i === imageRowsToSpan -1 ? {style:'thin'} : undefined, left: j === 2 ? {style:'thin'} : undefined, right: j === 14 ? {style: 'thin'} : undefined }); }
       }
+    } else {
+      console.warn('Structure image could not be loaded, creating placeholder cells');
     }
   } else { for(let i = 0; i < imageRowsToSpan; i++) { for(let j=2; j<=14; j++) { applyCellStyle(mainInfoSheet.getCell(imageDisplayStartRow + i, j)); } } }
   rowNum += imageRowsToSpan;
@@ -434,6 +510,8 @@ export const exportCompoundToXlsx = async (compound: CompoundData, options?: { r
           }
         } else if (fileUrl.startsWith('http') || fileUrl.startsWith('/compound-uploads/')) {
           const fullImageUrl = getImageUrl(fileUrl);
+          console.log(`Processing spectra image: ${fileUrl} -> ${fullImageUrl}`);
+
           const imageBuffer = await urlToBuffer(fullImageUrl);
           if (imageBuffer) {
             const extension = getImageExtension(fileUrl);
@@ -443,7 +521,9 @@ export const exportCompoundToXlsx = async (compound: CompoundData, options?: { r
               ext: { width: imagePixelWidth, height: imagePixelHeight }
             });
             imageCount++;
+            console.log(`Successfully added image to Excel: ${fileName}`);
           } else {
+            console.warn(`Failed to load image for spectra: ${fileName} from URL: ${fullImageUrl}`);
             const urlCell = spectraImagesSheet.getCell(1, colPointer);
             urlCell.value = {text: `${t('variousLabels.spectraViewExternalUrl', {label: t(fieldConfig.labelKey, fieldConfig.key)})} - ${fileName}`, hyperlink: fullImageUrl};
             urlCell.font = {color: {argb: 'FF0000FF'}, underline: true, name: 'Arial', size: 10, family: 2};
