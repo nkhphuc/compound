@@ -1,120 +1,219 @@
-# Compound Chemistry Data Manager
+# Compound Chemistry Application
 
-A full-stack application for managing chemical compound data, supporting multi-file uploads, advanced search, and bulk Excel export. Built with React, Express.js, and PostgreSQL.
+A web application for managing chemical compound data with image upload capabilities.
 
-## ✨ Features
+## 🚀 Quick Start (One Command)
 
-- Manage chemical compound data with rich metadata
-- Multi-file upload for spectral data and structure images
-- Bulk Excel export: select multiple compounds and export all as a ZIP of Excel files
-- Advanced search and filtering
-- Excel export for individual compounds
-- File upload to S3/MinIO
-- Responsive UI with i18n (English/Vietnamese)
-
-## 🚀 Quick Start
-
-### Prerequisites
-
-- Node.js 22+
-- pnpm 10+
-- PostgreSQL 16+
-- Docker (optional, for containerized setup)
-
-### Setup & Usage
+**To start the application on any computer:**
 
 ```bash
-# Clone and install dependencies
-pnpm install
-
-# Copy and edit backend environment file
-cp backend/env.example backend/.env
-# Edit backend/.env with your database URL
-
-# Run database migrations
-pnpm --filter backend db:migrate
-
-# Start development servers (frontend & backend)
-pnpm dev
-# Or start individually
-pnpm dev:frontend  # Frontend: http://localhost:5173
-pnpm dev:backend   # Backend: http://localhost:3002
+node start-app.js
 ```
 
-## 🐳 Production Deployment
+This single command will:
+1. ✅ Fix any line ending issues
+2. ✅ Start all services (database, MinIO, backend, frontend)
+3. ✅ Run diagnostics to verify everything works
+4. ✅ Show you the URLs to access the application
 
-### Prerequisites for Deployment
+## 📱 Access the Application
 
-- Docker Desktop installed and running
-- Docker Compose available
-- Port 80 available on your machine
+After running `node start-app.js`, open your browser to:
+- **Main App**: http://localhost
+- **MinIO Console**: http://localhost:9001 (admin/minioadmin)
 
-### Deployment
+## 🛠️ Useful Commands
 
-We provide a cross-platform Node.js deployment script that works on all platforms:
-
-```bash
-# Deploy the application
-node deploy.js
-```
-
-### What the Deployment Does
-
-The deployment script will:
-
-1. 🔍 Auto-detect your LAN IP address for mobile access
-2. 📁 Create necessary directories (`db/data`, `uploads`)
-3. 🐳 Stop existing containers and build new ones
-4. 🚀 Start all services (PostgreSQL, MinIO, Backend, Frontend, Nginx)
-5. ⏳ Wait for services to be ready
-6. 🔍 Run MinIO diagnostics to ensure upload functionality
-7. 📊 Display service status and access URLs
-
-### Access Your Application
-
-After deployment, you can access:
-
-- **Frontend**: <http://your-ip-address>
-- **Backend API**: <http://your-ip-address/api>
-- **Health Check**: <http://your-ip-address/health>
-- **Mobile Access**: Same URLs from any device on the same network
-
-### Troubleshooting
-
-If you experience upload issues or other problems:
-
-```bash
-# Run comprehensive diagnostics
-node troubleshoot.js
-
-# For specific issues:
-node troubleshoot.js --help
-```
-
-For detailed troubleshooting guidance, see `TROUBLESHOOTING.md`.
-
-### Useful Commands
-
-```bash
-# View logs
-docker-compose logs -f
-
-# Stop services
-docker-compose down
-
-# Restart services
-docker-compose restart
-
-# Check service status
-docker-compose ps
-```
-
-## 📝 Usage Notes
-
-- **Multi-file upload:** Upload multiple files for each spectral field and structure image. Drag-and-drop and preview supported.
-- **Bulk Excel export:** Select compounds on the main page, then click "Bulk Excel Export" to download a ZIP of Excel files.
-- **Clear selection:** Use the "Clear All Selected" button to reset your selection.
+| Command | What it does |
+|---------|-------------|
+| `node start-app.js` | **Start everything** (recommended) |
+| `node deploy.js` | Deploy without line ending fixes |
+| `node deploy.js --diagnose` | Check if everything is working |
+| `node troubleshoot.js` | Detailed troubleshooting |
+| `docker-compose down` | Stop the application |
 
 ---
 
-For more details, see code comments and in-app help.
+## 📋 Step-by-Step Setup
+
+### Prerequisites
+- Docker Desktop
+- Node.js (version 16 or higher)
+
+### Setup Process
+
+1. **Navigate to project folder**
+   ```bash
+   cd /path/to/your/compound/project
+   ```
+
+2. **Start the application**
+   ```bash
+   node start-app.js
+   ```
+
+3. **Access the app**
+   - Open browser to http://localhost
+   - Upload images and test functionality
+
+---
+
+## 🆘 Troubleshooting
+
+### Common Issues & Solutions
+
+#### **Problem**: "Line ending errors" or "syntax errors"
+**Solution**:
+```bash
+./fix-line-endings.sh
+docker-compose restart minio-init
+```
+
+#### **Problem**: "Access denied" or "Cannot connect to MinIO"
+**Solution**:
+```bash
+node troubleshoot.js --fix-minio
+```
+
+#### **Problem**: "Port already in use"
+**Solution**:
+```bash
+docker-compose down
+node deploy.js
+```
+
+#### **Problem**: "Docker not running"
+**Solution**:
+1. Open Docker Desktop
+2. Wait for it to fully start
+3. Try again
+
+#### **Problem**: Images show "URL ngoài" instead of preview
+**Solution**:
+```bash
+node troubleshoot.js --fix-minio
+```
+
+#### **Problem**: Images don't upload at all
+**Check**:
+- File size (max 100MB)
+- File type (JPEG, PNG, GIF, WebP, SVG)
+- Run: `node troubleshoot.js`
+
+### Platform-Specific Issues
+
+#### Windows Users
+- Use `node start-app.js` (recommended)
+- Ensure Docker Desktop is running
+- Run Command Prompt as Administrator if needed
+
+#### Unix/Linux/macOS Users
+- Use `node start-app.js` (recommended)
+- Ensure Docker daemon is running
+- Use `sudo` when needed for file operations
+
+### Advanced Troubleshooting
+
+#### Complete Reset (if nothing else works)
+```bash
+docker-compose down
+sudo rm -rf ./uploads/*
+sudo rm -rf ./db/data/*
+node start-app.js
+```
+
+#### Check Service Status
+```bash
+node troubleshoot.js --services
+```
+
+#### Check MinIO Health
+```bash
+node troubleshoot.js --minio
+```
+
+#### Check Backend Health
+```bash
+node troubleshoot.js --backend
+```
+
+#### View Logs
+```bash
+# All services
+docker-compose logs -f
+
+# Specific service
+docker logs compound-backend
+docker logs compound-minio
+docker logs compound-frontend
+```
+
+---
+
+## ✅ Success Indicators
+
+You'll know everything is working when:
+1. `node deploy.js --diagnose` shows all green checkmarks ✅
+2. You can access http://localhost in your browser
+3. You can upload images without errors
+4. Images display correctly in the compound view
+
+---
+
+## 🔄 Daily Usage
+
+**To start the app:**
+```bash
+node start-app.js
+```
+
+**To stop the app:**
+```bash
+docker-compose down
+```
+
+**To restart if something breaks:**
+```bash
+node troubleshoot.js --restart
+```
+
+---
+
+## 🔧 Development
+
+### Project Structure
+```
+compound/
+├── frontend/          # React application
+├── backend/           # Express.js API
+├── nginx/            # Reverse proxy
+├── docker-compose.yml # Service orchestration
+└── start-app.js      # One-command startup
+```
+
+### Architecture
+All services are routed through nginx on port 80:
+- Frontend: / (static files)
+- Backend API: /api/*
+- S3/MinIO: /s3/*
+- Health Check: /health
+
+---
+
+## 🆘 Need Help?
+
+1. **First**: Try `node start-app.js`
+2. **If that fails**: Check the troubleshooting section above
+3. **Still stuck**: Run `node troubleshoot.js` for automated fixes
+4. **For detailed logs**: Check the logs section above
+
+### Quick Reference
+
+| Issue | Command | Expected Result |
+|-------|---------|-----------------|
+| Upload fails | `node troubleshoot.js --minio` | ✅ MinIO is healthy |
+| Services not starting | `node troubleshoot.js --services` | ✅ All services running |
+| Docker issues | `node troubleshoot.js --docker` | ✅ Docker is installed |
+| Complete reset | `node troubleshoot.js --restart` | ✅ All services restarted |
+| MinIO issues | `node troubleshoot.js --fix-minio` | ✅ MinIO fixed |
+| Full diagnostic | `node troubleshoot.js` | ✅ All checks passed |
