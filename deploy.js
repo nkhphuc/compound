@@ -34,6 +34,18 @@ function execCommand(command, options = {}) {
     }
 }
 
+function execCommandSilent(command, options = {}) {
+    try {
+        return execSync(command, {
+            stdio: 'pipe',
+            encoding: 'utf8',
+            ...options
+        });
+    } catch (error) {
+        return null;
+    }
+}
+
 function getLocalIP() {
     const interfaces = os.networkInterfaces();
     const platform = os.platform();
@@ -108,6 +120,118 @@ function wait(seconds) {
     return new Promise(resolve => setTimeout(resolve, seconds * 1000));
 }
 
+async function diagnoseMinIO() {
+    log('🔍 Running MinIO diagnostics...', 'yellow');
+
+    try {
+        // Check if MinIO container is running
+        const minioStatus = execCommandSilent('docker ps --format "table {{.Names}}\t{{.Status}}" | findstr compound-minio');
+        if (minioStatus && minioStatus.includes('compound-minio')) {
+            log('✅ MinIO container is running', 'green');
+        } else {
+            log('❌ MinIO container is not running', 'red');
+            return false;
+        }
+
+        // Check MinIO logs
+        log('📋 Checking MinIO logs...', 'yellow');
+        const minioLogs = execCommandSilent('docker logs compound-minio --tail 10');
+        if (minioLogs) {
+            log('Recent MinIO logs:', 'cyan');
+            console.log(minioLogs);
+        }
+
+        // Test MinIO connection
+        log('🔗 Testing MinIO connection...', 'yellow');
+        const mcTest = execCommandSilent('docker exec compound-minio mc alias set test http://localhost:9000 minioadmin minioadmin');
+        if (mcTest !== null) {
+            log('✅ MinIO connection successful', 'green');
+        } else {
+            log('❌ MinIO connection failed', 'red');
+            return false;
+        }
+
+        // Check bucket status
+        log('📦 Checking bucket status...', 'yellow');
+        const bucketTest = execCommandSilent('docker exec compound-minio mc ls test/compound-uploads');
+        if (bucketTest !== null) {
+            log('✅ Bucket "compound-uploads" exists and is accessible', 'green');
+        } else {
+            log('❌ Bucket "compound-uploads" not found or not accessible', 'red');
+            log('🔧 Creating bucket...', 'yellow');
+            execCommandSilent('docker exec compound-minio mc mb test/compound-uploads');
+            execCommandSilent('docker exec compound-minio mc anonymous set download test/compound-uploads');
+            execCommandSilent('docker exec compound-minio mc policy set download test/compound-uploads');
+            log('✅ Bucket created and configured', 'green');
+        }
+
+        // Test file upload
+        log('📤 Testing file upload...', 'yellow');
+        const testContent = 'test-content';
+        fs.writeFileSync('/tmp/test-upload.txt', testContent);
+        const uploadTest = execCommandSilent('docker exec compound-minio mc cp /tmp/test-upload.txt test/compound-uploads/');
+        if (uploadTest !== null) {
+            log('✅ Test file upload successful', 'green');
+            execCommandSilent('docker exec compound-minio mc rm test/compound-uploads/test-upload.txt');
+        } else {
+            log('❌ Test file upload failed', 'red');
+            return false;
+        }
+
+        // Clean up test file
+        try {
+            fs.unlinkSync('/tmp/test-upload.txt');
+        } catch (e) {
+            // Ignore cleanup errors
+        }
+
+        // Check network connectivity
+        log('🌐 Checking network connectivity...', 'yellow');
+        const networkTest = execCommandSilent('docker exec compound-backend wget -q --spider http://minio:9000');
+        if (networkTest !== null) {
+            log('✅ Backend can reach MinIO', 'green');
+        } else {
+            log('❌ Backend cannot reach MinIO', 'red');
+            return false;
+        }
+
+        log('✅ MinIO diagnostics completed successfully', 'green');
+        return true;
+
+    } catch (error) {
+        log(`❌ MinIO diagnostics failed: ${error.message}`, 'red');
+        return false;
+    }
+}
+
+async function restartServices() {
+    log('🔄 Restarting services...', 'yellow');
+
+    try {
+        // Stop all services
+        log('⏹️  Stopping all services...', 'yellow');
+        execCommandSilent('docker-compose down');
+        execCommandSilent('docker-compose down --remove-orphans');
+
+        // Start services
+        log('▶️  Starting all services...', 'yellow');
+        execCommand('docker-compose up -d');
+
+        // Wait for services to be ready
+        log('⏳ Waiting for services to be ready...', 'yellow');
+        await wait(30);
+
+        // Check service status
+        log('📊 Checking service status...', 'yellow');
+        execCommand('docker-compose ps');
+
+        return true;
+    } catch (error) {
+        log(`❌ Service restart failed: ${error.message}`, 'red');
+        return false;
+    }
+}
+
 async function deploy() {
     try {
         log('🚀 Deploying Compound Chemistry Data Manager...', 'green');
@@ -138,11 +262,25 @@ async function deploy() {
 
         // Wait for services to be ready
         log('⏳ Waiting for services to be ready...', 'yellow');
-        await wait(15);
+        await wait(30);
 
         // Check service status
         log('📊 Checking service status...', 'yellow');
         execCommand('docker-compose ps');
+
+        // Run MinIO diagnostics
+        log('🔍 Running MinIO diagnostics...', 'yellow');
+        const minioHealthy = await diagnoseMinIO();
+
+        if (!minioHealthy) {
+            log('⚠️  MinIO diagnostics failed. Attempting to restart services...', 'yellow');
+            const restartSuccess = await restartServices();
+            if (restartSuccess) {
+                log('🔄 Re-running MinIO diagnostics after restart...', 'yellow');
+                await wait(15);
+                await diagnoseMinIO();
+            }
+        }
 
         // Display results
         log('✅ Deployment complete!', 'green');
@@ -165,8 +303,14 @@ async function deploy() {
         log('   View nginx logs: docker-compose logs nginx', 'white');
         log('   View frontend logs: docker-compose logs frontend', 'white');
         log('   View backend logs: docker-compose logs backend', 'white');
+        log('   View MinIO logs: docker-compose logs minio', 'white');
         log('');
         log('🛠️  Troubleshooting:', 'cyan');
+        log('   If you experience upload issues:', 'white');
+        log('   1. Run: node deploy.js --diagnose', 'white');
+        log('   2. Check backend logs: docker-compose logs backend', 'white');
+        log('   3. Check MinIO logs: docker-compose logs minio', 'white');
+        log('');
         log('   If mobile access doesn\'t work, check your firewall settings:', 'white');
 
         const platform = os.platform();
@@ -211,10 +355,28 @@ if (require.main === module) {
         process.exit(1);
     }
 
-    deploy().catch(error => {
-        log(`❌ Unexpected error: ${error.message}`, 'red');
-        process.exit(1);
-    });
+    const args = process.argv.slice(2);
+
+    if (args.includes('--diagnose')) {
+        diagnoseMinIO().then(success => {
+            if (!success) {
+                log('❌ MinIO diagnostics failed. Please check the logs above.', 'red');
+                process.exit(1);
+            }
+        });
+    } else if (args.includes('--restart')) {
+        restartServices().then(success => {
+            if (!success) {
+                log('❌ Service restart failed. Please check the logs above.', 'red');
+                process.exit(1);
+            }
+        });
+    } else {
+        deploy().catch(error => {
+            log(`❌ Unexpected error: ${error.message}`, 'red');
+            process.exit(1);
+        });
+    }
 }
 
-module.exports = { deploy, getLocalIP, createDirectories };
+module.exports = { deploy, getLocalIP, createDirectories, diagnoseMinIO, restartServices };

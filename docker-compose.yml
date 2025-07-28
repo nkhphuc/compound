@@ -35,18 +35,26 @@ services:
       - "9001:9001"
     networks:
       - compound-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   # MinIO Initialization
   minio-init:
     image: minio/mc
     depends_on:
-      - minio
+      minio:
+        condition: service_healthy
     volumes:
       - ./minio-init.sh:/minio-init.sh:ro
       - ./minio-cors.xml:/minio-cors.xml:ro
     entrypoint: /bin/sh /minio-init.sh
     networks:
       - compound-network
+    restart: on-failure
 
   # Backend API
   backend:
@@ -66,8 +74,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      minio:
-        condition: service_started
+      minio-init:
+        condition: service_completed_successfully
     restart: unless-stopped
     networks:
       - compound-network

@@ -49,67 +49,51 @@ pnpm dev:backend   # Backend: http://localhost:3002
 - Docker Compose available
 - Port 80 available on your machine
 
-### Deployment Options
+### Deployment
 
-We provide multiple deployment scripts for different platforms:
-
-#### Option 1: Bash Script (macOS/Linux/Git Bash)
+We provide a cross-platform Node.js deployment script that works on all platforms:
 
 ```bash
-# Make executable and run
-chmod +x deploy.sh
-./deploy.sh
-```
-
-#### Option 2: Windows Batch File
-
-```cmd
-# Double-click or run in Command Prompt
-deploy.bat
-```
-
-#### Option 3: PowerShell Script (Windows)
-
-```powershell
-# Right-click → "Run with PowerShell" or run:
-powershell -ExecutionPolicy Bypass -File deploy.ps1
-```
-
-#### Option 4: Node.js Script (Cross-platform)
-
-```bash
-# Run with Node.js (works on all platforms)
+# Deploy the application
 node deploy.js
-# Or make executable and run directly:
-chmod +x deploy.js  # macOS/Linux only
-./deploy.js
 ```
 
 ### What the Deployment Does
 
-All deployment scripts will:
+The deployment script will:
 
 1. 🔍 Auto-detect your LAN IP address for mobile access
 2. 📁 Create necessary directories (`db/data`, `uploads`)
 3. 🐳 Stop existing containers and build new ones
 4. 🚀 Start all services (PostgreSQL, MinIO, Backend, Frontend, Nginx)
 5. ⏳ Wait for services to be ready
-6. 📊 Display service status and access URLs
+6. 🔍 Run MinIO diagnostics to ensure upload functionality
+7. 📊 Display service status and access URLs
 
 ### Access Your Application
 
 After deployment, you can access:
 
-- **Frontend**: `http://your-ip-address`
-- **Backend API**: `http://your-ip-address/api`
-- **S3/MinIO**: `http://your-ip-address/s3`
-- **Health Check**: `http://your-ip-address/health`
+- **Frontend**: <http://your-ip-address>
+- **Backend API**: <http://your-ip-address/api>
+- **Health Check**: <http://your-ip-address/health>
+- **Mobile Access**: Same URLs from any device on the same network
 
-### Mobile Access
+### Troubleshooting
 
-The application is configured for mobile access! Make sure your mobile device is on the same WiFi network and access `http://your-ip-address`.
+If you experience upload issues or other problems:
 
-### Docker Commands
+```bash
+# Run comprehensive diagnostics
+node troubleshoot.js
+
+# For specific issues:
+node troubleshoot.js --help
+```
+
+For detailed troubleshooting guidance, see `TROUBLESHOOTING.md`.
+
+### Useful Commands
 
 ```bash
 # View logs
@@ -121,19 +105,9 @@ docker-compose down
 # Restart services
 docker-compose restart
 
-# View specific service logs
-docker-compose logs nginx
-docker-compose logs frontend
-docker-compose logs backend
+# Check service status
+docker-compose ps
 ```
-
-### Development Commands
-
-- `pnpm dev` - Start both frontend and backend in development mode
-- `pnpm build` - Build all packages
-- `pnpm lint` - Run linting
-- `pnpm test` - Run tests
-- `pnpm --filter backend db:migrate` - Run backend DB migrations
 
 ## 📝 Usage Notes
 
