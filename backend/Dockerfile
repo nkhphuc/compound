@@ -22,7 +22,10 @@ COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/package.json ./package.json
 COPY --from=build /app/start.sh ./start.sh
 
-RUN chmod +x start.sh
+# Ensure start.sh has execute permissions and is properly formatted
+RUN chmod +x start.sh && \
+    dos2unix start.sh 2>/dev/null || true && \
+    ls -la start.sh
 
 USER 1000
 
