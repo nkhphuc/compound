@@ -2,6 +2,7 @@
 
 const { execSync } = require('child_process');
 const fs = require('fs');
+const os = require('os');
 
 // Colors for console output
 const colors = {
@@ -32,15 +33,26 @@ function checkFileExists(file) {
     return fs.existsSync(file);
 }
 
+function fixLineEndings() {
+    log('🔧 Step 1: Fixing line endings...', 'yellow');
+
+    // Use the cross-platform Node.js script
+    if (checkFileExists('fix-line-endings.js')) {
+        log('🔄 Using cross-platform line ending fix...', 'yellow');
+        return runCommand('node fix-line-endings.js', 'Fixing line endings');
+    } else {
+        log('⚠️  No line ending fix script found, skipping...', 'yellow');
+        return true;
+    }
+}
+
 async function startApp() {
     log('🚀 Starting Compound Chemistry Application...', 'blue');
     log('', 'white');
 
     // Step 1: Fix line endings if needed
-    if (checkFileExists('fix-line-endings.sh')) {
-        log('🔧 Step 1: Fixing line endings...', 'yellow');
-        runCommand('chmod +x fix-line-endings.sh', 'Making fix-line-endings.sh executable');
-        runCommand('./fix-line-endings.sh', 'Fixing line endings');
+    if (!fixLineEndings()) {
+        log('⚠️  Line ending fixes failed, continuing anyway...', 'yellow');
         log('', 'white');
     }
 
