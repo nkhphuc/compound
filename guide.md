@@ -639,6 +639,50 @@ project/
 - Canary releases
 - Feature flags
 
+#### **Deployment Automation Scripts**
+
+**Custom Deployment Scripts (Recommended for Complex Projects):**
+
+**Script Categories:**
+- **Startup scripts** - Automated application initialization
+- **Deployment scripts** - Environment-specific deployments
+- **Health check scripts** - Service monitoring and diagnostics
+- **Troubleshooting scripts** - Automated problem resolution
+- **Cross-platform scripts** - Windows, Linux, macOS compatibility
+
+**Script Best Practices:**
+- **Cross-platform compatibility** - Use Node.js for portability
+- **Comprehensive error handling** - Graceful failure with fallbacks
+- **User-friendly output** - Colored console messages and progress indicators
+- **Health monitoring** - Automated service status checks
+- **Diagnostic capabilities** - Built-in troubleshooting tools
+- **Environment detection** - Automatic IP and platform detection
+- **Service orchestration** - Coordinated startup and shutdown
+
+**Script Structure:**
+- **Modular design** - Separate concerns (deployment, health checks, diagnostics)
+- **Configuration-driven** - Environment-specific settings
+- **Logging and monitoring** - Detailed execution logs
+- **Rollback capabilities** - Quick recovery from failed deployments
+- **Team collaboration** - Shared scripts for consistent workflows
+
+**When to Use Custom Scripts:**
+
+**Use Custom Scripts When:**
+- **Complex deployment workflows** - Multiple services with dependencies
+- **Cross-platform requirements** - Teams using different operating systems
+- **Custom health checks** - Application-specific monitoring needs
+- **Team productivity** - Reducing manual deployment steps
+- **Production environments** - Reliable, repeatable deployments
+- **Debugging needs** - Automated troubleshooting capabilities
+
+**Use Standard Tools When:**
+- **Simple deployments** - Single service or basic applications
+- **Cloud-native deployments** - Kubernetes, serverless platforms
+- **Standard workflows** - Common deployment patterns
+- **Small teams** - Limited automation requirements
+- **Third-party platforms** - Vercel, Netlify, Heroku
+
 #### **Environment Configuration**
 
 **Environment Management:**
