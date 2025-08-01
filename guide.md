@@ -976,11 +976,26 @@ Key principles to follow:
 - [ ] Add health checks
 - [ ] Set up logging aggregation
 
-### **Phase 5: Optimization (Week 5-6)**
+### **Phase 5: Nginx & Static File Optimization (Week 5-6)**
+
+**Development Environment Setup:**
+- [ ] Create development nginx configuration
+- [ ] Update frontend Dockerfile for hot reloading
+- [ ] Set up Vite dev server with nginx proxy
+- [ ] Test development workflow with hot reloading
+- [ ] Configure source maps for debugging
+
+**Production Environment Setup:**
+- [ ] Create production nginx configuration
+- [ ] Update frontend Dockerfile for static serving
+- [ ] Implement static file caching headers
+- [ ] Add security headers (CSP, HSTS, etc.)
+- [ ] Configure gzip compression
+- [ ] Set up rate limiting for API endpoints
 
 **Performance Optimization:**
 - [ ] Optimize database queries
-- [ ] Implement caching strategies
+- [ ] Implement Redis caching strategies
 - [ ] Optimize frontend bundle size
 - [ ] Add image optimization
 - [ ] Configure CDN for static assets
@@ -995,3 +1010,152 @@ Key principles to follow:
 - [ ] Configure backup encryption
 
 Remember that the best architecture is the one that serves your specific needs and can evolve with your project requirements.
+
+### 16. Reverse Proxy & Static File Serving
+
+#### **Technology Selection**
+
+**Nginx (Recommended for Production)**
+- **Battle-tested** - Proven in high-traffic production environments
+- **Excellent performance** - Highly optimized for static file serving
+- **Rich ecosystem** - Extensive modules and community support
+- **Mature caching** - Advanced caching strategies and CDN integration
+- **Load balancing** - Built-in load balancing capabilities
+- **Security features** - Rate limiting, DDoS protection, SSL termination
+- **Wide adoption** - Every DevOps engineer knows nginx
+- **Great documentation** - Extensive official and community docs
+- **Flexible configuration** - Fine-grained control over every aspect
+- **Monitoring integration** - Works with all monitoring tools
+- **Docker integration** - Excellent container support
+
+**Caddy (Alternative for Simplicity)**
+- **Automatic HTTPS** - Built-in Let's Encrypt integration
+- **Simpler configuration** - Less boilerplate than nginx
+- **Modern defaults** - Security headers and optimizations out of the box
+- **Good performance** - Competitive with nginx for most use cases
+- **Easier setup** - Less configuration required
+- **Automatic SSL** - No manual certificate management
+- **Modern syntax** - Cleaner configuration format
+- **Built-in security** - Security headers by default
+
+#### **Common Setup Issues to Avoid**
+
+**Development vs Production Mismatch:**
+- Using development servers in production (inefficient)
+- No hot reloading in development environment
+- Static files served through proxy instead of direct nginx serving
+
+**Performance Issues:**
+- Double proxying: nginx → dev server → static files
+- No static file caching headers
+- Missing compression for static assets
+- No CDN integration
+
+**Development Experience:**
+- No hot reloading for frontend development
+- Complex setup for local development
+- No source maps in production
+- **WebSocket connection issues** - Vite requires proper WebSocket handling for hot reload
+
+**Security Concerns:**
+- Missing security headers for static files
+- No CSP (Content Security Policy) headers
+- Missing HSTS headers
+
+#### **Configuration Requirements**
+
+**Production Environment:**
+- Direct static file serving (avoid double proxying)
+- Static file caching with appropriate headers
+- Gzip compression for text-based assets
+- Security headers (CSP, HSTS, X-Frame-Options, etc.)
+- Rate limiting for API endpoints
+- Health check endpoints
+- Proper upstream definitions with keepalive connections
+
+**Development Environment:**
+- WebSocket support for Vite hot reload
+- Extended timeouts for WebSocket connections (86400s)
+- Proper proxy headers for WebSocket upgrade
+- Vite dev server endpoint handling (`/@vite/client`)
+- Source maps for debugging
+- Hot reload functionality preservation
+
+**⚠️ Important: WebSocket Handling for Vite**
+
+When setting up nginx for development with Vite, proper WebSocket handling is crucial for hot reload functionality. Vite uses WebSockets for real-time communication between the dev server and browser.
+
+#### **Performance Optimization**
+
+**Static File Caching:**
+- Cache static assets (JS, CSS, images, fonts) for 1 year
+- Cache HTML files for 1 hour with revalidation
+- Use immutable cache headers for versioned assets
+- Implement Vary headers for compression
+
+**Compression Settings:**
+- Enable gzip compression for text-based assets
+- Configure appropriate compression levels (6-9)
+- Include all text formats (CSS, JS, JSON, XML, SVG)
+- Add font compression for web fonts
+
+**Security Headers:**
+- Implement comprehensive security headers
+- Add CSP (Content Security Policy) headers
+- Include HSTS for HTTPS enforcement
+- Set X-Frame-Options and X-Content-Type-Options
+
+#### **Monitoring and Logging**
+
+**Nginx Logging Configuration:**
+- Implement structured JSON logging for better parsing
+- Include request time, status codes, and user agents
+- Configure appropriate log levels for development and production
+- Set up log rotation and retention policies
+
+**Health Check Endpoints:**
+- Create dedicated health check endpoints for nginx
+- Implement backend health check proxying
+- Add monitoring for WebSocket connections in development
+- Set up automated health monitoring
+
+#### **Docker Configuration**
+
+**Production Requirements:**
+- Multi-stage builds for optimized images
+- Static file serving through nginx
+- Environment-specific configurations
+- Proper volume management for configurations
+
+**Development Requirements:**
+- Hot reloading with Vite dev server
+- Source code mounting for live updates
+- WebSocket support for development
+- Environment variables for development mode
+
+#### **Implementation Guidelines**
+
+**Development Environment Setup:**
+- Configure nginx for WebSocket support with Vite
+- Set up hot reloading with proper timeouts
+- Implement source maps for debugging
+- Test file change detection and live updates
+
+**Production Environment Setup:**
+- Configure direct static file serving
+- Implement comprehensive caching strategies
+- Add security headers and compression
+- Set up monitoring and health checks
+
+#### **Troubleshooting**
+
+**WebSocket Issues (Development):**
+If hot reload isn't working in development:
+1. **Check WebSocket connections** - Verify `/@vite/client` endpoint is accessible
+2. **Increase timeouts** - WebSocket connections need longer timeouts (86400s)
+3. **Check proxy headers** - Ensure `Upgrade` and `Connection` headers are set
+4. **Verify Vite dev server** - Ensure Vite is running on the correct port
+5. **Check browser console** - Look for WebSocket connection errors
+6. **Test direct access** - Try accessing Vite dev server directly (bypass nginx)
+
+This comprehensive nginx configuration provides a robust foundation for both development and production environments, avoiding common pitfalls and ensuring optimal performance.
